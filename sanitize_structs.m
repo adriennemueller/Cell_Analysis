@@ -56,7 +56,7 @@ function session_struct = sanitize_structs( raw_struct, alignments )
                 spike_time_series = make_ts( spike_times, pl_end - pl_beg + 1, padding );
                 clean_trial_data.spike_millis = spike_time_series(2,:)';    
                 clean_trial_data.spikes       = spike_time_series(1,:)'; 
-                clean_trial_data.sden150      = spike_density( clean_trial_data.spikes, 150 ); %150ms std on Gaussian
+                clean_trial_data.sden150      = spike_density( clean_trial_data.spikes, 50 ); %150ms std on Gaussian
               
                 % Add them as a field for this struct and append this struct to trial_struct
                 if isempty(fieldnames(trial_struct))

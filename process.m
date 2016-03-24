@@ -26,6 +26,9 @@ function stat_struct = process()
 
     % Run AttIn_AttOut for that file
     for i = 1:length(fnames)
+        
+        if i == 47
+        
         load( ffpaths{i} );
         attend_struct = attIn_attOut( data_struct );
         
@@ -42,7 +45,8 @@ function stat_struct = process()
         saveas( att_sden_fig, strcat(save_name{1}, '.png') );
         savefig( att_sden_fig, strcat(save_name{1}, '.fig') );
         end
-        
+
+        end
     end
 
     % Append the result (d' matrix) to a the summary statistic struct and

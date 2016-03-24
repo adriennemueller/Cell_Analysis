@@ -43,6 +43,8 @@ function att_sden_fig = plot_att_sdens( attend_struct )
         
         ylim([0 max_sden+5] );
         xlim([-500 750]);
+        
+        set(gca,'Xtick',[-300 0 500],'XTickLabel',{ ['Targets' char(10) 'On'], ['Cue' char(10) 'On'], 'Cue \newline Off' })
 
         % stick the two d's on the subplot
         dO_dprime = attend_struct.dmat(i,2);
@@ -54,13 +56,8 @@ function att_sden_fig = plot_att_sdens( attend_struct )
         %h = legend( [], [], 'Drug Off, Attend In', 'Drug Off, Attend Out', 'Drug On, Attend In', 'Drug On, Attend Out');
         
         hold off;
-        
-        
+    
     end
-    
-    %subplot( 3, 3, 5 )
-    %legend(h);
-    
     hold off;
     
     att_sden_fig = gcf;
@@ -69,7 +66,6 @@ end
 
 % There is a better way
 function rslt = get_subplotidx( group )
-
     if group == 1
         rslt = 6;
     elseif group == 2
@@ -87,5 +83,4 @@ function rslt = get_subplotidx( group )
     elseif group == 8
         rslt = 9;
     end
-
 end

@@ -159,8 +159,14 @@ function rslt = gen_dprime_struct( idx_struct, trials )
         row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 0) & ([idx_struct.attend] == 0));
         drugOff_AttOut_n_spikes = [trials(idx_struct(row).idxs).n_spikes];
         
-        % Calculate the D' for Drug Off Attend In vs Attend Out.
-        drugOff_dprime = d_prime( drugOff_AttIn_n_spikes, drugOff_AttOut_n_spikes );
+        % Calculate the D' and Wilcox Rank Sum for Drug Off Attend In vs Attend Out.
+        drugOff_dprime  = d_prime( drugOff_AttIn_n_spikes, drugOff_AttOut_n_spikes );
+        if ~ isempty(drugOff_AttIn_n_spikes) &&  ~ isempty(drugOff_AttOut_n_spikes)
+            drugOff_ranksum = ranksum( drugOff_AttIn_n_spikes, drugOff_AttOut_n_spikes );
+        else
+            drugOff_ranksum = nan;
+        
+        end
         
         % Find the Drug On, Attend In trials and make a vector of the
         % number of spikes for them.        
@@ -171,11 +177,16 @@ function rslt = gen_dprime_struct( idx_struct, trials )
         row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 1) & ([idx_struct.attend] == 0));
         drugOn_AttOut_n_spikes = [trials(idx_struct(row).idxs).n_spikes];
         
-        % Calculate the D' for Drug On Attend In vs Attend Out.
-        drugOn_dprime = d_prime( drugOn_AttIn_n_spikes, drugOn_AttOut_n_spikes );
+        % Calculate the D' and Wilcox Rank Sum for Drug On Attend In vs Attend Out.
+        drugOn_dprime  = d_prime( drugOn_AttIn_n_spikes, drugOn_AttOut_n_spikes );
+        if ~ isempty(drugOn_AttIn_n_spikes) &&  ~ isempty(drugOn_AttOut_n_spikes)
+            drugOn_ranksum = ranksum( drugOn_AttIn_n_spikes, drugOn_AttOut_n_spikes );
+        else
+            drugOn_ranksum = nan;
+        end
         
         % Append the result.
-        rslt = [rslt; theta drugOff_dprime drugOn_dprime];
+        rslt = [rslt; theta drugOff_dprime drugOn_dprime drugOff_ranksum drugOn_ranksum];
     end
 end
 
