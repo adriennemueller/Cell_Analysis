@@ -132,8 +132,18 @@ function ctd = get_clean_trial_data( bhv, idx, offset, bhv_code_times )
     ctd.comb = bhv.UserVars(idx).comb;
     ctd.nocue = bhv.UserVars(idx).nocue;
     ctd.theta = bhv.UserVars(idx).theta * (180/pi); % Converted to Degrees
+    ctd.theta = adjust_theta(ctd.theta);
     ctd.radius = bhv.UserVars(idx).radius; % Still in MLUs. Must change.
 
+end
+
+% Change thetas that are in negative degrees into positive degrees.
+function theta = adjust_theta( val )
+    if val < 0
+        theta = 360 + val;
+    else
+        theta = val;
+    end
 end
 
 
@@ -153,13 +163,30 @@ function trials = adjust_drug( trials )
             skip_idxs = [skip_idxs i];
         end
         
-        current = round(mean(drug));        
+        current = round(mean(drug));
+        current = adjust_current(current);
         trials(i).drug = current;
     end
     
     trials(skip_idxs) = [];
 end
 
+% Adjust the current values so they are consistent within ~2nA error.
+function current = adjust_current( current )
+    if (-17 <= current) && (current <= -13)
+        current = -15;
+    elseif (18 <= current) && (current <= 22)
+        current = 20;
+    elseif (38 <= current) && (current <= 42)
+        current = 40;
+    elseif (43 <= current) && (current <= 47)
+        current = 45;
+    elseif (48 <= current) && (current <= 52)
+        current = 50;
+    elseif (95 <= current) && (current <= 105)
+        current = 100;
+    end
+end
 
 % Returns a list of spike-times re-aligned to trial-onset.
 function aligned_spike_times = get_aligned_spike_times( spike_times, trial_beg, trial_end, padding )

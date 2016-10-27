@@ -36,28 +36,62 @@ function att_sden_fig = plot_att_sdens( attend_struct )
         line([0 0], [0 max_sden+5], 'LineStyle', ':', 'Color', [0.2 0.2 0.2]);%, 'YLimInclude', 'off', 'XLimInclude', 'off');
         line([500 500], [0 max_sden+5], 'LineStyle', ':', 'Color', [0.2 0.2 0.2]);%, 'YLimInclude', 'off', 'XLimInclude', 'off');
         
-        shadedErrorBar(dOaI_mil, dOaI_avg, dOaI_ste, 'k', 1);
-        shadedErrorBar(dOaO_mil, dOaO_avg, dOaO_ste, {'--', 'Color', [0.5 0.5 0.5]}, 1);
-        shadedErrorBar(dNaI_mil, dNaI_avg, dNaI_ste, 'r', 1);
-        shadedErrorBar(dNaO_mil, dNaO_avg, dNaO_ste, {'--', 'Color', [0.5 0 0]}, 1);
+        % As long as there were enough trials to get an actual error bar,
+        % plot an error bar
+        if length(dOaI_ste)>1 && length(dOaO_ste)>1  && length(dNaI_ste)>1  && length(dNaO_ste)>1 
+            shadedErrorBar(dOaI_mil, dOaI_avg, dOaI_ste, 'k', 1);
+            shadedErrorBar(dOaO_mil, dOaO_avg, dOaO_ste, {'--', 'Color', [0.5 0.5 0.5]}, 1);
+            shadedErrorBar(dNaI_mil, dNaI_avg, dNaI_ste, 'r', 1);
+            shadedErrorBar(dNaO_mil, dNaO_avg, dNaO_ste, {'--', 'Color', [0.5 0 0]}, 1);
+        end
         
         ylim([0 max_sden+5] );
         xlim([-500 750]);
         
-        set(gca,'Xtick',[-300 0 500],'XTickLabel',{ ['Targets' char(10) 'On'], ['Cue' char(10) 'On'], 'Cue \newline Off' })
+        % Should maybe use text to make labels centered.
+        set(gca,'Xtick',[-300 0 500],'XTickLabel',{ ['Targets \newline On'], ['Cue \newline On'], ['Cue \newline Off'] });
 
         % stick the two d's on the subplot
         dO_dprime = attend_struct.dmat(i,2);
         dN_dprime = attend_struct.dmat(i,3);
         
-        text(700,max_sden, num2str(round(dO_dprime,2)));
-        text(700,max_sden-5, num2str(round(dN_dprime,2)), 'Color','red');
+        text(600,max_sden, num2str(round(dO_dprime,2)));
+        text(600,max_sden-5, num2str(round(dN_dprime,2)), 'Color','red');
+        
+        % Denote whether cell is visually responsive for this direction
+        dO_ranksign = attend_struct.vis_pval(i,2);
+        dN_ranksign = attend_struct.vis_pval(i,3);
+        title( ['P-Val: DrugOff VR: ' num2str(round(dO_ranksign,2)) ' / DrugOn VR: ' num2str(round(dN_ranksign,2))], 'FontSize', 6 );
         
         %h = legend( [], [], 'Drug Off, Attend In', 'Drug Off, Attend Out', 'Drug On, Attend In', 'Drug On, Attend Out');
         
         hold off;
-    
     end
+    
+    
+     % Plot d's across space
+     subplot(3,3, 5);
+     hold on;
+     plot( attend_struct.dmat(:,2), '-ok' );
+     plot( attend_struct.dmat(:,3), '-or' );
+     %xlabel( 'Direction' );
+     ylabel( 'D''');
+     set(get(gca,'YLabel'),'Rotation',0);   
+     xlim([0.5 8.5]);
+     yl = ylim;
+     ylim( [yl(1) (yl(2)+0.2)] );
+     set(gca,'Xtick',[1 3 5 7],'XTickLabel',{'Right', 'Up', 'Left', 'Down'});
+
+     % Should put this into a separate function, Also account for
+     % multiple comparisons
+     sig_val = 0.05;
+     drugOff_sig_idxs = find( attend_struct.dmat(:,4) <= sig_val );
+     drugOn_sig_idxs  = find( attend_struct.dmat(:,5) <= sig_val );
+
+     text(drugOff_sig_idxs, attend_struct.dmat(drugOff_sig_idxs, 2) + 0.2, '*', 'FontSize', 12);
+     text(drugOn_sig_idxs,  attend_struct.dmat(drugOn_sig_idxs,3) + 0.2, '*', 'Color','red', 'FontSize', 12);
+        
+    
     hold off;
     
     att_sden_fig = gcf;

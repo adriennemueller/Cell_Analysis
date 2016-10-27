@@ -40,6 +40,10 @@ function preprocess(tmp_struct)
         processed_files = export_sessions( master_file_struct.main_direc, master_file_struct.session(proc_idxs(i)), alignments, session_struct);
         master_file_struct.session(proc_idxs(i)).processed_files = processed_files;
         
+        % Also add details about the currents for each unit in a session to
+        % the master file struct
+        master_file_struct.session(proc_idxs(i)).currents = find_unique_currents(session_struct);
+        
         % Note that this session has now been preprocessed.
         master_file_struct.session( proc_idxs(i) ).preprocessed = 1;
 
@@ -53,6 +57,15 @@ function preprocess(tmp_struct)
     
 
 
+end
+
+% Make a list of the unique currents for each unit in a given session.
+function currents = find_unique_currents( session_struct )
+    
+    currents = {};
+    for i = 1:length(session_struct)
+        currents{i} = unique([session_struct{i}.drug]);
+    end
 end
 
 
@@ -104,8 +117,13 @@ function alignments = find_alignments( raw_struct )
         % are in Strobed. Find triples of the start and end event codes (which
         % appear to be recorded as 242 and 233, respectively).
         % PL_trial_idx has 2 columns, representing the start and end indexes of
-        % trials from Plexon.
-        PL_trial_idx = candidate_trial_indexes( raw_struct.PL_events.Strobed, 242, 233 );
+        % trials from Plexon. 
+        %%%% 9 AND 18 POST FIX!!!
+        if sum( [raw_struct.PL_events.Strobed] >= 200 )
+            PL_trial_idx = candidate_trial_indexes( raw_struct.PL_events.Strobed, 242, 233 );
+        else
+            PL_trial_idx = candidate_trial_indexes( raw_struct.PL_events.Strobed, 9, 18 );
+        end
 
         % Timestamps of the start and end events from Plexon
         PL_trial_times = PL_event_times(PL_trial_idx);
@@ -242,8 +260,6 @@ function rslt = find_trial( all_events, start_index, trial_start_event, trial_en
     end
 
 end
-
-
 
 
 % load_data_files takes a session struct (sub struct of master struct) and

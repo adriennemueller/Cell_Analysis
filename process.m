@@ -15,9 +15,9 @@ function stat_struct = process()
     load('master_file_struct');
     load('stat_struct');
         
-    % Run through mfs, getting the filenames (and full file paths) of the different processed files
+    % Run through mfs, getting the filenames, full file paths, and drug of the different processed files
     fn_ffps = get_ffps( master_file_struct );
-    fnames = fn_ffps(1,:); ffpaths = fn_ffps(2,:);
+    fnames = fn_ffps(1,:); ffpaths = fn_ffps(2,:); drug = fn_ffps(3,:); currents = fn_ffps(4,:);
     
     %ss_filenames = [stat_struct.filename];
     
@@ -27,26 +27,28 @@ function stat_struct = process()
     % Run AttIn_AttOut for that file
     for i = 1:length(fnames)
         
-        if i == 47
-        
         load( ffpaths{i} );
-        attend_struct = attIn_attOut( data_struct );
+        attend_struct = attIn_attOut( data_struct, currents{i} );
         
         stat_struct(i).filename = fnames(i);
         stat_struct(i).attend = attend_struct;
+        stat_struct(i).drug = drug(i);
        
-        if (isempty(find(isinf(attend_struct.dmat)))) || ...
-            (isempty(find(isnan(attend_struct.dmat)))) 
-        att_sden_fig = plot_att_sdens( attend_struct );
+        if (isempty(attend_struct)), continue, end
         
-        
-        save_name_mat = strcat('tmp_figs/',fnames(i));
-        save_name = strrep(save_name_mat,'.mat','');
-        saveas( att_sden_fig, strcat(save_name{1}, '.png') );
-        savefig( att_sden_fig, strcat(save_name{1}, '.fig') );
+        % Go through each current
+        for j = 1:length(attend_struct)
+            if (isempty(find(isinf(attend_struct(j).dmat)))) || ...
+                (isempty(find(isnan(attend_struct(j).dmat))))
+            att_sden_fig = plot_att_sdens( attend_struct(j) );
+
+            save_name_mat = strcat('tmp_figs/',fnames(i), '_', num2str(attend_struct(j).current));
+            save_name = strrep(save_name_mat,'.mat','');
+            saveas( att_sden_fig, strcat(save_name{1}, '.png') );
+            savefig( att_sden_fig, strcat(save_name{1}, '.fig') );
+            end
         end
 
-        end
     end
 
     % Append the result (d' matrix) to a the summary statistic struct and
@@ -60,6 +62,8 @@ function ffps = get_ffps( mfs )
     
     ffps = {};
     fnames = {};
+    drug = {};
+    currents = {};
     main_direc = mfs.main_direc;
 
     for i = 1:length(mfs.session)
@@ -71,9 +75,15 @@ function ffps = get_ffps( mfs )
             
             ffp = strcat( main_direc, sub_direc, file );
             ffps = [ffps ffp];
+            
+            curr_drug = mfs.session(i).drug;
+            drug = [drug curr_drug];
+            
+            current = mfs.session(i).currents(j);
+            currents = [currents current];
         end
         
     end
     
-    ffps = [fnames; ffps];
+    ffps = [fnames; ffps; drug; currents];
 end

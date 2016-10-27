@@ -1,40 +1,159 @@
 
 % Attend In - Attend Out
 
-function rslt = attIn_attOut( trials )
+function rslt = attIn_attOut( full_trials, currents )
 
-    % Remove error trials
-    correct_trial_idx = find([trials.trial_error] == 0);
-    correct_trials = trials(correct_trial_idx);
-    
-    % Adjust Theta
-    if length(unique([correct_trials.theta])) > 9
-        correct_trials = adjust_theta( correct_trials );
+    % If only one current was applied, return an empty rslt.
+    if length(currents) == 1
+        rslt = [];
     end
-       
-    % Count spikes in attentional window for each trial. Get list of numbers
-    % for attend in, list of numbers for attend out.
-    window = [121 126]; % Event codes for attentional window (Cue on, before targets blank and flip);
-    correct_trials = count_spikes( correct_trials, window );
-    
-    % For each direction - get idxs for attend in and attend out, when drug
-    % is present and when drug is absent
-    idx_struct = segregate( correct_trials );
-    
-    % Get D' for result of this
-    dmat = gen_dprime_struct( idx_struct, correct_trials );
-    
-    % Get Attend In/Out Drug On/Off SDen averages and SEs
-    sdens = get_attend_sdens( idx_struct, correct_trials, 121 );
-    sden_summs =  get_trial_sum( sdens );
-    
-    rslt.dmat = dmat;
-    rslt.sdens = sdens;
-    rslt.sden_summs = sden_summs;
-    
-    % MAKE A FUNCTION TO RUN THIS FUNCTION AND ADD THE OUTPUT TO THE
-    % SESSION_STRUCT AND SAVE IT OUT?
 
+    % Go through all different ejected currents in the file. (currents(1)
+    % will be the retain current.
+    for i = 2:length(currents)
+        
+        % Get only retain trials and trials with that current
+        eject_current = currents(i); retain_current = currents(1);
+        trials = segregate_by_current( full_trials, retain_current, eject_current );
+
+        % Remove error trials
+        correct_trial_idx = find([trials.trial_error] == 0);
+        correct_trials = trials(correct_trial_idx);
+
+        % Adjust Theta
+        if length(unique([correct_trials.theta])) > 9
+            correct_trials = adjust_theta( correct_trials );
+        end
+
+        % Count spikes in attentional window for each trial. Get list of numbers
+        % for attend in, list of numbers for attend out.
+        correct_trials = remove_probe_trials( correct_trials );
+        window = get_attend_window( correct_trials );
+        correct_trials = count_spikes( correct_trials, window, 'attend' );
+
+        % For each direction - get idxs for attend in and attend out, when drug
+        % is present and when drug is absent
+        idx_struct = segregate( correct_trials );
+
+        % Get D' for result of this
+        dmat = gen_dprime_struct( idx_struct, correct_trials );
+
+        % Get Attend In/Out Drug On/Off SDen averages and SEs
+        sdens = get_attend_sdens( idx_struct, correct_trials, window(1) );
+        sden_summs =  get_trial_sum( sdens );
+
+        % Get Visual Reponse p-values %%% VERIFY VERIFY VERIFY %%%
+        vis_window = [124 window(1)]; %THIS WINDOW 1 THING IS CONFUSING. FIX.
+        correct_trials = count_spikes( correct_trials, vis_window, 'visual' );
+        vis_pval = gen_vis_pval( idx_struct, correct_trials );
+    
+        % Return results for each current separately
+        rslt(i-1).current = eject_current;
+        rslt(i-1).dmat = dmat;
+        rslt(i-1).sdens = sdens;
+        rslt(i-1).sden_summs = sden_summs;
+        rslt(i-1).vis_pval = vis_pval;
+
+        % MAKE A FUNCTION TO RUN THIS FUNCTION AND ADD THE OUTPUT TO THE
+        % SESSION_STRUCT AND SAVE IT OUT?
+    end
+end
+
+% Make a new trials structure with only the retain trials and trials with
+% ejection of current of interest
+function trials = segregate_by_current( trials, retain_c, eject_c )
+    valid_idxs = find( ([trials.drug] == retain_c) | ([trials.drug] == eject_c));
+    trials = trials(valid_idxs);
+end
+
+
+% For sessions that have probe trials, this removes the probe trials.
+function correct_trials = remove_probe_trials( correct_trials )
+    indexes = [];
+
+    % Can I do this without a for loop?
+    for i = 1:length(correct_trials)
+        if find( correct_trials(i).event_codes == 126 ) % Contains a blanked cue; therefore not a probe trial
+            indexes = [indexes i];
+        end
+    end
+
+    correct_trials = correct_trials(indexes);
+end
+
+
+% Event codes for attentional window (Cue on, before targets blank and flip);
+% Need a function for this because I changed the event codes in Jan/Mar 2016   
+function window = get_attend_window( correct_trials )
+    if find(correct_trials(1).event_codes == 121);
+        window = [121 126];
+    else
+        window = [133 126];
+    end
+end
+
+
+function vis_pval = gen_vis_pval( idx_struct, trials )
+
+    % Can combine AttendIn and AttendOut trials because identical during period
+    % of initial stimulus presentation
+
+    vis_pval = [];
+
+    for i = 1:length(unique([idx_struct.theta])); % For the 8 directions
+        
+        theta = map_direction(i);
+        
+        % Find the Drug Off, Attend In trials and make a vector of the
+        % number of spikes for them.
+        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 0) & ([idx_struct.attend] == 1));
+        drugOff_AttIn_n_spikes = [trials(idx_struct(row).idxs).visual_n_spikes];
+        drugOff_AttIn_n_spikes_baseline = [trials(idx_struct(row).idxs).baseline_n_spikes];
+        
+        % Same for Drug Off, Attend Out
+        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 0) & ([idx_struct.attend] == 0));
+        drugOff_AttOut_n_spikes = [trials(idx_struct(row).idxs).visual_n_spikes];
+        drugOff_AttOut_n_spikes_baseline = [trials(idx_struct(row).idxs).baseline_n_spikes];
+        
+        
+        % Combine lists
+        drugOff_vis_n_spikes = [drugOff_AttIn_n_spikes drugOff_AttOut_n_spikes];
+        drugOff_base_n_spikes = [drugOff_AttIn_n_spikes_baseline drugOff_AttOut_n_spikes_baseline];
+        
+        % Calculate the Wilcox Rank Sum for Drug Off Visual Response vs Baseline.
+        if ~ isempty(drugOff_vis_n_spikes) &&  ~ isempty(drugOff_base_n_spikes)
+            drugOff_ranksum = ranksum( drugOff_vis_n_spikes, drugOff_base_n_spikes );
+        else
+            drugOff_ranksum = nan;
+        end
+        
+        % Find the Drug On, Attend In trials and make a vector of the
+        % number of spikes for them.        
+        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 1) & ([idx_struct.attend] == 1));
+        drugOn_AttIn_n_spikes = [trials(idx_struct(row).idxs).visual_n_spikes];
+        drugOn_AttIn_n_spikes_baseline = [trials(idx_struct(row).idxs).baseline_n_spikes];
+        
+        % Same for Drug On, Attend Out
+        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 1) & ([idx_struct.attend] == 0));
+        drugOn_AttOut_n_spikes = [trials(idx_struct(row).idxs).visual_n_spikes];
+        drugOn_AttOut_n_spikes_baseline = [trials(idx_struct(row).idxs).baseline_n_spikes];
+        
+        drugOn_vis_n_spikes = [drugOn_AttIn_n_spikes drugOn_AttOut_n_spikes];
+        drugOn_base_n_spikes = [drugOn_AttIn_n_spikes_baseline drugOn_AttOut_n_spikes_baseline];
+        
+        % Calculate the D' and Wilcox Rank Sum for Drug On Attend In vs Attend Out.
+        if ~ isempty(drugOn_vis_n_spikes) &&  ~ isempty(drugOn_base_n_spikes)
+            drugOn_ranksum = ranksum( drugOn_vis_n_spikes, drugOn_base_n_spikes );
+        else
+            drugOn_ranksum = nan;
+        end
+        
+        % Append the result.
+        vis_pval = [vis_pval; theta drugOff_ranksum drugOn_ranksum];
+    end
+    
+    
+    
 end
 
 function rslt = get_trial_sum( trials )
@@ -153,11 +272,11 @@ function rslt = gen_dprime_struct( idx_struct, trials )
         % Find the Drug Off, Attend In trials and make a vector of the
         % number of spikes for them.
         row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 0) & ([idx_struct.attend] == 1));
-        drugOff_AttIn_n_spikes = [trials(idx_struct(row).idxs).n_spikes];
+        drugOff_AttIn_n_spikes = [trials(idx_struct(row).idxs).attend_n_spikes];
         
         % Same for Drug Off, Attend Out
         row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 0) & ([idx_struct.attend] == 0));
-        drugOff_AttOut_n_spikes = [trials(idx_struct(row).idxs).n_spikes];
+        drugOff_AttOut_n_spikes = [trials(idx_struct(row).idxs).attend_n_spikes];
         
         % Calculate the D' and Wilcox Rank Sum for Drug Off Attend In vs Attend Out.
         drugOff_dprime  = d_prime( drugOff_AttIn_n_spikes, drugOff_AttOut_n_spikes );
@@ -171,11 +290,11 @@ function rslt = gen_dprime_struct( idx_struct, trials )
         % Find the Drug On, Attend In trials and make a vector of the
         % number of spikes for them.        
         row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 1) & ([idx_struct.attend] == 1));
-        drugOn_AttIn_n_spikes = [trials(idx_struct(row).idxs).n_spikes];
+        drugOn_AttIn_n_spikes = [trials(idx_struct(row).idxs).attend_n_spikes];
         
         % Same for Drug On, Attend Out
         row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 1) & ([idx_struct.attend] == 0));
-        drugOn_AttOut_n_spikes = [trials(idx_struct(row).idxs).n_spikes];
+        drugOn_AttOut_n_spikes = [trials(idx_struct(row).idxs).attend_n_spikes];
         
         % Calculate the D' and Wilcox Rank Sum for Drug On Attend In vs Attend Out.
         drugOn_dprime  = d_prime( drugOn_AttIn_n_spikes, drugOn_AttOut_n_spikes );
@@ -196,7 +315,7 @@ end
 % blank, etc) for each trial and appends it to the trial_structure that was
 % input. The window is given by two behavioral codes. eg:
 % [121 126] - Event codes for attentional window [Cue On, Targets Blank];
-function trials = count_spikes( trials, window )
+function trials = count_spikes( trials, window, type )
 
     for i = 1:length(trials)
         
@@ -218,7 +337,18 @@ function trials = count_spikes( trials, window )
         
         % This will be ambiguous if there are ever other spike counts in the
         % struct.
-        trials(i).n_spikes = n_spikes;
+        if strcmp(type, 'attend')
+            trials(i).attend_n_spikes = n_spikes;
+        elseif strcmp(type, 'visual')
+            trials(i).visual_n_spikes = n_spikes;
+            
+            % baseline
+            dur = spike_end_idx - spike_start_idx;
+            base_start_idx = spike_start_idx - dur;
+            base_end_idx = spike_end_idx - dur;
+            
+            trials(i).baseline_n_spikes = sum(trials(i).spikes(base_start_idx:base_end_idx));
+        end
     end
     
 
