@@ -12,7 +12,10 @@ function preprocess(tmp_struct)
     else
         master_file_struct = tmp_struct;
     end
-
+    
+    % Directory to Save Processed Files:
+    save_superdirec = '~/Garf/Processed';
+    
     % Preprocess all sessions which have not yet been preprocessed.
 
     % Find indexes of sessions in master struct which haven't been preprocessed.
@@ -31,13 +34,15 @@ function preprocess(tmp_struct)
         % Identify which unit files belong with which bhv files, and their alignment
         alignments = find_alignments( raw_struct );
         assignin( 'base', 'alignments', alignments);
-      
+        if isempty(fieldnames(alignments)), continue, end
+        % Should have this purge entry, possibly.
+                  
         % Make 'clean' structs for future analyses
         session_struct = sanitize_structs(raw_struct, alignments);
         assignin('base', 'session_struct', session_struct);
 
         % Save Out the Clean Session Sub-Structs, Add them to the Master File Struct
-        processed_files = export_sessions( master_file_struct.main_direc, master_file_struct.session(proc_idxs(i)), alignments, session_struct);
+        processed_files = export_sessions( save_superdirec, master_file_struct.session(proc_idxs(i)), alignments, session_struct);
         master_file_struct.session(proc_idxs(i)).processed_files = processed_files;
         
         % Also add details about the currents for each unit in a session to
@@ -72,20 +77,23 @@ end
 % export_sessions loops through and exports clean structs for the found
 % bhv/unit pairs for the session and updates the main_file_struct with the
 % filenames for those output files.
-function processed_files = export_sessions( main_direc, file_struct, alignments, session_struct )
+function processed_files = export_sessions( save_superdirec, file_struct, alignments, session_struct )
     processed_files = {};
 
     for i = 1:length(alignments)
         unit_file_idx = alignments(i).unit_file;
         unit_file = file_struct.unit_files{unit_file_idx};
         
-        save_fname = ['PROC_', unit_file];
-        save_direc = [main_direc, file_struct.sub_direc];
+        [pathstr, unit_filename, ext] = fileparts( unit_file );
+        
+        save_fname = ['PROC_', unit_filename, ext];
+        save_direc = fullfile(save_superdirec, file_struct.sub_direc);
+        if ~ isdir( save_direc ), mkdir( save_direc ); end
         
         % Save out individual cleaned data struct for the bhv/unit
         % combinations in the session
         data_struct = session_struct{i};
-        save( [save_direc, save_fname], 'data_struct');
+        save( fullfile(save_direc, save_fname), 'data_struct');
         
         % Append the filename info to the file_struct that was passed in
         processed_files{i} = save_fname;
@@ -180,6 +188,7 @@ function alignments = find_alignments( raw_struct )
             
             % Find associated unit files
             for j = 1:n_units
+                tmp_struct = struct;
                 unit = raw_struct.units(j);
                 unit_beg_time = unit.SpikeTimes(1);
                 unit_end_time = unit.SpikeTimes(end);
@@ -203,6 +212,7 @@ function alignments = find_alignments( raw_struct )
                     else
                         alignments = [alignments tmp_struct];
                     end
+                
                 end
                 
             end
@@ -269,7 +279,7 @@ end
 function raw_struct = load_data_files( main_direc, session_struct )
 
     % Load the plexon timestamped events
-    event_file = strcat( main_direc, session_struct.sub_direc, session_struct.event_file );
+    event_file = session_struct.event_file;
     PL_events_tmp = load( event_file );
     PL_events.TimeStamps = PL_events_tmp.ans.Ts;
     PL_events.Strobed    = PL_events_tmp.ans.Strobed;
@@ -278,13 +288,14 @@ function raw_struct = load_data_files( main_direc, session_struct )
     
     % Load all of the monkeylogic bhv files for this session.
     for i = 1:length(session_struct.bhv_files)
-        bhv_file = strcat( main_direc, session_struct.sub_direc, session_struct.bhv_files(i) );
+        bhv_file = session_struct.bhv_files(i)
+        %bhv_file = bhv_file{1};
         bhvs_struct(i) = bhv_read( bhv_file{1} ); % Accessing {1} to convert from cell array to string
     end
     
     % Load all of the plexon unit files for this session.
     for i = 1:length(session_struct.unit_files)
-        unit_file = strcat( main_direc, session_struct.sub_direc, session_struct.unit_files(i) );
+        unit_file = session_struct.unit_files(i);
         unit_struct_tmp = load( unit_file{1} ); % Accessing {1} to convert from cell array to string
         units_struct(i).SpikeTimes = unit_struct_tmp.adc041(:,1);
         units_struct(i).SpikeTimes = round(units_struct(i).SpikeTimes * 1000);

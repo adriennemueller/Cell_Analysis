@@ -1,7 +1,15 @@
 % This functions generates a master_file struct_from scratch
+% Want to update this so it adds new ones without overwriting old master
+% file struct, necessarily.
+
 function make_master_file_struct()
 
+    % Removes old master_file_struct
+    delete('master_file_struct.mat');
+
     master_file_struct = struct;
+    master_file_struct.main_direc = '~/Garf'; %'/Users/eddi/Documents/Work/SCH23390/';
+    save('master_file_struct', 'master_file_struct');
 
     unit_super_direc = '~/Garf/Plexon/';
     bhv_super_direc = '~/Garf/Lever_Training/';
@@ -21,13 +29,12 @@ function make_master_file_struct()
         if ~ isempty(event_file_struct)
             event_file = event_file_struct.name;    
         else
-          disp( strcat('No Event File in: ', search_folder ) ); 
+          disp( strcat('No Event File in: ', {' '}, folder.name ) ); 
           continue
         end
         
         
         % Identify Unit Files
-        
         % If Sorted2.0 folder exists, search in it
         if isdir( fullfile( search_folder, 'sorted2.0') )
             search_folder = fullfile( search_folder, 'sorted2.0' );
@@ -35,7 +42,7 @@ function make_master_file_struct()
         elseif isdir( fullfile( search_folder, 'Sorted') )
             search_folder = fullfile( search_folder, 'Sorted' );
         else
-            disp( strcat( 'No Files Sorted in:', searchfolder ));
+            disp( strcat( 'No Files Sorted in:', {' '}, folder.name ));
             continue
         end
               
@@ -46,24 +53,29 @@ function make_master_file_struct()
         folder_date = convert_folder_date(folder.name);
         
         bhv_filelist_struct = findfiles( bhv_super_direc, strcat('*',folder_date,'*'), 0 );
+        LP_file_exists = strfind( {bhv_filelist_struct.name}, 'LP' );
+        LP_file_indices = find(~cellfun(@isempty, LP_file_exists));
+        bhv_filelist_struct = bhv_filelist_struct( LP_file_indices );
+        
+        if isempty( bhv_filelist_struct )
+            disp( strcat('No bhv files in folder:', {' '}, folder.name ) );
+            continue;
+        end
         bhv_filelist = {bhv_filelist_struct.name};
  
-
-        %%% IF BHV FILES EMPTY
-        
         % Identify Drug
-        if contains( unit_filelist(1), 'SCH' )
+        if ~isempty( strfind( unit_filelist{1}, 'SCH' ) )
             drug = 'SCH23390';
-        elseif contains( unit_filelist(1), 'SKF' )
+        elseif ~isempty( strfind( unit_filelist{1}, 'SKF' ) )
             drug = 'SKF81297';
         else
-            disp( strcat('No Drug Information available in filenames for:', search_folder ));
+            disp( strcat('No Drug Information available in filenames for:', {' '}, folder.name ));
+            drug = '';
         end
         
         % add session
+        disp( strcat( 'Adding session:', {' '}, folder.name ) );
         add_session( folder.name, event_file, bhv_filelist, unit_filelist, drug );
-        %%% HAVE THIS HAPPEN TO A CLEAN Master File Struct. Have this
-        %%% delete old master file struct.
 
     end
 
