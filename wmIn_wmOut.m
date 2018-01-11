@@ -1,7 +1,6 @@
+% Working Memory
 
-% Attend In - Attend Out
-
-function rslt = attIn_attOut( full_trials, currents )
+function rslt = wmIn_wmOut( full_trials, currents )
 
     % If only one current was applied, return an empty rslt.
     if length(currents) == 1
@@ -27,36 +26,36 @@ function rslt = attIn_attOut( full_trials, currents )
 
         % Count spikes in attentional window for each trial. Get list of numbers
         % for attend in, list of numbers for attend out.
-        correct_trials = remove_probe_trials( correct_trials );
+        correct_trials = remove_attend_trials( correct_trials );
         window = get_attend_window( correct_trials );
-        correct_trials = count_spikes( correct_trials, window, 'attend' );
+%        correct_trials = count_spikes( correct_trials, window, 'attend' );
 
         % For each direction - get idxs for attend in and attend out, when drug
         % is present and when drug is absent
         idx_struct = segregate( correct_trials );
 
         % Get D' for result of this
-        dmat = gen_dprime_struct( idx_struct, correct_trials );
+%       dmat = gen_dprime_struct( idx_struct, correct_trials );
         
         % Get Anova for this
-        anova_mat = gen_anova_struct( idx_struct, correct_trials );
+%        anova_mat = gen_anova_struct( idx_struct, correct_trials );
 
         % Get Attend In/Out Drug On/Off SDen averages and SEs
-        sdens = get_attend_sdens( idx_struct, correct_trials, window(1) );
+        sdens = get_attend_sdens( idx_struct, correct_trials, window(2) );
         sden_summs =  get_trial_sum( sdens );
 
         % Get Visual Reponse p-values %%% VERIFY VERIFY VERIFY %%%
-        vis_window = [124 window(1)]; %THIS WINDOW 1 THING IS CONFUSING. FIX.
-        correct_trials = count_spikes( correct_trials, vis_window, 'visual' );
-        vis_pval = gen_vis_pval( idx_struct, correct_trials );
+%       vis_window = [124 window(1)]; %THIS WINDOW 1 THING IS CONFUSING. FIX
+%       correct_trials = count_spikes( correct_trials, vis_window, 'visual' );
+%       vis_pval = gen_vis_pval( idx_struct, correct_trials );
     
         % Return results for each current separately
         rslt(i-1).current = eject_current;
-        rslt(i-1).dmat = dmat;
-        rslt(i-1).anova_mat = anova_mat;
+%        rslt(i-1).dmat = dmat;
+%        rslt(i-1).anova_mat = anova_mat;
         rslt(i-1).sdens = sdens;
         rslt(i-1).sden_summs = sden_summs;
-        rslt(i-1).vis_pval = vis_pval;
+%        rslt(i-1).vis_pval = vis_pval;
 
         % MAKE A FUNCTION TO RUN THIS FUNCTION AND ADD THE OUTPUT TO THE
         % SESSION_STRUCT AND SAVE IT OUT?
@@ -72,12 +71,12 @@ end
 
 
 % For sessions that have probe trials, this removes the probe trials.
-function correct_trials = remove_probe_trials( correct_trials )
+function correct_trials = remove_attend_trials( correct_trials )
     indexes = [];
 
     % Can I do this without a for loop?
     for i = 1:length(correct_trials)
-        if find( correct_trials(i).event_codes == 126 ) % Contains a blanked cue; therefore not a probe trial
+        if find( correct_trials(i).event_codes == 153 ) % Contains a "153"
             indexes = [indexes i];
         end
     end
@@ -89,11 +88,12 @@ end
 % Event codes for attentional window (Cue on, before targets blank and flip);
 % Need a function for this because I changed the event codes in Jan/Mar 2016   
 function window = get_attend_window( correct_trials )
-    if find(correct_trials(1).event_codes == 121);
-        window = [121 126];
-    else
-        window = [133 126];
-    end
+%     if find(correct_trials(1).event_codes == 121);
+%         window = [121 126];
+%     else
+%         window = [133 126];
+%     end
+    window = [155 161]; %157
 end
 
 
@@ -170,43 +170,18 @@ function rslt = get_trial_sum( trials )
     rslt = struct;
 
     for i = 1:length(trials); % eight directions
-        rslt(i).dOaI_millis = trials(i).drugOff_attIn(1,:);
-        dOaI_sdens  = trials(i).drugOff_attIn(2:end,:);
-        [ts ms] = size(dOaI_sdens);
-        rslt(i).dOaI_avg    = mean(dOaI_sdens, 1);
-        rslt(i).dOaI_ste    = std(dOaI_sdens) / sqrt(ts); % Make sure std is in right dimension
-        
-        rslt(i).dOaO_millis = trials(i).drugOff_attOut(1,:);
-        dOaO_sdens  = trials(i).drugOff_attOut(2:end,:);
-        [ts ms] = size(dOaO_sdens);
-        rslt(i).dOaO_avg    = mean(dOaO_sdens, 1);
-        rslt(i).dOaO_ste    = std(dOaO_sdens) / sqrt(ts); % Make sure std is in right dimension
+        rslt(i).wm_millis = trials(i).wm(1,:);
+        wm_sdens  = trials(i).wm(2:end,:);
+        [ts ms] = size(wm_sdens);
+        rslt(i).wm_avg    = mean(wm_sdens, 1);
+        rslt(i).wm_ste    = std(wm_sdens) / sqrt(ts); % Make sure std is in right dimension
 
-        rslt(i).dNaI_millis = trials(i).drugOn_attIn(1,:);
-        dNaI_sdens  = trials(i).drugOn_attIn(2:end,:);
-        [ts ms] = size(dNaI_sdens);
-        rslt(i).dNaI_avg    = mean(dNaI_sdens, 1);
-        rslt(i).dNaI_ste    = std(dNaI_sdens) / sqrt(ts); % Make sure std is in right dimension
+%         rslt(i).dN_millis = trials(i).drugOn(1,:);
+%         dN_sdens  = trials(i).drugOn(2:end,:);
+%         [ts ms] = size(dN_sdens);
+%         rslt(i).dN_avg    = mean(dN_sdens, 1);
+%         rslt(i).dN_ste    = std(dN_sdens) / sqrt(ts); % Make sure std is in right dimension
 
-        rslt(i).dNaO_millis = trials(i).drugOn_attOut(1,:);
-        dNaO_sdens  = trials(i).drugOn_attOut(2:end,:);
-        [ts ms] = size(dNaO_sdens);
-        rslt(i).dNaO_avg    = mean(dNaO_sdens, 1);
-        rslt(i).dNaO_ste    = std(dNaO_sdens) / sqrt(ts); % Make sure std is in right dimension
-
-        %%% ATT In and ATT Out Combined %%%
-        rslt(i).dN_millis = trials(i).drugOn_attIn(1,:);
-        dN_sdens = vertcat(dNaI_sdens, dNaO_sdens);
-        [ts ms] = size(dN_sdens);
-        rslt(i).dN_avg    = mean(dN_sdens, 1);
-        rslt(i).dN_ste    = std(dN_sdens) / sqrt(ts); % Make sure std is in right dimension
-
-        rslt(i).dO_millis = trials(i).drugOn_attOut(1,:);
-        dO_sdens  = vertcat(dOaI_sdens, dOaO_sdens);
-        [ts ms] = size(dO_sdens);
-        rslt(i).dO_avg    = mean(dO_sdens, 1);
-        rslt(i).dO_ste    = std(dO_sdens) / sqrt(ts); % Make sure std is in right dimension
-        
         
     end
 end
@@ -214,35 +189,15 @@ end
 
 function sdens = get_attend_sdens( idx_struct, trials, align_idx )
 
-    drugOff_attIn = [];
-    drugOff_attOut = [];
-    drugOn_attIn = [];
-    drugOn_attOut = [];
-
    for i = 1:length(unique([idx_struct.theta])); % For the 8 directions
         
         theta = map_direction(i);
         
         % Find the Drug Off, Attend In trials and
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 0) & ([idx_struct.attend] == 1));
+        row = find(([idx_struct.theta] == theta));
         sub_trials = trials(idx_struct(row).idxs);
-        sdens(i).drugOff_attIn = align_trials( sub_trials, align_idx );
+        sdens(i).wm = align_trials( sub_trials, align_idx );
         
-        % Same for Drug Off, Attend Out
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 0) & ([idx_struct.attend] == 0));
-        sub_trials = trials(idx_struct(row).idxs);
-        sdens(i).drugOff_attOut = align_trials( sub_trials, align_idx );
-        
-        % Find the Drug On, Attend In trials and
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 1) & ([idx_struct.attend] == 1));
-        sub_trials = trials(idx_struct(row).idxs);
-        sdens(i).drugOn_attIn = align_trials( sub_trials, align_idx );
-        
-        % Same for Drug On, Attend Out
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 1) & ([idx_struct.attend] == 0));
-        sub_trials = trials(idx_struct(row).idxs);
-        sdens(i).drugOn_attOut = align_trials( sub_trials, align_idx );
-      
         sdens(i).theta = theta;
     end
     
@@ -260,7 +215,7 @@ end
 
 %%% THE MILLIS ARE IN THE FIRST ROW!!!!!
 function [spike_mat, aligned_millis] = align_trials( trials, align_code )
-    window = [-500, 750];
+    window = [-1000, 200];
 
     aligned_millis = window(1) : window(2);
     spike_mat = zeros(length(trials) + 1, window(2) - window(1) +1);
@@ -458,44 +413,43 @@ function idx_struct = segregate( trials )
         tmp_struct.theta = map_direction(direction);
         
         % And for conditions whether the drug is on or off.
-        for drug = 0:1
-            
-            tmp_struct.drug = drug;
+%         for drug = 0:1
+%             
+%             tmp_struct.drug = drug;
             
             % Currently assuming retaining a drug is a negative sign and
             % ejecting it is a positive sign. Also not allowing for
             % different values of injected drug. Should amend to allow.
             % (Unique?)
-            if drug == 0;
-                drug_sign = -1;
-            else
-                drug_sign = 1;
-            end
+%             if drug == 0;
+%                 drug_sign = -1;
+%             else
+%                 drug_sign = 1;
+%             end
             
-            % And for either attend-in or attend-out conditions.
-            for attend = 0:1
-                
-                tmp_struct.attend = attend;
-                
-                % Attend-out conditions are when the attention is in the
-                % oposite direction.
-                if attend == 0
-                    attend_direction = reversed(direction);
-                else
-                    attend_direction = direction;
-                end
-                
-                % Get all the trials that match
-                tmp_struct.idxs = find( (sign([trials.drug]) == drug_sign) & ...
-                                                   ([trials.theta] == map_direction(attend_direction)));
+%             % And for either attend-in or attend-out conditions.
+%             for attend = 0:1
+%                 
+%                 tmp_struct.attend = attend;
+%                 
+%                 % Attend-out conditions are when the attention is in the
+%                 % oposite direction.
+%                 if attend == 0
+%                     attend_direction = reversed(direction);
+%                 else
+%                     attend_direction = direction;
+%                 end
+%                 
+%                 % Get all the trials that match
+                tmp_struct.idxs = find( ([trials.theta] == map_direction(direction)));
                                                
                 if isempty(fieldnames(idx_struct))
                     idx_struct = tmp_struct;
                 else
                     idx_struct = [idx_struct tmp_struct];
                 end
-            end
-        end
+%             end
+%         end
     end
 end
 
