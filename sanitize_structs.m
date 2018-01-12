@@ -21,7 +21,7 @@ function session_struct = sanitize_structs( raw_struct, alignments )
         % Remove trials in from ML bhv data that have no associated PL
         % data. (Generated when ML is left running after PL has been turned
         % off).
-        bhv = truncate_trials( bhv, length(alignments(i).PL_bhv_times(:,1)));
+        bhv = truncate_trials( bhv, length(alignments(i).PL_bhv_times(:,1)), alignments(i).PL_starting_index);
         
         trial_struct = struct;
         % Iterate through trials
@@ -85,23 +85,31 @@ end
 % truncate_trials takes an ML bhv struct and the number of trials in length
 % that it *should* be and removes trials from the end until it is the right
 % length. This is necessary when the ML file outruns the PL file.
-function bhv = truncate_trials( bhv, n_trials )
-    bhv.TrialNumber = bhv.TrialNumber(1:n_trials,:);
-    bhv.AbsoluteTrialStartTime = bhv.AbsoluteTrialStartTime(1:n_trials,:);
-    bhv.BlockNumber = bhv.BlockNumber(1:n_trials,:);
-    bhv.BlockIndex = bhv.BlockIndex(1:n_trials,:);
-    bhv.ConditionNumber = bhv.ConditionNumber(1:n_trials,:);
-    bhv.TrialError = bhv.TrialError(1:n_trials,:);
-    bhv.CycleRate = bhv.CycleRate(1:n_trials,:);
-	bhv.MinCycleRate = bhv.MinCycleRate(1:n_trials,:);
-    bhv.NumCodes = bhv.NumCodes(1:n_trials,:);
-    bhv.CodeNumbers = bhv.CodeNumbers(:,1:n_trials);
-    bhv.CodeTimes = bhv.CodeTimes(:,1:n_trials);
-    bhv.AnalogData = bhv.AnalogData(:,1:n_trials);
-    bhv.ReactionTime = bhv.ReactionTime(:,1:n_trials);
-    bhv.ObjectStatusRecord = bhv.ObjectStatusRecord(:,1:n_trials);
-    bhv.RewardRecord = bhv.RewardRecord(:,1:n_trials);
-    bhv.UserVars = bhv.UserVars(:,1:n_trials);
+function bhv = truncate_trials( bhv, n_trials, starting_index )
+  
+    if starting_index <= 0
+        starting_index_pos = - starting_index;
+        selection = starting_index_pos +2 : (n_trials + starting_index_pos - 1);
+    else
+        selection = 1:n_trials;
+    end
+    
+    bhv.TrialNumber = bhv.TrialNumber(selection,:);
+    bhv.AbsoluteTrialStartTime = bhv.AbsoluteTrialStartTime(selection,:);
+    bhv.BlockNumber = bhv.BlockNumber(selection,:);
+    bhv.BlockIndex = bhv.BlockIndex(selection,:);
+    bhv.ConditionNumber = bhv.ConditionNumber(selection,:);
+    bhv.TrialError = bhv.TrialError(selection,:);
+    bhv.CycleRate = bhv.CycleRate(selection,:);
+	bhv.MinCycleRate = bhv.MinCycleRate(selection,:);
+    bhv.NumCodes = bhv.NumCodes(selection,:);
+    bhv.CodeNumbers = bhv.CodeNumbers(:,selection);
+    bhv.CodeTimes = bhv.CodeTimes(:,selection);
+    bhv.AnalogData = bhv.AnalogData(:,selection);
+    bhv.ReactionTime = bhv.ReactionTime(:,selection);
+    bhv.ObjectStatusRecord = bhv.ObjectStatusRecord(:,selection);
+    bhv.RewardRecord = bhv.RewardRecord(:,selection);
+    bhv.UserVars = bhv.UserVars(:,selection);
 end
 
 % Returns a struct with a subset of santized values from the original ML

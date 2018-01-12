@@ -8,11 +8,11 @@ function make_master_file_struct()
     delete('master_file_struct.mat');
 
     master_file_struct = struct;
-    master_file_struct.main_direc = '~/Garf'; %'/Users/eddi/Documents/Work/SCH23390/';
+    master_file_struct.main_direc = '/Users/eddi/Documents/MATLAB/Cell_Analysis/'; %'/Users/eddi/Documents/Work/SCH23390/';
     save('master_file_struct', 'master_file_struct');
 
-    unit_super_direc = '~/Garf/Plexon/';
-    bhv_super_direc = '~/Garf/Lever_Training/';
+    unit_super_direc = '/Users/eddi/Documents/MATLAB/Cell_Analysis/AttIN_OUT_Contrasts';
+    bhv_super_direc = '/Users/eddi/Documents/Work/SCH23390/Lever_Training';
     
     unit_sub_direcs = dir(unit_super_direc);
     unit_sub_direcs = unit_sub_direcs([unit_sub_direcs.isdir] == 1);
@@ -22,7 +22,7 @@ function make_master_file_struct()
     for i = 1:length(unit_sub_direcs)
         
         folder = unit_sub_direcs(i);
-        search_folder = strcat( unit_super_direc, folder.name );
+        search_folder = fullfile( unit_super_direc, folder.name );
         
         % Identify EventTimes File
         event_file_struct = findfiles( search_folder, '*Event*', 0 );

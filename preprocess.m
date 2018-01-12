@@ -14,7 +14,7 @@ function preprocess(tmp_struct)
     end
     
     % Directory to Save Processed Files:
-    save_superdirec = '~/Garf/Processed';
+    save_superdirec = '~/Documents/MATLAB/Cell_Analysis/Processed';
     
     % Preprocess all sessions which have not yet been preprocessed.
 
@@ -178,7 +178,7 @@ function alignments = find_alignments( raw_struct )
         else
             probable_end_index = probable_starting_index+ML_n_trials-1;
         end            
-        PL_bhv_times = PL_trial_times(probable_starting_index:probable_end_index, :);
+        PL_bhv_times = PL_trial_times(max(probable_starting_index,1):probable_end_index, :);
         PL_bhv_beg_time = PL_bhv_times(1,1);
         PL_bhv_end_time = PL_bhv_times(end,2);
         
@@ -205,6 +205,7 @@ function alignments = find_alignments( raw_struct )
                     tmp_struct.PL_bhv_beg_time = PL_bhv_beg_time;
                     tmp_struct.PL_bhv_end_time = PL_bhv_end_time;
                     tmp_struct.PL_bhv_times = PL_bhv_times;
+                    tmp_struct.PL_starting_index = probable_starting_index;
                     
                     % Append struct for this matched unit file and bhv file
                     if isempty(fieldnames(alignments))

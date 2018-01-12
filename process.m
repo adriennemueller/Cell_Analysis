@@ -30,8 +30,8 @@ function stat_struct = process()
     % Run AttIn_AttOut for that file
     for i = 1:length(fnames)
         
-        tmp = strfind( fnames(i), '2017.06.19' );
-        if ~isempty( tmp{1})  %%% DO ONLY THIS FOLDER 
+        %tmp = strfind( fnames(i), '2017.06.18' );
+        %if ~isempty( tmp{1})  %%% DO ONLY THIS FOLDER 
         
         disp(fnames(i));
         
@@ -40,6 +40,10 @@ function stat_struct = process()
 %       wm_struct = wmIn_wmOut( data_struct, currents{i} );
 %        attend_struct = attIn_attOut( data_struct, currents{i} ); %% GOOD
         attend_struct = attIn_attOut_Contrasts( data_struct, currents{i} );
+        for j = 1:length(attend_struct)
+            if isempty( attend_struct(j).sden_summs ), continue, end
+            plot_att_sdens_Modified_Contrasts(attend_struct(j), fnames(i), num2str(attend_struct(j).current));
+        end
 
         
  %%% UNCOMMENT ONCE FROM HERE TO RETURN 
@@ -98,8 +102,8 @@ function stat_struct = process()
 %             end
 %             
 %          end
-%        
-         end
+       
+     %    end
      end
 % 
 %     % Append the result (d' matrix) to a the summary statistic struct and
@@ -136,7 +140,7 @@ function ffps = get_ffps( mfs )
     fnames = {};
     drug = {};
     currents = {};
-    save_direc = '~/Garf/Processed';
+    save_direc = '/Users/eddi/Documents/MATLAB/Cell_Analysis/Processed';
 
     for i = 1:length(mfs.session)
         sub_direc = mfs.session(i).sub_direc;

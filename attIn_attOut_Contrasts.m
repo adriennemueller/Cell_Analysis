@@ -40,7 +40,7 @@ function rslt = attIn_attOut_Contrasts( full_trials, currents )
 %         dmat = gen_dprime_struct( idx_struct, correct_trials );
 %         
 %         % Get Anova for this
-%         anova_mat = gen_anova_struct( idx_struct, correct_trials );
+         anova_mat = gen_anova_struct( idx_struct, correct_trials );
 % 
 %         % Get Attend In/Out Drug On/Off SDen averages and SEs
          sdens = get_attend_sdens( idx_struct, correct_trials, window(1) );
@@ -52,11 +52,11 @@ function rslt = attIn_attOut_Contrasts( full_trials, currents )
 %         vis_pval = gen_vis_pval( idx_struct, correct_trials );
 %     
 %         % Return results for each current separately
-%         rslt(i-1).current = eject_current;
+         rslt(i-1).current = eject_current;
 %         rslt(i-1).dmat = dmat;
-%         rslt(i-1).anova_mat = anova_mat;
-%         rslt(i-1).sdens = sdens;
-%         rslt(i-1).sden_summs = sden_summs;
+         rslt(i-1).anova_mat = anova_mat;
+         rslt(i-1).sdens = sdens;
+         rslt(i-1).sden_summs = sden_summs;
 %         rslt(i-1).vis_pval = vis_pval;
 % 
 %         % MAKE A FUNCTION TO RUN THIS FUNCTION AND ADD THE OUTPUT TO THE
@@ -171,43 +171,168 @@ function rslt = get_trial_sum( trials )
     rslt = struct;
 
     for i = 1:length(trials); % eight directions
-        rslt(i).dOaI_millis = trials(i).drugOff_attIn(1,:);
-        dOaI_sdens  = trials(i).drugOff_attIn(2:end,:);
-        [ts ms] = size(dOaI_sdens);
-        rslt(i).dOaI_avg    = mean(dOaI_sdens, 1);
-        rslt(i).dOaI_ste    = std(dOaI_sdens) / sqrt(ts); % Make sure std is in right dimension
         
-        rslt(i).dOaO_millis = trials(i).drugOff_attOut(1,:);
-        dOaO_sdens  = trials(i).drugOff_attOut(2:end,:);
-        [ts ms] = size(dOaO_sdens);
-        rslt(i).dOaO_avg    = mean(dOaO_sdens, 1);
-        rslt(i).dOaO_ste    = std(dOaO_sdens) / sqrt(ts); % Make sure std is in right dimension
+        
+        %%% THIS IS AWFUL. FIX IT LATER 
+        
+        %%% C10 %%%
+        rslt(i).C10dOaI_millis = trials(i).C10drugOff_attIn(1,:);
+        C10dOaI_sdens  = trials(i).C10drugOff_attIn(2:end,:);
+        [ts ms] = size(C10dOaI_sdens);
+        rslt(i).C10dOaI_avg    = mean(C10dOaI_sdens, 1);
+        rslt(i).C10dOaI_ste    = std(C10dOaI_sdens) / sqrt(ts); % Make sure std is in right dimension
+        
+        rslt(i).C10dOaO_millis = trials(i).C10drugOff_attOut(1,:);
+        C10dOaO_sdens  = trials(i).C10drugOff_attOut(2:end,:);
+        [ts ms] = size(C10dOaO_sdens);
+        rslt(i).C10dOaO_avg    = mean(C10dOaO_sdens, 1);
+        rslt(i).C10dOaO_ste    = std(C10dOaO_sdens) / sqrt(ts); % Make sure std is in right dimension
 
-        rslt(i).dNaI_millis = trials(i).drugOn_attIn(1,:);
-        dNaI_sdens  = trials(i).drugOn_attIn(2:end,:);
-        [ts ms] = size(dNaI_sdens);
-        rslt(i).dNaI_avg    = mean(dNaI_sdens, 1);
-        rslt(i).dNaI_ste    = std(dNaI_sdens) / sqrt(ts); % Make sure std is in right dimension
+        rslt(i).C10dNaI_millis = trials(i).C10drugOn_attIn(1,:);
+        C10dNaI_sdens  = trials(i).C10drugOn_attIn(2:end,:);
+        [ts ms] = size(C10dNaI_sdens);
+        rslt(i).C10dNaI_avg    = mean(C10dNaI_sdens, 1);
+        rslt(i).C10dNaI_ste    = std(C10dNaI_sdens) / sqrt(ts); % Make sure std is in right dimension
 
-        rslt(i).dNaO_millis = trials(i).drugOn_attOut(1,:);
-        dNaO_sdens  = trials(i).drugOn_attOut(2:end,:);
-        [ts ms] = size(dNaO_sdens);
-        rslt(i).dNaO_avg    = mean(dNaO_sdens, 1);
-        rslt(i).dNaO_ste    = std(dNaO_sdens) / sqrt(ts); % Make sure std is in right dimension
+        rslt(i).C10dNaO_millis = trials(i).C10drugOn_attOut(1,:);
+        C10dNaO_sdens  = trials(i).C10drugOn_attOut(2:end,:);
+        [ts ms] = size(C10dNaO_sdens);
+        rslt(i).C10dNaO_avg    = mean(C10dNaO_sdens, 1);
+        rslt(i).C10dNaO_ste    = std(C10dNaO_sdens) / sqrt(ts); % Make sure std is in right dimension
 
         %%% ATT In and ATT Out Combined %%%
-        rslt(i).dN_millis = trials(i).drugOn_attIn(1,:);
-        dN_sdens = vertcat(dNaI_sdens, dNaO_sdens);
-        [ts ms] = size(dN_sdens);
-        rslt(i).dN_avg    = mean(dN_sdens, 1);
-        rslt(i).dN_ste    = std(dN_sdens) / sqrt(ts); % Make sure std is in right dimension
+        rslt(i).C10dN_millis = trials(i).C10drugOn_attIn(1,:);
+        C10dN_sdens = vertcat(C10dNaI_sdens, C10dNaO_sdens);
+        [ts ms] = size(C10dN_sdens);
+        rslt(i).C10dN_avg    = mean(C10dN_sdens, 1);
+        rslt(i).C10dN_ste    = std(C10dN_sdens) / sqrt(ts); % Make sure std is in right dimension
 
-        rslt(i).dO_millis = trials(i).drugOn_attOut(1,:);
-        dO_sdens  = vertcat(dOaI_sdens, dOaO_sdens);
-        [ts ms] = size(dO_sdens);
-        rslt(i).dO_avg    = mean(dO_sdens, 1);
-        rslt(i).dO_ste    = std(dO_sdens) / sqrt(ts); % Make sure std is in right dimension
+        rslt(i).C10dO_millis = trials(i).C10drugOn_attOut(1,:);
+        C10dO_sdens  = vertcat(C10dOaI_sdens, C10dOaO_sdens);
+        [ts ms] = size(C10dO_sdens);
+        rslt(i).C10dO_avg    = mean(C10dO_sdens, 1);
+        rslt(i).C10dO_ste    = std(C10dO_sdens) / sqrt(ts); % Make sure std is in right dimension
+               
         
+        
+        %%% C15 %%%
+        rslt(i).C15dOaI_millis = trials(i).C15drugOff_attIn(1,:);
+        C15dOaI_sdens  = trials(i).C15drugOff_attIn(2:end,:);
+        [ts ms] = size(C15dOaI_sdens);
+        rslt(i).C15dOaI_avg    = mean(C15dOaI_sdens, 1);
+        rslt(i).C15dOaI_ste    = std(C15dOaI_sdens) / sqrt(ts); % Make sure std is in right dimension
+        
+        rslt(i).C15dOaO_millis = trials(i).C15drugOff_attOut(1,:);
+        C15dOaO_sdens  = trials(i).C15drugOff_attOut(2:end,:);
+        [ts ms] = size(C15dOaO_sdens);
+        rslt(i).C15dOaO_avg    = mean(C15dOaO_sdens, 1);
+        rslt(i).C15dOaO_ste    = std(C15dOaO_sdens) / sqrt(ts); % Make sure std is in right dimension
+
+        rslt(i).C15dNaI_millis = trials(i).C15drugOn_attIn(1,:);
+        C15dNaI_sdens  = trials(i).C15drugOn_attIn(2:end,:);
+        [ts ms] = size(C15dNaI_sdens);
+        rslt(i).C15dNaI_avg    = mean(C15dNaI_sdens, 1);
+        rslt(i).C15dNaI_ste    = std(C15dNaI_sdens) / sqrt(ts); % Make sure std is in right dimension
+
+        rslt(i).C15dNaO_millis = trials(i).C15drugOn_attOut(1,:);
+        C15dNaO_sdens  = trials(i).C15drugOn_attOut(2:end,:);
+        [ts ms] = size(C15dNaO_sdens);
+        rslt(i).C15dNaO_avg    = mean(C15dNaO_sdens, 1);
+        rslt(i).C15dNaO_ste    = std(C15dNaO_sdens) / sqrt(ts); % Make sure std is in right dimension
+
+        %%% ATT In and ATT Out Combined %%%
+        rslt(i).C15dN_millis = trials(i).C15drugOn_attIn(1,:);
+        C15dN_sdens = vertcat(C15dNaI_sdens, C15dNaO_sdens);
+        [ts ms] = size(C15dN_sdens);
+        rslt(i).C15dN_avg    = mean(C15dN_sdens, 1);
+        rslt(i).C15dN_ste    = std(C15dN_sdens) / sqrt(ts); % Make sure std is in right dimension
+
+        rslt(i).C15dO_millis = trials(i).C15drugOn_attOut(1,:);
+        C15dO_sdens  = vertcat(C15dOaI_sdens, C15dOaO_sdens);
+        [ts ms] = size(C15dO_sdens);
+        rslt(i).C15dO_avg    = mean(C15dO_sdens, 1);
+        rslt(i).C15dO_ste    = std(C15dO_sdens) / sqrt(ts); % Make sure std is in right dimension
+               
+    
+        %%% 20 %%%
+        rslt(i).C20dOaI_millis = trials(i).C20drugOff_attIn(1,:);
+        C20dOaI_sdens  = trials(i).C20drugOff_attIn(2:end,:);
+        [ts ms] = size(C20dOaI_sdens);
+        rslt(i).C20dOaI_avg    = mean(C20dOaI_sdens, 1);
+        rslt(i).C20dOaI_ste    = std(C20dOaI_sdens) / sqrt(ts); % Make sure std is in right dimension
+        
+        rslt(i).C20dOaO_millis = trials(i).C20drugOff_attOut(1,:);
+        C20dOaO_sdens  = trials(i).C20drugOff_attOut(2:end,:);
+        [ts ms] = size(C20dOaO_sdens);
+        rslt(i).C20dOaO_avg    = mean(C20dOaO_sdens, 1);
+        rslt(i).C20dOaO_ste    = std(C20dOaO_sdens) / sqrt(ts); % Make sure std is in right dimension
+
+        rslt(i).C20dNaI_millis = trials(i).C20drugOn_attIn(1,:);
+        C20dNaI_sdens  = trials(i).C20drugOn_attIn(2:end,:);
+        [ts ms] = size(C20dNaI_sdens);
+        rslt(i).C20dNaI_avg    = mean(C20dNaI_sdens, 1);
+        rslt(i).C20dNaI_ste    = std(C20dNaI_sdens) / sqrt(ts); % Make sure std is in right dimension
+
+        rslt(i).C20dNaO_millis = trials(i).C20drugOn_attOut(1,:);
+        C20dNaO_sdens  = trials(i).C20drugOn_attOut(2:end,:);
+        [ts ms] = size(C20dNaO_sdens);
+        rslt(i).C20dNaO_avg    = mean(C20dNaO_sdens, 1);
+        rslt(i).C20dNaO_ste    = std(C20dNaO_sdens) / sqrt(ts); % Make sure std is in right dimension
+
+        %%% ATT In and ATT Out Combined %%%
+        rslt(i).C20dN_millis = trials(i).C20drugOn_attIn(1,:);
+        C20dN_sdens = vertcat(C20dNaI_sdens, C20dNaO_sdens);
+        [ts ms] = size(C20dN_sdens);
+        rslt(i).C20dN_avg    = mean(C20dN_sdens, 1);
+        rslt(i).C20dN_ste    = std(C20dN_sdens) / sqrt(ts); % Make sure std is in right dimension
+
+        rslt(i).C20dO_millis = trials(i).C20drugOn_attOut(1,:);
+        C20dO_sdens  = vertcat(C20dOaI_sdens, C20dOaO_sdens);
+        [ts ms] = size(C20dO_sdens);
+        rslt(i).C20dO_avg    = mean(C20dO_sdens, 1);
+        rslt(i).C20dO_ste    = std(C20dO_sdens) / sqrt(ts); % Make sure std is in right dimension        
+        
+        
+        
+        
+        
+        %%% C25 %%%
+        rslt(i).C25dOaI_millis = trials(i).C25drugOff_attIn(1,:);
+        C25dOaI_sdens  = trials(i).C25drugOff_attIn(2:end,:);
+        [ts ms] = size(C25dOaI_sdens);
+        rslt(i).C25dOaI_avg    = mean(C25dOaI_sdens, 1);
+        rslt(i).C25dOaI_ste    = std(C25dOaI_sdens) / sqrt(ts); % Make sure std is in right dimension
+        
+        rslt(i).C25dOaO_millis = trials(i).C25drugOff_attOut(1,:);
+        C25dOaO_sdens  = trials(i).C25drugOff_attOut(2:end,:);
+        [ts ms] = size(C25dOaO_sdens);
+        rslt(i).C25dOaO_avg    = mean(C25dOaO_sdens, 1);
+        rslt(i).C25dOaO_ste    = std(C25dOaO_sdens) / sqrt(ts); % Make sure std is in right dimension
+
+        rslt(i).C25dNaI_millis = trials(i).C25drugOn_attIn(1,:);
+        C25dNaI_sdens  = trials(i).C25drugOn_attIn(2:end,:);
+        [ts ms] = size(C25dNaI_sdens);
+        rslt(i).C25dNaI_avg    = mean(C25dNaI_sdens, 1);
+        rslt(i).C25dNaI_ste    = std(C25dNaI_sdens) / sqrt(ts); % Make sure std is in right dimension
+
+        rslt(i).C25dNaO_millis = trials(i).C25drugOn_attOut(1,:);
+        C25dNaO_sdens  = trials(i).C25drugOn_attOut(2:end,:);
+        [ts ms] = size(C25dNaO_sdens);
+        rslt(i).C25dNaO_avg    = mean(C25dNaO_sdens, 1);
+        rslt(i).C25dNaO_ste    = std(C25dNaO_sdens) / sqrt(ts); % Make sure std is in right dimension
+
+        %%% ATT In and ATT Out Combined %%%
+        rslt(i).C25dN_millis = trials(i).C25drugOn_attIn(1,:);
+        C25dN_sdens = vertcat(C25dNaI_sdens, C25dNaO_sdens);
+        [ts ms] = size(C25dN_sdens);
+        rslt(i).C25dN_avg    = mean(C25dN_sdens, 1);
+        rslt(i).C25dN_ste    = std(C25dN_sdens) / sqrt(ts); % Make sure std is in right dimension
+
+        rslt(i).C25dO_millis = trials(i).C25drugOn_attOut(1,:);
+        C25dO_sdens  = vertcat(C25dOaI_sdens, C25dOaO_sdens);
+        [ts ms] = size(C25dO_sdens);
+        rslt(i).C25dO_avg    = mean(C25dO_sdens, 1);
+        rslt(i).C25dO_ste    = std(C25dO_sdens) / sqrt(ts); % Make sure std is in right dimension
         
     end
 end
@@ -224,26 +349,97 @@ function sdens = get_attend_sdens( idx_struct, trials, align_idx )
         
         theta = map_direction(i);
         
+        %%% THIS IS AWFUL. FIX IT LATER.
+        
+        %%% C10 %%%
         % Find the Drug Off, Attend In trials and
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 0) & ([idx_struct.attend] == 1));
+        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 0) & ([idx_struct.attend] == 1) & ([idx_struct.contrast] == 10) );
         sub_trials = trials(idx_struct(row).idxs);
-        sdens(i).drugOff_attIn = align_trials( sub_trials, align_idx );
+        sdens(i).C10drugOff_attIn = align_trials( sub_trials, align_idx );
         
         % Same for Drug Off, Attend Out
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 0) & ([idx_struct.attend] == 0));
+        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 0) & ([idx_struct.attend] == 0) & ([idx_struct.contrast] == 10));
         sub_trials = trials(idx_struct(row).idxs);
-        sdens(i).drugOff_attOut = align_trials( sub_trials, align_idx );
+        sdens(i).C10drugOff_attOut = align_trials( sub_trials, align_idx );
         
         % Find the Drug On, Attend In trials and
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 1) & ([idx_struct.attend] == 1));
+        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 1) & ([idx_struct.attend] == 1) & ([idx_struct.contrast] == 10));
         sub_trials = trials(idx_struct(row).idxs);
-        sdens(i).drugOn_attIn = align_trials( sub_trials, align_idx );
+        sdens(i).C10drugOn_attIn = align_trials( sub_trials, align_idx );
         
         % Same for Drug On, Attend Out
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 1) & ([idx_struct.attend] == 0));
+        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 1) & ([idx_struct.attend] == 0) & ([idx_struct.contrast] == 10));
         sub_trials = trials(idx_struct(row).idxs);
-        sdens(i).drugOn_attOut = align_trials( sub_trials, align_idx );
-      
+        sdens(i).C10drugOn_attOut = align_trials( sub_trials, align_idx );
+
+        
+        %%% C15 %%%
+        % Find the Drug Off, Attend In trials and
+        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 0) & ([idx_struct.attend] == 1) & ([idx_struct.contrast] == 15));
+        sub_trials = trials(idx_struct(row).idxs);
+        sdens(i).C15drugOff_attIn = align_trials( sub_trials, align_idx );
+        
+        % Same for Drug Off, Attend Out
+        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 0) & ([idx_struct.attend] == 0) & ([idx_struct.contrast] == 15));
+        sub_trials = trials(idx_struct(row).idxs);
+        sdens(i).C15drugOff_attOut = align_trials( sub_trials, align_idx );
+        
+        % Find the Drug On, Attend In trials and
+        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 1) & ([idx_struct.attend] == 1) & ([idx_struct.contrast] == 15));
+        sub_trials = trials(idx_struct(row).idxs);
+        sdens(i).C15drugOn_attIn = align_trials( sub_trials, align_idx );
+        
+        % Same for Drug On, Attend Out
+        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 1) & ([idx_struct.attend] == 0) & ([idx_struct.contrast] == 15));
+        sub_trials = trials(idx_struct(row).idxs);
+        sdens(i).C15drugOn_attOut = align_trials( sub_trials, align_idx );
+        
+        
+        %%% C20 %%%
+        % Find the Drug Off, Attend In trials and
+        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 0) & ([idx_struct.attend] == 1) & ([idx_struct.contrast] == 20));
+        sub_trials = trials(idx_struct(row).idxs);
+        sdens(i).C20drugOff_attIn = align_trials( sub_trials, align_idx );
+        
+        % Same for Drug Off, Attend Out
+        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 0) & ([idx_struct.attend] == 0) & ([idx_struct.contrast] == 20));
+        sub_trials = trials(idx_struct(row).idxs);
+        sdens(i).C20drugOff_attOut = align_trials( sub_trials, align_idx );
+        
+        % Find the Drug On, Attend In trials and
+        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 1) & ([idx_struct.attend] == 1) & ([idx_struct.contrast] == 20));
+        sub_trials = trials(idx_struct(row).idxs);
+        sdens(i).C20drugOn_attIn = align_trials( sub_trials, align_idx );
+        
+        % Same for Drug On, Attend Out
+        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 1) & ([idx_struct.attend] == 0) & ([idx_struct.contrast] == 20));
+        sub_trials = trials(idx_struct(row).idxs);
+        sdens(i).C20drugOn_attOut = align_trials( sub_trials, align_idx );
+        
+        
+        
+        %%% C25 %%%
+        % Find the Drug Off, Attend In trials and
+        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 0) & ([idx_struct.attend] == 1) & ([idx_struct.contrast] == 25));
+        sub_trials = trials(idx_struct(row).idxs);
+        sdens(i).C25drugOff_attIn = align_trials( sub_trials, align_idx );
+        
+        % Same for Drug Off, Attend Out
+        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 0) & ([idx_struct.attend] == 0) & ([idx_struct.contrast] == 25));
+        sub_trials = trials(idx_struct(row).idxs);
+        sdens(i).C25drugOff_attOut = align_trials( sub_trials, align_idx );
+        
+        % Find the Drug On, Attend In trials and
+        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 1) & ([idx_struct.attend] == 1) & ([idx_struct.contrast] == 25));
+        sub_trials = trials(idx_struct(row).idxs);
+        sdens(i).C25drugOn_attIn = align_trials( sub_trials, align_idx );
+        
+        % Same for Drug On, Attend Out
+        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 1) & ([idx_struct.attend] == 0) & ([idx_struct.contrast] == 25));
+        sub_trials = trials(idx_struct(row).idxs);
+        sdens(i).C25drugOn_attOut = align_trials( sub_trials, align_idx );
+        
+        
         sdens(i).theta = theta;
     end
     
@@ -343,49 +539,40 @@ function rslt = gen_anova_struct( idx_struct, trials )
     direction = [];
     drug = [];
     attend = [];
+    contrast = [];
     
-    for i = 1:length(unique([idx_struct.theta])); % For the 8 directions % Only 4 dir b/c copied att in/out.
+    for i = 1:length(idx_struct)
         
-        theta = map_direction(i);
-        if (theta >= 180), continue, end;
-        
-        
-        % Find the Drug Off, Attend In trials and make a vector of the
-        % number of spikes for them.
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 0) & ([idx_struct.attend] == 1));
-        drugOff_AttIn_n_spikes = [trials(idx_struct(row).idxs).attend_n_spikes];
-        
-        % Same for Drug Off, Attend Out
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 0) & ([idx_struct.attend] == 0));
-        drugOff_AttOut_n_spikes = [trials(idx_struct(row).idxs).attend_n_spikes];
-        
-        
-        % Find the Drug On, Attend In trials and make a vector of the
-        % number of spikes for them.        
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 1) & ([idx_struct.attend] == 1));
-        drugOn_AttIn_n_spikes = [trials(idx_struct(row).idxs).attend_n_spikes];
-        
-        % Same for Drug On, Attend Out
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 1) & ([idx_struct.attend] == 0));
-        drugOn_AttOut_n_spikes = [trials(idx_struct(row).idxs).attend_n_spikes];
-        
-        % Append the result.
-        
-        l_dOff_AI = length(drugOff_AttIn_n_spikes);
-        l_dOff_AO = length(drugOff_AttOut_n_spikes);
-        l_dOn_AI  = length(drugOn_AttIn_n_spikes);
-        l_dOn_AO  = length(drugOn_AttOut_n_spikes);
-        
-        data_vec = [data_vec drugOff_AttIn_n_spikes drugOff_AttOut_n_spikes drugOn_AttIn_n_spikes drugOn_AttOut_n_spikes];
-        direction = [ direction repmat(theta, 1, l_dOff_AI) repmat(theta, 1, l_dOff_AO) repmat(theta, 1, l_dOn_AI) repmat(theta, 1, l_dOn_AO) ];
-        drug = [ drug zeros(1, l_dOff_AI) zeros(1, l_dOff_AO) ones(1, l_dOn_AI) ones(1, l_dOn_AO) ];
-        attend = [ attend ones(1, l_dOff_AI) zeros(1, l_dOff_AO) ones(1, l_dOn_AI) zeros(1, l_dOn_AO) ];
+        for j = 1:length(trials)
+            
+            if sum((j == idx_struct(i).idxs))
+                
+                theta_i = idx_struct(i).theta;
+                if (theta_i >= 180), continue, end
+                direction = [direction theta_i];
+                
+                drug_i = idx_struct(i).drug;
+                drug = [drug drug_i];
+                
+                attend_i = idx_struct(i).attend;
+                attend = [attend attend_i];
+                
+                contrast_i = idx_struct(i).contrast;
+                contrast = [contrast contrast_i];
+                
+                data_vec_i = trials(j).attend_n_spikes;
+                data_vec = [data_vec data_vec_i];
+            else
+                continue
+            end
+        end
+    
     end
     
-    [p,tbl] = anovan( data_vec, {direction, drug, attend}, 'model','full','varnames',{'direction','drug','attend'}, 'display','off', 'sstype', 1 );
-    
-    rslt.p = p;
-    rslt.tbl = tbl;
+    [p,tbl] = anovan( data_vec, {direction, drug, attend, contrast}, 'model','full','varnames',{'direction','drug','attend', 'contrast'}, 'display','off', 'sstype', 1 );
+     
+     rslt.p = p;
+     rslt.tbl = tbl;
 end
 
 

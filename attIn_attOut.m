@@ -19,6 +19,11 @@ function rslt = attIn_attOut( full_trials, currents )
         % Remove error trials
         correct_trial_idx = find([trials.trial_error] == 0);
         correct_trials = trials(correct_trial_idx);
+        
+        % Remove trials that are too short ?!?! FIX THIS BY REMOVING AND
+        % LOOKING AT PREPROCESS.
+        
+        
 
         % Adjust Theta
         if length(unique([correct_trials.theta])) > 9
