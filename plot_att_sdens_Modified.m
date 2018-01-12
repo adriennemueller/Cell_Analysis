@@ -66,15 +66,15 @@ function att_sden_fig = plot_att_sdens_Modified( attend_struct )
 
             x = [501:1000, 1000:-1:501];        % x, forwards and backwards
             
-%             attOut = dOaO_avg(501:1000);
-%             attIn = dOaI_avg(501:1000);
-%             yy = [attOut, fliplr(max(attOut, attIn))]; % Draw where attIn > attOut
-%             fill(x,yy,'k', 'FaceAlpha', 0.3, 'LineStyle', 'none');
-%             yy = [attOut, fliplr(min(attOut, attIn))]; % Draw where attIn < attOut
-%             fill(x,yy,'k', 'FaceAlpha', 0.1, 'LineStyle', 'none');
-% 
-%             plot([501:1000], attOut, 'k:');
-%             plot([501:1000], attIn, 'k');
+            attOut = dOaO_avg(501:1000);
+            attIn = dOaI_avg(501:1000);
+            yy = [attOut, fliplr(max(attOut, attIn))]; % Draw where attIn > attOut
+            fill(x,yy,'k', 'FaceAlpha', 0.3, 'LineStyle', 'none');
+            yy = [attOut, fliplr(min(attOut, attIn))]; % Draw where attIn < attOut
+            fill(x,yy,'k', 'FaceAlpha', 0.1, 'LineStyle', 'none');
+
+            plot([501:1000], attOut, 'k:');
+            plot([501:1000], attIn, 'k');
 
             attNOut = dNaO_avg(501:1000);
             attNIn = dNaI_avg(501:1000);
@@ -87,8 +87,8 @@ function att_sden_fig = plot_att_sdens_Modified( attend_struct )
             plot([501:1000], attNIn, 'r');
             
             % lines
-            %plot(501:1000, attOut, 'k');
-            %plot(501:1000, attIn, 'Color', [0.2 0.2 0.2]);
+%             plot(501:1000, attOut, 'k');
+%             plot(501:1000, attIn, 'Color', [0.2 0.2 0.2]);
             
         end
         

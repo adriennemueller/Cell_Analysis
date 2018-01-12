@@ -134,8 +134,22 @@ function ctd = get_clean_trial_data( bhv, idx, offset, bhv_code_times )
     ctd.theta = bhv.UserVars(idx).theta * (180/pi); % Converted to Degrees
     ctd.theta = adjust_theta(ctd.theta);
     ctd.radius = bhv.UserVars(idx).radius; % Still in MLUs. Must change.
-
+    ctd.contrast = map_contrast(bhv.ConditionNumber(idx));
+    
 end
+
+function contrast = map_contrast( condition_number)
+    if condition_number <= 700
+        contrast = 10;
+    elseif condition_number <= 1400
+        contrast = 15;
+    elseif condition_number <= 2100
+        contrast = 20;
+    elseif condition_number <= 2900
+        contrast = 25;
+    end
+end
+
 
 % Change thetas that are in negative degrees into positive degrees.
 function theta = adjust_theta( val )
