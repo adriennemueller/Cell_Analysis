@@ -37,6 +37,9 @@ function stat_struct = process()
         
         load( ffpaths{i} );
         
+        %%% TMP TMP TMP
+        tmp_spike_raster( data_struct, currents{i});
+        
 %       wm_struct = wmIn_wmOut( data_struct, currents{i} );
 %        attend_struct = attIn_attOut( data_struct, currents{i} ); %% GOOD
         attend_struct = attIn_attOut_Contrasts( data_struct, currents{i} );

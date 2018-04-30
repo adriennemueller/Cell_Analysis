@@ -31,64 +31,72 @@ function rslt = tmp_spike_raster( full_trials, currents )
         % for attend in, list of numbers for attend out.
         correct_trials = remove_probe_trials( correct_trials );
         
-        
-        % Make a new Figure
-        % Go through each direction
-        
-        % `[out,idx] = sort([14 8 91 19])
-        drug_sort = [correct_trials.drug];
-        [tmp, drug_sort_idxes ] = sort(drug_sort);
-        correct_trials = correct_trials(drug_sort_idxes);
-
+        % Order By Direction
         direc_sort = [correct_trials.theta];
         [tmp, direc_idxs ] = sort(direc_sort);
         correct_trials = correct_trials(direc_idxs);
-
         
+        % Sort into two structs by Drug
+        drug_off_trial_idxs = find([correct_trials.drug] == retain_current);
+        drug_off_trials = correct_trials(drug_off_trial_idxs);
+        drug_on_trials_idxs  = find([correct_trials.drug] == eject_current);
+        drug_on_trials = correct_trials(drug_on_trials_idxs);
         
-        
-            % Sort into Attend In and Attend Out, Drug On, Drug Off
-            
-            % Plot Four Rasters in a Stack with different Colors
-            
-            % Plot Spike Dens underneath
-        
-        align_code = 124; % Targets On
-        [spike_mat, aligned_millis] = align_trials( correct_trials, align_code );
-
-        spikes_only = spike_mat(2:end, :);
-        spikes_only = logical(spikes_only);
+        % Make a new Figure
         figure();
         
+        % Plot Two Rasters in a Stack with different Colors
+            
+        subplot(2,1,1);
+        align_code = 124; % Targets On
+        [dOff_spike_mat, dOff_aligned_millis] = align_trials( drug_off_trials, align_code );
+        dOff_spikes_only = dOff_spike_mat(2:end, :);
+        dOff_spikes_only = logical(dOff_spikes_only);
+        [dOff_xs, dOff_ys] = plotSpikeRaster( dOff_spikes_only, 'PlotType', 'scatter' );
         
+
+        subplot(2,1,2);
+        align_code = 124; % Targets On
+        [dOn_spike_mat, dOn_aligned_millis] = align_trials( drug_on_trials, align_code );
+        dOn_spikes_only = dOn_spike_mat(2:end, :);
+        dOn_spikes_only = logical(dOn_spikes_only);
+        [dOn_xs, dOn_ys] = plotSpikeRaster( dOn_spikes_only, 'PlotType', 'scatter' );
+
         
-        [xs, ys] = plotSpikeRaster( spikes_only, 'PlotType', 'scatter' );
-        
-        
-%                    plot([501:1000], C25attNOut, 'r:');
-%            plot([501:1000], C25attNIn, 'r');
+%       plot([501:1000], C25attNOut, 'r:');
+%       plot([501:1000], C25attNIn, 'r');
  
         % Should maybe use text to make labels centered.
-        %Redo this properly
-        offset = 300;
-        hold_time = 300; 
-        cue_time = 300; %%% SOMETIMES 500!!!
-        blank_time = 300;
+        offset = abs(dOff_aligned_millis(1));
+        targ_on_time = offset + 0;
+        
+        first_trial = drug_off_trials(1);
+        cue_on_time = get_axis_time( first_trial, 133, offset );
+        target_flip_off_time =  get_axis_time( first_trial, 126, offset );
+        target_flip_on_time = get_axis_time( first_trial, 128, offset );
 
-        set(gca,'Xtick',[offset, offset+hold_time, offset+hold_time+cue_time, offset+hold_time+cue_time+blank_time],'XTickLabel',{ ['Targets \newline On'], ['Cue \newline On'], ['Targ \newline Flip \newline Off'], ['Targ \newline Flip \newline On'] });
+        set(gca,'Xtick',[targ_on_time, cue_on_time, target_flip_off_time, target_flip_on_time],'XTickLabel',{ ['Targets \newline On'], ['Cue \newline On'], ['Targ \newline Flip \newline Off'], ['Targ \newline Flip \newline On'] });
         
+        % Plot Spike Dens underneath
         
-        
-        % For each direction - get idxs for attend in and attend out, when drug
-        % is present and when drug is absent
- %       idx_struct = segregate( correct_trials );
- %       rslt = idx_struct; %%% TMP TMP TMP %%%
 
     end
     
     
     
     
+end
+
+%
+function axis_time = get_axis_time( first_trial, code, offset )
+
+        targ_on_code_time_idx = find([first_trial.event_codes] == 124);
+        targ_on_code_time = first_trial.code_times(targ_on_code_time_idx);
+
+        
+        code_time_idx = find([first_trial.event_codes] == code);
+        code_time = first_trial.code_times(code_time_idx);
+        axis_time = offset + code_time - targ_on_code_time;
 end
 
 
