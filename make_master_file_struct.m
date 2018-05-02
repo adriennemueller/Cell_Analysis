@@ -8,13 +8,14 @@ function make_master_file_struct()
     delete('master_file_struct.mat');
 
     master_file_struct = struct;
-    master_file_struct.main_direc = '/Users/eddi/Documents/MATLAB/Cell_Analysis/'; %'/Users/eddi/Documents/Work/SCH23390/';
+    master_file_struct.main_direc = '/Users/Adrienne/Documents/MATLAB/Cell_Analysis/'; %'/Users/eddi/Documents/MATLAB/Cell_Analysis/'; %'/Users/eddi/Documents/Work/SCH23390/';
     save('master_file_struct', 'master_file_struct');
 
-    unit_super_direc = '/Users/eddi/Documents/MATLAB/Cell_Analysis/AttIN_OUT_Contrasts';
-    bhv_super_direc = '/Users/eddi/Documents/Work/SCH23390/Lever_Training';
+    ionto_super_direc = '/Volumes/Hnoss/Data/Iontophoresis';
+    %unit_super_direc = '/Volumes/Hnoss/Data/Iontophoresis';%'/Users/eddi/Documents/MATLAB/Cell_Analysis/AttIN_OUT_Contrasts';
+    %bhv_super_direc =  '/Volumes/Hnoss/Data/Iontophoresis/Lever_Training'; %'/Users/eddi/Documents/Work/SCH23390/Lever_Training';
     
-    unit_sub_direcs = dir(unit_super_direc);
+    unit_sub_direcs = dir(ionto_super_direc);
     unit_sub_direcs = unit_sub_direcs([unit_sub_direcs.isdir] == 1);
     unit_sub_direcs = unit_sub_direcs( 3:end ); % Eliminate . and .. directories
     
@@ -22,7 +23,7 @@ function make_master_file_struct()
     for i = 1:length(unit_sub_direcs)
         
         folder = unit_sub_direcs(i);
-        search_folder = fullfile( unit_super_direc, folder.name );
+        search_folder = fullfile( ionto_super_direc, folder.name );
         
         % Identify EventTimes File
         event_file_struct = findfiles( search_folder, '*Event*', 0 );
@@ -52,7 +53,7 @@ function make_master_file_struct()
         % Identify Associated .bhv Files
         folder_date = convert_folder_date(folder.name);
         
-        bhv_filelist_struct = findfiles( bhv_super_direc, strcat('*',folder_date,'*'), 0 );
+        bhv_filelist_struct = findfiles( ionto_super_direc, strcat('*',folder_date,'*'), 0 );
         LP_file_exists = strfind( {bhv_filelist_struct.name}, 'LP' );
         LP_file_indices = find(~cellfun(@isempty, LP_file_exists));
         bhv_filelist_struct = bhv_filelist_struct( LP_file_indices );

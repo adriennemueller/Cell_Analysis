@@ -1,4 +1,4 @@
-% sanitize_structs makes a set of structs - one for each unit/bhv
+sanitize_structs makes a set of structs - one for each unit/bhv
 % combination in the session. These structs are a parred-down version of
 % the monkeylogic behavior information, and the aligned unit data. The
 % output of this function is a cell array of structs; each struct

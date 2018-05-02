@@ -139,7 +139,7 @@ end
 
 %%% THE MILLIS ARE IN THE FIRST ROW!!!!!
 function [spike_mat, aligned_millis] = align_trials( trials, align_code )
-    window = [-300, 1300];
+    window = [-300, 1500];
 
     aligned_millis = window(1) : window(2);
     spike_mat = zeros(length(trials) + 1, window(2) - window(1) +1);

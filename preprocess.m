@@ -30,11 +30,20 @@ function preprocess(tmp_struct)
         % Load data files into workspace
         raw_struct = load_data_files( master_file_struct.main_direc, master_file_struct.session( proc_idxs(i) ) );
         assignin( 'base', 'raw_struct', raw_struct);
+        if isempty( raw_struct.PL_events.Strobed ) % If there are no event codes. Should maybe do this check earlier.
+           master_file_struct.session( proc_idxs(i) ).preprocessed = 1;
+           save('master_file_struct', 'master_file_struct');
+           continue
+        end
         
         % Identify which unit files belong with which bhv files, and their alignment
         alignments = find_alignments( raw_struct );
         assignin( 'base', 'alignments', alignments);
-        if isempty(fieldnames(alignments)), continue, end
+        if isempty(fieldnames(alignments))
+           %master_file_struct.session( proc_idxs(i) ).preprocessed = 1;
+           %save('master_file_struct', 'master_file_struct');
+           continue
+        end
         % Should have this purge entry, possibly.
                   
         % Make 'clean' structs for future analyses
@@ -127,7 +136,11 @@ function alignments = find_alignments( raw_struct )
         % PL_trial_idx has 2 columns, representing the start and end indexes of
         % trials from Plexon. 
         %%%% 9 AND 18 POST FIX!!!
-        if sum( [raw_struct.PL_events.Strobed] >= 200 )
+        if find( [raw_struct.PL_events.Strobed] == 237 )
+            PL_trial_idx = candidate_trial_indexes( raw_struct.PL_events.Strobed, 246, 237 );
+        elseif find( [raw_struct.PL_events.Strobed] == 16402 )
+            PL_trial_idx = candidate_trial_indexes( raw_struct.PL_events.Strobed, 16402, 16393 );
+        elseif sum( [raw_struct.PL_events.Strobed] >= 200 )
             PL_trial_idx = candidate_trial_indexes( raw_struct.PL_events.Strobed, 242, 233 );
         else
             PL_trial_idx = candidate_trial_indexes( raw_struct.PL_events.Strobed, 9, 18 );
@@ -289,8 +302,8 @@ function raw_struct = load_data_files( main_direc, session_struct )
     
     % Load all of the monkeylogic bhv files for this session.
     for i = 1:length(session_struct.bhv_files)
-        bhv_file = session_struct.bhv_files(i)
-        %bhv_file = bhv_file{1};
+        bhv_file = session_struct.bhv_files(i);
+        disp( strcat('Loading bhv_file: ', {' '}, bhv_file ) );
         bhvs_struct(i) = bhv_read( bhv_file{1} ); % Accessing {1} to convert from cell array to string
     end
     
