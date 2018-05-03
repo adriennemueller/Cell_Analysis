@@ -2,22 +2,28 @@
 % Want to update this so it adds new ones without overwriting old master
 % file struct, necessarily.
 
-function make_master_file_struct()
+function make_master_file_struct(clean)
 
-    % Removes old master_file_struct
-    delete('master_file_struct.mat');
-
-    master_file_struct = struct;
-    master_file_struct.main_direc = '/Users/Adrienne/Documents/MATLAB/Cell_Analysis/'; %'/Users/eddi/Documents/MATLAB/Cell_Analysis/'; %'/Users/eddi/Documents/Work/SCH23390/';
-    save('master_file_struct', 'master_file_struct');
+    master_file_struct.main_direc = '/Users/Adrienne/Documents/MATLAB/Cell_Analysis/';
 
     ionto_super_direc = '/Volumes/Hnoss/Data/Iontophoresis';
-    %unit_super_direc = '/Volumes/Hnoss/Data/Iontophoresis';%'/Users/eddi/Documents/MATLAB/Cell_Analysis/AttIN_OUT_Contrasts';
-    %bhv_super_direc =  '/Volumes/Hnoss/Data/Iontophoresis/Lever_Training'; %'/Users/eddi/Documents/Work/SCH23390/Lever_Training';
     
     unit_sub_direcs = dir(ionto_super_direc);
     unit_sub_direcs = unit_sub_direcs([unit_sub_direcs.isdir] == 1);
     unit_sub_direcs = unit_sub_direcs( 3:end ); % Eliminate . and .. directories
+
+    % Removes old master_file_struct
+    if clean
+        delete('master_file_struct.mat');
+        master_file_struct = struct;
+        save('master_file_struct', 'master_file_struct');
+    else
+        master_file_struct = load( 'master_file_struct.mat' );
+        
+        %%% DO A THING HERE TO COMPARE the folders in master fle struct
+        %%% with those in the superdirec
+    end
+
     
     % Iterate through unit_subdirecs
     for i = 1:length(unit_sub_direcs)
