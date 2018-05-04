@@ -1,7 +1,7 @@
 % 120 - Fixation Spot On
 % 124 - Targets On
 
-function rslt = spike_raster( full_trials, currents )
+function plot_h = spike_raster( full_trials, currents )
 
 % If only one current was applied, return an empty rslt.
     if length(currents) == 1
@@ -81,7 +81,7 @@ function rslt = spike_raster( full_trials, currents )
     end
     
     
-    
+    plot_h = gcf;
     
 end
 
@@ -137,7 +137,7 @@ end
 
 %%% THE MILLIS ARE IN THE FIRST ROW!!!!!
 function [spike_mat, aligned_millis] = align_trials( trials, align_code )
-    window = [-300, 1500];
+    window = [-300, 1200];
 
     aligned_millis = window(1) : window(2);
     spike_mat = zeros(length(trials) + 1, window(2) - window(1) +1);
