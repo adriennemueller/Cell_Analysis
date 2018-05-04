@@ -35,7 +35,7 @@ function rslt = evaluate_units()
             %set(0,'CurrentFigure',raster_plot)
             keep = input('Keep this unit? 1/0:','s');
             
-            keep_list = {keep_list, keep};
+            keep_list = [keep_list, str2num(keep)];
         end
         tmp_master_file_struct.session(i).evaluated = 1;
         tmp_master_file_struct.session(i).keep = keep_list;
@@ -43,7 +43,7 @@ function rslt = evaluate_units()
     end
 end
 
-function keep = evaluate_unit( unit )
-
-
-end
+% function keep = evaluate_unit( unit )
+% 
+% 
+% end
