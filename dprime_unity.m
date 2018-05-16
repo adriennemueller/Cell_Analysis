@@ -114,7 +114,7 @@ function dprime_unity( stat_struct, selected_current )
     %subplot(2,2,1);
     hold on;
     plot( SCH_drugoff_dprimes, SCH_drugon_dprimes, 'ok', 'MarkerFaceColor', 'red' );
-    xlabel('Control D''', 'FontSize', 16, 'FontWeight', 'bold'); ylabel( 'D1R Antagonist D''', 'FontSize', 16, 'FontWeight', 'bold' );
+    xlabel('Control d''', 'FontSize', 16, 'FontWeight', 'bold'); ylabel( 'D1R Antagonist d''', 'FontSize', 16, 'FontWeight', 'bold' );
     xlim([-2 2]);
     ylim([-2 2]);
     
@@ -155,7 +155,7 @@ function dprime_unity( stat_struct, selected_current )
     figure('units','normalized','position',[.1 .1 .3 .42]);   % subplot(2,2,3);
     hold on;
     plot( SKF_drugoff_dprimes, SKF_drugon_dprimes, 'ok', 'MarkerFaceColor', 'blue' );
-    xlabel('Control D''', 'FontSize', 16, 'FontWeight', 'bold'); ylabel( 'D1R Agonist D''', 'FontSize', 16, 'FontWeight', 'bold' );
+    xlabel('Control d''', 'FontSize', 16, 'FontWeight', 'bold'); ylabel( 'D1R Agonist d''', 'FontSize', 16, 'FontWeight', 'bold' );
     xlim([-2 2]);
     ylim([-2 2]);
     

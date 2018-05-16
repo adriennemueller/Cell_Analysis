@@ -18,7 +18,11 @@ function rslt = evaluate_units()
         
         proc_files = tmp_master_file_struct.session(eval_idxs(i)).processed_files;
         
-        keep_list = [];
+        type_list = [];
+        % 0 = Not viable unit.
+        % 1 = Vis/Att Activity
+        % 2 = Pre-trial Activity
+        % 3 = Nonspecific Activity
         
         for j = 1:length(proc_files)
             curr_file = proc_files(j);
@@ -33,12 +37,12 @@ function rslt = evaluate_units()
             
             %figure();
             %set(0,'CurrentFigure',raster_plot)
-            keep = input('Keep this unit? 1/0:','s');
+            type = input('What type of unit is this? 0(Trashy), 1(Vis-Att), 2(Pre-Trial), 3(Nonspecific), 4(Other):','s');
+            type_list = [type_list, str2num(type)];
             
-            keep_list = [keep_list, str2num(keep)];
         end
         tmp_master_file_struct.session(i).evaluated = 1;
-        tmp_master_file_struct.session(i).keep = keep_list;
+        tmp_master_file_struct.session(i).type = type_list;
         save( 'tmp_master_file_struct', 'tmp_master_file_struct' );
     end
 end
