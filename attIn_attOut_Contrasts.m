@@ -36,6 +36,10 @@ function rslt = attIn_attOut_Contrasts( full_trials, currents )
         idx_struct = segregate( correct_trials );
         rslt = idx_struct; %%% TMP TMP TMP %%%
 
+        
+        event_durations = get_event_durations( correct_trials(1) );
+
+        
         % Get D' for result of this
 %         dmat = gen_dprime_struct( idx_struct, correct_trials );
 %         
@@ -57,11 +61,40 @@ function rslt = attIn_attOut_Contrasts( full_trials, currents )
          rslt(i-1).anova_mat = anova_mat;
          rslt(i-1).sdens = sdens;
          rslt(i-1).sden_summs = sden_summs;
+         rslt(i-1).event_durations = event_durations;
+
 %         rslt(i-1).vis_pval = vis_pval;
 % 
 %         % MAKE A FUNCTION TO RUN THIS FUNCTION AND ADD THE OUTPUT TO THE
 %         % SESSION_STRUCT AND SAVE IT OUT?
      end
+end
+
+%
+function event_durs = get_event_durations( trial )
+
+    e_times = trial.code_times;
+    codes = trial.event_codes;
+    
+    fix_on   = get_time_matching_code( e_times, codes, 120);
+    targ_on  = get_time_matching_code( e_times, codes, 124);
+    targ_off = get_time_matching_code( e_times, codes, 126);
+    targ_on2 = get_time_matching_code( e_times, codes, 128);
+    
+    if find(trial.event_codes == 121)
+        cue_on = get_time_matching_code( e_times, codes, 121);
+    else
+        cue_on = get_time_matching_code( e_times, codes, 133);
+    end
+
+    event_durs.pre_cue = round((cue_on - targ_on) / 50) * 50;
+    event_durs.cue     = round((targ_off - cue_on) / 50) * 50;
+    event_durs.blank   = round((targ_on2 - targ_off) / 50) * 50;
+end
+
+function e_time = get_time_matching_code(times, codes, code)
+    idx = find(codes == code);
+    e_time = times(idx);
 end
 
 % Make a new trials structure with only the retain trials and trials with

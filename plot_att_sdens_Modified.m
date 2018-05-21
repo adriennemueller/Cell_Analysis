@@ -5,6 +5,9 @@ function att_sden_fig = plot_att_sdens_Modified( attend_struct )
 
     n_plots  = length(attend_struct.sden_summs); % Num Directions
     
+    pre_cue_dur = attend_struct.event_durations.pre_cue;
+    cue_dur = attend_struct.event_durations.cue;
+    
     % For y-axis height
     max_sden = max( [[attend_struct.sden_summs.dOaI_avg] [attend_struct.sden_summs.dOaO_avg], ...
                     [attend_struct.sden_summs.dNaI_avg] [attend_struct.sden_summs.dNaO_avg]] );
@@ -43,8 +46,8 @@ function att_sden_fig = plot_att_sdens_Modified( attend_struct )
         hold on;
         
         % Delimiting cue window
-        line([500 500], [0 max_sden+5], 'LineStyle', ':', 'Color', [0.2 0.2 0.2]);%, 'YLimInclude', 'off', 'XLimInclude', 'off');
-        line([1000 1000], [0 max_sden+5], 'LineStyle', ':', 'Color', [0.2 0.2 0.2]);%, 'YLimInclude', 'off', 'XLimInclude', 'off');
+        line([pre_cue_dur pre_cue_dur], [0 max_sden+5], 'LineStyle', ':', 'Color', [0.2 0.2 0.2]);%, 'YLimInclude', 'off', 'XLimInclude', 'off');
+        line([pre_cue_dur+cue_dur pre_cue_dur+cue_dur], [0 max_sden+5], 'LineStyle', ':', 'Color', [0.2 0.2 0.2]);%, 'YLimInclude', 'off', 'XLimInclude', 'off');
         
         % As long as there were enough trials to get an actual error bar,
         % plot an error bar
@@ -55,8 +58,10 @@ function att_sden_fig = plot_att_sdens_Modified( attend_struct )
 %            shadedErrorBar([1:500], dO_avg(1:500), dO_ste(1:500), 'k', 1);
 %            shadedErrorBar([1:500], dN_avg(1:500), dN_ste(1:500), 'r', 1);
             
-            plot([1:500], dO_avg(1:500), 'k', 'LineWidth',2);
-            plot([1:500], dN_avg(1:500), 'r', 'LineWidth',2);
+%            plot([1:500], dO_avg(1:500), 'k', 'LineWidth',2);
+%            plot([1:500], dN_avg(1:500), 'r', 'LineWidth',2);
+            plot([1:pre_cue_dur], dO_avg(1:pre_cue_dur), 'k', 'LineWidth',2);
+            plot([1:pre_cue_dur], dN_avg(1:pre_cue_dur), 'r', 'LineWidth',2);
             
             % Plot Cue Part
 %             shadedErrorBar([500:1000], dOaI_avg(500:1000), dOaI_ste(500:1000), 'k', 1);
@@ -64,27 +69,27 @@ function att_sden_fig = plot_att_sdens_Modified( attend_struct )
 %             shadedErrorBar([500:1000], dNaI_avg(500:1000), dNaI_ste(500:1000), 'r', 1);
 %             shadedErrorBar([500:1000], dNaO_avg(500:1000), dNaO_ste(500:1000), {'--', 'Color', [0.5 0 0]}, 1);
 
-            x = [501:1000, 1000:-1:501];        % x, forwards and backwards
+            x = [pre_cue_dur+1:pre_cue_dur+cue_dur, pre_cue_dur+cue_dur:-1:pre_cue_dur+1];        % x, forwards and backwards
             
-            attOut = dOaO_avg(501:1000);
-            attIn = dOaI_avg(501:1000);
+            attOut = dOaO_avg(pre_cue_dur+1:pre_cue_dur+cue_dur);
+            attIn = dOaI_avg(pre_cue_dur+1:pre_cue_dur+cue_dur);
             yy = [attOut, fliplr(max(attOut, attIn))]; % Draw where attIn > attOut
             fill(x,yy,'k', 'FaceAlpha', 0.3, 'LineStyle', 'none');
             yy = [attOut, fliplr(min(attOut, attIn))]; % Draw where attIn < attOut
             fill(x,yy,'k', 'FaceAlpha', 0.1, 'LineStyle', 'none');
 
-            plot([501:1000], attOut, 'k:');
-            plot([501:1000], attIn, 'k');
+            plot([pre_cue_dur+1:pre_cue_dur+cue_dur], attOut, 'k:');
+            plot([pre_cue_dur+1:pre_cue_dur+cue_dur], attIn, 'k');
 
-            attNOut = dNaO_avg(501:1000);
-            attNIn = dNaI_avg(501:1000);
+            attNOut = dNaO_avg(pre_cue_dur+1:pre_cue_dur+cue_dur);
+            attNIn = dNaI_avg(pre_cue_dur+1:pre_cue_dur+cue_dur);
             yy = [attNOut, fliplr(max(attNOut, attNIn))]; % Draw where attIn > attOut
             fill(x,yy,'r', 'FaceAlpha', 0.3, 'LineStyle', 'none');
             yy = [attNOut, fliplr(min(attNOut, attNIn))]; % Draw where attIn < attOut
             fill(x,yy,'r', 'FaceAlpha', 0.1, 'LineStyle', 'none');
             
-            plot([501:1000], attNOut, 'r:');
-            plot([501:1000], attNIn, 'r');
+            plot([pre_cue_dur+1:pre_cue_dur+cue_dur], attNOut, 'r:');
+            plot([pre_cue_dur+1:pre_cue_dur+cue_dur], attNIn, 'r');
             
             % lines
 %             plot(501:1000, attOut, 'k');
@@ -96,7 +101,7 @@ function att_sden_fig = plot_att_sdens_Modified( attend_struct )
         %xlim([-500 750]);
         
         % Should maybe use text to make labels centered.
-        set(gca,'Xtick',[200 500 1000],'XTickLabel',{ ['Targets \newline On'], ['Cue \newline On'], ['Targ \newline Flip'] });
+        set(gca,'Xtick',[0 pre_cue_dur pre_cue_dur+cue_dur],'XTickLabel',{ ['Targets \newline On'], ['Cue \newline On'], ['Targ \newline Flip'] });
 
         % stick the two d's on the subplot
         dO_dprime = attend_struct.dmat(i,2);

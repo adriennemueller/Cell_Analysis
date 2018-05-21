@@ -4,13 +4,17 @@ function att_sden_fig = plot_att_sdens_Modified_Contrasts( attend_struct, fname,
 
     n_directions  = length(attend_struct.sden_summs); % Num Directions
     
+    pre_cue_dur = attend_struct.event_durations.pre_cue;
+    cue_dur = attend_struct.event_durations.cue;
+    end_cue_time = pre_cue_dur + cue_dur;
+    
     % For y-axis height
     %max_sden = max( [[attend_struct.sden_summs.C25dOaI_avg] [attend_struct.C25sden_summs.dOaO_avg], ...
     %                [attend_struct.sden_summs.C25dNaI_avg] [attend_struct.C25sden_summs.dNaO_avg]] );
 
     for i = 1:n_directions
         
-        figure('Visible','off','rend','painters','pos',[10 10 1000 300]);
+        figure('Visible','off','rend','painters','pos',[10 10 end_cue_time 300]);
         
         hold on;
         
@@ -48,34 +52,34 @@ function att_sden_fig = plot_att_sdens_Modified_Contrasts( attend_struct, fname,
             hold on;
         
         % Delimiting cue window
-        %line([500 500], [0 max_sden+5], 'LineStyle', ':', 'Color', [0.2 0.2 0.2]);%, 'YLimInclude', 'off', 'XLimInclude', 'off');
-        %line([1000 1000], [0 max_sden+5], 'LineStyle', ':', 'Color', [0.2 0.2 0.2]);%, 'YLimInclude', 'off', 'XLimInclude', 'off');
+        %line([pre_cue_dur pre_cue_dur], [0 max_sden+5], 'LineStyle', ':', 'Color', [0.2 0.2 0.2]);%, 'YLimInclude', 'off', 'XLimInclude', 'off');
+        %line([end_cue_time end_cue_time], [0 max_sden+5], 'LineStyle', ':', 'Color', [0.2 0.2 0.2]);%, 'YLimInclude', 'off', 'XLimInclude', 'off');
         
         % As long as there were enough trials to get an actual error bar,
         % plot an error bar
         if length(C10dOaI_ste)>1 && length(C10dOaO_ste)>1  && length(C10dNaI_ste)>1  && length(C10dNaO_ste)>1 
-            plot([1:500], C10dO_avg(1:500), 'k', 'LineWidth',2);
-            plot([1:500], C10dN_avg(1:500), 'r', 'LineWidth',2);
-            x = [501:1000, 1000:-1:501];        % x, forwards and backwards
-            C10attOut = C10dOaO_avg(501:1000);
-            C10attIn = C10dOaI_avg(501:1000);
+            plot([1:pre_cue_dur], C10dO_avg(1:pre_cue_dur), 'k', 'LineWidth',2);
+            plot([1:pre_cue_dur], C10dN_avg(1:pre_cue_dur), 'r', 'LineWidth',2);
+            x = [pre_cue_dur+1:end_cue_time, end_cue_time:-1:pre_cue_dur+1];        % x, forwards and backwards
+            C10attOut = C10dOaO_avg(pre_cue_dur+1:end_cue_time);
+            C10attIn = C10dOaI_avg(pre_cue_dur+1:end_cue_time);
             yy = [C10attOut, fliplr(max(C10attOut, C10attIn))]; % Draw where attIn > attOut
             fill(x,yy,'k', 'FaceAlpha', 0.3, 'LineStyle', 'none');
             yy = [C10attOut, fliplr(min(C10attOut, C10attIn))]; % Draw where attIn < attOut
             fill(x,yy,'k', 'FaceAlpha', 0.1, 'LineStyle', 'none');
 
-            plot([501:1000], C10attOut, 'k:');
-            plot([501:1000], C10attIn, 'k');
+            plot([pre_cue_dur+1:end_cue_time], C10attOut, 'k:');
+            plot([pre_cue_dur+1:end_cue_time], C10attIn, 'k');
 
-            C10attNOut = C10dNaO_avg(501:1000);
-            C10attNIn = C10dNaI_avg(501:1000);
+            C10attNOut = C10dNaO_avg(pre_cue_dur+1:end_cue_time);
+            C10attNIn = C10dNaI_avg(pre_cue_dur+1:end_cue_time);
             yy = [C10attNOut, fliplr(max(C10attNOut, C10attNIn))]; % Draw where attIn > attOut
             fill(x,yy,'r', 'FaceAlpha', 0.3, 'LineStyle', 'none');
             yy = [C10attNOut, fliplr(min(C10attNOut, C10attNIn))]; % Draw where attIn < attOut
             fill(x,yy,'r', 'FaceAlpha', 0.1, 'LineStyle', 'none');
             
-            plot([501:1000], C10attNOut, 'r:');
-            plot([501:1000], C10attNIn, 'r');
+            plot([pre_cue_dur+1:end_cue_time], C10attNOut, 'r:');
+            plot([pre_cue_dur+1:end_cue_time], C10attNIn, 'r');
             
         end
         
@@ -83,10 +87,10 @@ function att_sden_fig = plot_att_sdens_Modified_Contrasts( attend_struct, fname,
 
         
 %        ylim([0 max_sden+5] );
-        %xlim([-500 750]);
+        %xlim([-pre_cue_dur 750]);
         
         % Should maybe use text to make labels centered.
-        set(gca,'Xtick',[200 500 1000],'XTickLabel',{ ['Targets \newline On'], ['Cue \newline On'], ['Targ \newline Flip'] });
+        set(gca,'Xtick',[0 pre_cue_dur end_cue_time],'XTickLabel',{ ['Targets \newline On'], ['Cue \newline On'], ['Targ \newline Flip'] });
         
 
         
@@ -125,42 +129,42 @@ function att_sden_fig = plot_att_sdens_Modified_Contrasts( attend_struct, fname,
         hold on;
         
         % Delimiting cue window
-        %line([500 500], [0 max_sden+5], 'LineStyle', ':', 'Color', [0.2 0.2 0.2]);%, 'YLimInclude', 'off', 'XLimInclude', 'off');
-        %line([1000 1000], [0 max_sden+5], 'LineStyle', ':', 'Color', [0.2 0.2 0.2]);%, 'YLimInclude', 'off', 'XLimInclude', 'off');
+        %line([pre_cue_dur pre_cue_dur], [0 max_sden+5], 'LineStyle', ':', 'Color', [0.2 0.2 0.2]);%, 'YLimInclude', 'off', 'XLimInclude', 'off');
+        %line([end_cue_time end_cue_time], [0 max_sden+5], 'LineStyle', ':', 'Color', [0.2 0.2 0.2]);%, 'YLimInclude', 'off', 'XLimInclude', 'off');
         
         % As long as there were enough trials to get an actual error bar,
         % plot an error bar
         if length(C15dOaI_ste)>1 && length(C15dOaO_ste)>1  && length(C15dNaI_ste)>1  && length(C15dNaO_ste)>1 
-            plot([1:500], C15dO_avg(1:500), 'k', 'LineWidth',2);
-            plot([1:500], C15dN_avg(1:500), 'r', 'LineWidth',2);
-            x = [501:1000, 1000:-1:501];        % x, forwards and backwards
-            C15attOut = C15dOaO_avg(501:1000);
-            C15attIn = C15dOaI_avg(501:1000);
+            plot([1:pre_cue_dur], C15dO_avg(1:pre_cue_dur), 'k', 'LineWidth',2);
+            plot([1:pre_cue_dur], C15dN_avg(1:pre_cue_dur), 'r', 'LineWidth',2);
+            x = [pre_cue_dur+1:end_cue_time, end_cue_time:-1:pre_cue_dur+1];        % x, forwards and backwards
+            C15attOut = C15dOaO_avg(pre_cue_dur+1:end_cue_time);
+            C15attIn = C15dOaI_avg(pre_cue_dur+1:end_cue_time);
             yy = [C15attOut, fliplr(max(C15attOut, C15attIn))]; % Draw where attIn > attOut
             fill(x,yy,'k', 'FaceAlpha', 0.3, 'LineStyle', 'none');
             yy = [C15attOut, fliplr(min(C15attOut, C15attIn))]; % Draw where attIn < attOut
             fill(x,yy,'k', 'FaceAlpha', 0.1, 'LineStyle', 'none');
 
-            plot([501:1000], C15attOut, 'k:');
-            plot([501:1000], C15attIn, 'k');
+            plot([pre_cue_dur+1:end_cue_time], C15attOut, 'k:');
+            plot([pre_cue_dur+1:end_cue_time], C15attIn, 'k');
 
-            C15attNOut = C15dNaO_avg(501:1000);
-            C15attNIn = C15dNaI_avg(501:1000);
+            C15attNOut = C15dNaO_avg(pre_cue_dur+1:end_cue_time);
+            C15attNIn = C15dNaI_avg(pre_cue_dur+1:end_cue_time);
             yy = [C15attNOut, fliplr(max(C15attNOut, C15attNIn))]; % Draw where attIn > attOut
             fill(x,yy,'r', 'FaceAlpha', 0.3, 'LineStyle', 'none');
             yy = [C15attNOut, fliplr(min(C15attNOut, C15attNIn))]; % Draw where attIn < attOut
             fill(x,yy,'r', 'FaceAlpha', 0.1, 'LineStyle', 'none');
             
-            plot([501:1000], C15attNOut, 'r:');
-            plot([501:1000], C15attNIn, 'r');
+            plot([pre_cue_dur+1:end_cue_time], C15attNOut, 'r:');
+            plot([pre_cue_dur+1:end_cue_time], C15attNIn, 'r');
             
         end
         
 %        ylim([0 max_sden+5] );
-        %xlim([-500 750]);
+        %xlim([-pre_cue_dur 750]);
         
         % Should maybe use text to make labels centered.
-        set(gca,'Xtick',[200 500 1000],'XTickLabel',{ ['Targets \newline On'], ['Cue \newline On'], ['Targ \newline Flip'] });
+        set(gca,'Xtick',[0 pre_cue_dur end_cue_time],'XTickLabel',{ ['Targets \newline On'], ['Cue \newline On'], ['Targ \newline Flip'] });
         
  
         
@@ -199,42 +203,42 @@ function att_sden_fig = plot_att_sdens_Modified_Contrasts( attend_struct, fname,
         hold on;
         
         % Delimiting cue window
-        %line([500 500], [0 max_sden+5], 'LineStyle', ':', 'Color', [0.2 0.2 0.2]);%, 'YLimInclude', 'off', 'XLimInclude', 'off');
-        %line([1000 1000], [0 max_sden+5], 'LineStyle', ':', 'Color', [0.2 0.2 0.2]);%, 'YLimInclude', 'off', 'XLimInclude', 'off');
+        %line([pre_cue_dur pre_cue_dur], [0 max_sden+5], 'LineStyle', ':', 'Color', [0.2 0.2 0.2]);%, 'YLimInclude', 'off', 'XLimInclude', 'off');
+        %line([end_cue_time end_cue_time], [0 max_sden+5], 'LineStyle', ':', 'Color', [0.2 0.2 0.2]);%, 'YLimInclude', 'off', 'XLimInclude', 'off');
         
         % As long as there were enough trials to get an actual error bar,
         % plot an error bar
         if length(C20dOaI_ste)>1 && length(C20dOaO_ste)>1  && length(C20dNaI_ste)>1  && length(C20dNaO_ste)>1 
-            plot([1:500], C20dO_avg(1:500), 'k', 'LineWidth',2);
-            plot([1:500], C20dN_avg(1:500), 'r', 'LineWidth',2);
-            x = [501:1000, 1000:-1:501];        % x, forwards and backwards
-            C20attOut = C20dOaO_avg(501:1000);
-            C20attIn = C20dOaI_avg(501:1000);
+            plot([1:pre_cue_dur], C20dO_avg(1:pre_cue_dur), 'k', 'LineWidth',2);
+            plot([1:pre_cue_dur], C20dN_avg(1:pre_cue_dur), 'r', 'LineWidth',2);
+            x = [pre_cue_dur+1:end_cue_time, end_cue_time:-1:pre_cue_dur+1];        % x, forwards and backwards
+            C20attOut = C20dOaO_avg(pre_cue_dur+1:end_cue_time);
+            C20attIn = C20dOaI_avg(pre_cue_dur+1:end_cue_time);
             yy = [C20attOut, fliplr(max(C20attOut, C20attIn))]; % Draw where attIn > attOut
             fill(x,yy,'k', 'FaceAlpha', 0.3, 'LineStyle', 'none');
             yy = [C20attOut, fliplr(min(C20attOut, C20attIn))]; % Draw where attIn < attOut
             fill(x,yy,'k', 'FaceAlpha', 0.1, 'LineStyle', 'none');
 
-            plot([501:1000], C20attOut, 'k:');
-            plot([501:1000], C20attIn, 'k');
+            plot([pre_cue_dur+1:end_cue_time], C20attOut, 'k:');
+            plot([pre_cue_dur+1:end_cue_time], C20attIn, 'k');
 
-            C20attNOut = C20dNaO_avg(501:1000);
-            C20attNIn = C20dNaI_avg(501:1000);
+            C20attNOut = C20dNaO_avg(pre_cue_dur+1:end_cue_time);
+            C20attNIn = C20dNaI_avg(pre_cue_dur+1:end_cue_time);
             yy = [C20attNOut, fliplr(max(C20attNOut, C20attNIn))]; % Draw where attIn > attOut
             fill(x,yy,'r', 'FaceAlpha', 0.3, 'LineStyle', 'none');
             yy = [C20attNOut, fliplr(min(C20attNOut, C20attNIn))]; % Draw where attIn < attOut
             fill(x,yy,'r', 'FaceAlpha', 0.1, 'LineStyle', 'none');
             
-            plot([501:1000], C20attNOut, 'r:');
-            plot([501:1000], C20attNIn, 'r');
+            plot([pre_cue_dur+1:end_cue_time], C20attNOut, 'r:');
+            plot([pre_cue_dur+1:end_cue_time], C20attNIn, 'r');
             
         end
         
 %        ylim([0 max_sden+5] );
-        %xlim([-500 750]);
+        %xlim([-pre_cue_dur 750]);
         
         % Should maybe use text to make labels centered.
-        set(gca,'Xtick',[200 500 1000],'XTickLabel',{ ['Targets \newline On'], ['Cue \newline On'], ['Targ \newline Flip'] });
+        set(gca,'Xtick',[0 pre_cue_dur end_cue_time],'XTickLabel',{ ['Targets \newline On'], ['Cue \newline On'], ['Targ \newline Flip'] });
         
         
         
@@ -274,42 +278,42 @@ function att_sden_fig = plot_att_sdens_Modified_Contrasts( attend_struct, fname,
         hold on;
         
         % Delimiting cue window
-        %line([500 500], [0 max_sden+5], 'LineStyle', ':', 'Color', [0.2 0.2 0.2]);%, 'YLimInclude', 'off', 'XLimInclude', 'off');
-        %line([1000 1000], [0 max_sden+5], 'LineStyle', ':', 'Color', [0.2 0.2 0.2]);%, 'YLimInclude', 'off', 'XLimInclude', 'off');
+        %line([pre_cue_dur pre_cue_dur], [0 max_sden+5], 'LineStyle', ':', 'Color', [0.2 0.2 0.2]);%, 'YLimInclude', 'off', 'XLimInclude', 'off');
+        %line([end_cue_time end_cue_time], [0 max_sden+5], 'LineStyle', ':', 'Color', [0.2 0.2 0.2]);%, 'YLimInclude', 'off', 'XLimInclude', 'off');
         
         % As long as there were enough trials to get an actual error bar,
         % plot an error bar
         if length(C25dOaI_ste)>1 && length(C25dOaO_ste)>1  && length(C25dNaI_ste)>1  && length(C25dNaO_ste)>1 
-            plot([1:500], C25dO_avg(1:500), 'k', 'LineWidth',2);
-            plot([1:500], C25dN_avg(1:500), 'r', 'LineWidth',2);
-            x = [501:1000, 1000:-1:501];        % x, forwards and backwards
-            C25attOut = C25dOaO_avg(501:1000);
-            C25attIn = C25dOaI_avg(501:1000);
+            plot([1:pre_cue_dur], C25dO_avg(1:pre_cue_dur), 'k', 'LineWidth',2);
+            plot([1:pre_cue_dur], C25dN_avg(1:pre_cue_dur), 'r', 'LineWidth',2);
+            x = [pre_cue_dur+1:end_cue_time, end_cue_time:-1:pre_cue_dur+1];        % x, forwards and backwards
+            C25attOut = C25dOaO_avg(pre_cue_dur+1:end_cue_time);
+            C25attIn = C25dOaI_avg(pre_cue_dur+1:end_cue_time);
             yy = [C25attOut, fliplr(max(C25attOut, C25attIn))]; % Draw where attIn > attOut
             fill(x,yy,'k', 'FaceAlpha', 0.3, 'LineStyle', 'none');
             yy = [C25attOut, fliplr(min(C25attOut, C25attIn))]; % Draw where attIn < attOut
             fill(x,yy,'k', 'FaceAlpha', 0.1, 'LineStyle', 'none');
 
-            plot([501:1000], C25attOut, 'k:');
-            plot([501:1000], C25attIn, 'k');
+            plot([pre_cue_dur+1:end_cue_time], C25attOut, 'k:');
+            plot([pre_cue_dur+1:end_cue_time], C25attIn, 'k');
 
-            C25attNOut = C25dNaO_avg(501:1000);
-            C25attNIn = C25dNaI_avg(501:1000);
+            C25attNOut = C25dNaO_avg(pre_cue_dur+1:end_cue_time);
+            C25attNIn = C25dNaI_avg(pre_cue_dur+1:end_cue_time);
             yy = [C25attNOut, fliplr(max(C25attNOut, C25attNIn))]; % Draw where attIn > attOut
             fill(x,yy,'r', 'FaceAlpha', 0.3, 'LineStyle', 'none');
             yy = [C25attNOut, fliplr(min(C25attNOut, C25attNIn))]; % Draw where attIn < attOut
             fill(x,yy,'r', 'FaceAlpha', 0.1, 'LineStyle', 'none');
             
-            plot([501:1000], C25attNOut, 'r:');
-            plot([501:1000], C25attNIn, 'r');
+            plot([pre_cue_dur+1:end_cue_time], C25attNOut, 'r:');
+            plot([pre_cue_dur+1:end_cue_time], C25attNIn, 'r');
             
         end
         
 %        ylim([0 max_sden+5] );
-        %xlim([-500 750]);
+        %xlim([-pre_cue_dur 750]);
         
         % Should maybe use text to make labels centered.
-        set(gca,'Xtick',[200 500 1000],'XTickLabel',{ ['Targets \newline On'], ['Cue \newline On'], ['Targ \newline Flip'] });
+        set(gca,'Xtick',[0 pre_cue_dur end_cue_time],'XTickLabel',{ ['Targets \newline On'], ['Cue \newline On'], ['Targ \newline Flip'] });
         
         
         hold off;
@@ -331,12 +335,12 @@ function att_sden_fig = plot_att_sdens_Modified_Contrasts( attend_struct, fname,
        annotation('textbox', [0 0.9 1 0.1], 'String', signif_text, 'EdgeColor', 'none', 'HorizontalAlignment', 'center' );
     end    
 
-    att_sden_modded_fig = gcf;
-    tightfig(att_sden_modded_fig);
+    att_sden_fig = gcf;
+    tightfig(att_sden_fig);
         
-    save_name_mat = strcat('tmp_figs/contrast_figs/',fname, '_', num2str(i), '_', curr_current);
-    save_name = strrep(save_name_mat,'.mat','');
-    saveas( att_sden_modded_fig, strcat(save_name{1}, '_Modded_DOn.png') );
+    %save_name_mat = strcat('tmp_figs/contrast_figs/',fname, '_', num2str(i), '_', curr_current);
+    %save_name = strrep(save_name_mat,'.mat','');
+    %saveas( att_sden_modded_fig, strcat(save_name{1}, '_Modded_DOn.png') );
     %savefig( att_sden_modded_fig, strcat(save_name{1}, '_Modded_DOn.fig') );
         
     end

@@ -74,7 +74,8 @@ function plot_h = spike_raster( full_trials, currents )
         end
         
         first_trial = drug_off_trials(1);
-        cue_on_time = get_axis_time( first_trial, 133, offset );
+        cue_eventcode = get_cue_eventcode(drug_off_trials(1));
+        cue_on_time = get_axis_time( first_trial, cue_eventcode, offset );
         target_flip_off_time =  get_axis_time( first_trial, 126, offset );
         target_flip_on_time = get_axis_time( first_trial, 128, offset );
 
@@ -89,6 +90,16 @@ function plot_h = spike_raster( full_trials, currents )
     plot_h = gcf;
     
 end
+
+%
+function cue_eventcode = get_cue_eventcode(trial)
+    if find(trial(1).event_codes == 121)
+        cue_eventcode = 121;
+    else
+        cue_eventcode = 133;
+    end 
+end
+
 
 %
 function axis_time = get_axis_time( first_trial, code, offset )

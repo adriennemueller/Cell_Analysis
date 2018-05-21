@@ -9,7 +9,7 @@ function dprime_unity( stat_struct, selected_current )
     SKF_drugon_dprimes  = [];
     SKF_drugoff_avgs = [];
     SKF_drugon_avgs = [];
-    
+        
     for i = 1:length(stat_struct )
         
         if isfield(stat_struct(i).attend, 'dmat')
@@ -19,8 +19,9 @@ function dprime_unity( stat_struct, selected_current )
             if length(stat_struct(i).attend) > 1
 
                 for j = 1:length(stat_struct(i).attend)
-                    if (stat_struct(i).attend(j).current == selected_current)
-                        dprime_subset = get_relAttIn_dprimes( stat_struct(i).attend(j).dmat );
+                    if (stat_struct(i).attend(j).current == selected_current)% && (test_attend(stat_struct(i).attend(j).anova_mat))
+                        %dprime_subset = get_relAttIn_dprimes( stat_struct(i).attend(j).dmat );
+                        dprime_subset = get_maxAttIn_dprime( stat_struct(i).attend(j).dmat );
                         curr_Off_dprimes = dprime_subset(:,1);
                         curr_On_dprimes  = dprime_subset(:,2);
                         curr_Off_avgs = dprime_subset(:,3);
@@ -34,8 +35,9 @@ function dprime_unity( stat_struct, selected_current )
                 end
             
             else
-                if (stat_struct(i).attend.current == selected_current)
-                    dprime_subset = get_relAttIn_dprimes( stat_struct(i).attend.dmat );
+                if (stat_struct(i).attend.current == selected_current)%  && (test_attend(stat_struct(i).attend.anova_mat))
+                    %dprime_subset = get_relAttIn_dprimes( stat_struct(i).attend.dmat );
+                    dprime_subset = get_maxAttIn_dprime( stat_struct(i).attend.dmat );
                     curr_Off_dprimes = dprime_subset(:,1);
                     curr_On_dprimes  = dprime_subset(:,2);
                     curr_Off_avgs = dprime_subset(:,3);
@@ -124,7 +126,9 @@ function dprime_unity( stat_struct, selected_current )
     set(gca,'FontSize',12, 'FontWeight', 'bold');
     line( [-3 3], [-3 3], 'Color', 'black');
     
-    text(-1.5, 1.5, ['p = ' num2str(round(SCH_rs, 4))], 'FontSize', 16, 'FontWeight', 'bold');
+    SCH_rs_str = get_pval_string(SCH_rs);
+    text(-1.5, 1.5, ['p ' SCH_rs_str], 'FontSize', 16, 'FontWeight', 'bold');
+    text(1.3, -1.7, ['N = ' num2str(length(SCH_drugoff_dprimes))], 'FontSize', 16, 'FontWeight', 'bold');
     hold off;
     title(strcat( 'D1R Antagonist',{' '} , num2str(selected_current), 'nA' ), 'FontSize', 18, 'Color', 'r');
     
@@ -165,7 +169,9 @@ function dprime_unity( stat_struct, selected_current )
     set(gca,'FontSize',12, 'FontWeight', 'bold');
     line( [-3 3], [-3 3], 'Color', 'black');
     
-    text(-1.5, 1.5, ['p = ' num2str(round(SKF_rs, 4))], 'FontSize', 16, 'FontWeight', 'bold');
+    SKF_rs_str = get_pval_string(SKF_rs);
+    text(-1.5, 1.5, ['p ' SKF_rs_str], 'FontSize', 16, 'FontWeight', 'bold');
+    text(1.3, -1.7, ['N = ' num2str(length(SKF_drugoff_dprimes))], 'FontSize', 16, 'FontWeight', 'bold');
       
     hold off; 
     title(strcat( 'D1R Agonist',{' '} , num2str(selected_current), 'nA' ), 'FontSize', 18, 'Color', 'b');
@@ -222,7 +228,11 @@ function dprime_unity( stat_struct, selected_current )
         SKF_drugon_avgs(badidx_SKFon) = [];
     end
     
-    SCH_drug_rs = ranksum( SCH_drugoff_avgs, SCH_drugon_avgs );
+    if isempty(SCH_drugoff_avgs) || isempty( SCH_drugon_avgs)
+        SCH_drug_rs = nan;
+    else
+        SCH_drug_rs = ranksum( SCH_drugoff_avgs, SCH_drugon_avgs );
+    end
     
 %     SCH_off_ste = std(SCH_drugoff_avgs) / (sqrt(length(SCH_drugoff_avgs)));
 %     SCH_on_ste = std(SCH_drugon_avgs) / (sqrt(length(SCH_drugon_avgs)));
@@ -238,7 +248,12 @@ function dprime_unity( stat_struct, selected_current )
 % 
 %     hold off;
 
-    SKF_drug_rs = ranksum( SKF_drugoff_avgs, SKF_drugon_avgs );
+    if isempty(SKF_drugoff_avgs) || isempty( SKF_drugon_avgs)
+        SKF_drug_rs = nan;
+    else
+        SKF_drug_rs = ranksum( SKF_drugoff_avgs, SKF_drugon_avgs );
+    end
+        
 
 %     SKF_off_ste = std(SKF_drugoff_avgs) / (sqrt(length(SKF_drugoff_avgs)));
 %     SKF_on_ste = std(SKF_drugon_avgs) / (sqrt(length(SKF_drugon_avgs)));
@@ -275,7 +290,9 @@ function dprime_unity( stat_struct, selected_current )
     set(gca,'FontSize',12, 'FontWeight', 'bold');
     line( [-50 50], [-50 50], 'Color', 'black');
     
-    text(5, 45, ['p = ' num2str(round(SCH_drug_rs, 2))], 'FontSize', 16, 'FontWeight', 'bold');
+    SCH_pval_str = get_pval_string( SCH_drug_rs );
+    text(5, 45, ['p ' SCH_pval_str], 'FontSize', 16, 'FontWeight', 'bold');
+    text(40, 3, ['N = ' num2str(length(SCH_drugoff_avgs))], 'FontSize', 16, 'FontWeight', 'bold');
     hold off;
     title(strcat( 'D1R Antagonist',{' '} , num2str(selected_current), 'nA' ), 'FontSize', 18, 'Color', 'r');
     
@@ -316,7 +333,10 @@ function dprime_unity( stat_struct, selected_current )
     set(gca,'FontSize',12, 'FontWeight', 'bold');
     line( [-50 50], [-50 50], 'Color', 'black');
     
-    text(5, 45, ['p = ' num2str(round(SKF_drug_rs, 2))], 'FontSize', 16, 'FontWeight', 'bold');
+    % num2str(round(SKF_drug_rs, 2))
+    SKF_pval_str = get_pval_string( SKF_drug_rs );
+    text(5, 45, ['p ' SKF_pval_str], 'FontSize', 16, 'FontWeight', 'bold');
+    text(40, 3, ['N = ' num2str(length(SKF_drugoff_avgs))], 'FontSize', 16, 'FontWeight', 'bold');
     hold off;
     title(strcat( 'D1R Agonist',{' '} , num2str(selected_current), 'nA' ), 'FontSize', 18, 'Color', 'b');
     
@@ -346,6 +366,34 @@ function dprime_unity( stat_struct, selected_current )
         
 end
 
+function pval_str = get_pval_string( pval )
+    if isempty(pval)
+        pval_str = '= NaN';
+    elseif pval >= 0.01
+        pval_str = [ '= ' num2str(round(pval, 2))];
+    elseif (0.001 < pval) && (pval < 0.01)
+        pval_str = ['< 0.01'];
+    elseif pval < 0.000001
+        pval_str = ['< 1*10-6' ];
+    elseif pval < 0.001
+        pval_str = ['< 0.001'];
+    else
+        pval_str = '= NaN';
+    end
+    % Make for smaller
+end
+
+
+function rslt = test_attend( anova_mat )
+    attend_anova_idxs = [3, 5, 6, 7];
+    pvals = anova_mat.p;
+    
+    rslt = pvals(attend_anova_idxs) <= 0.05;
+    rslt = max(rslt);
+    
+end
+
+
 % This function gets the subset of d's which are likely to be the 'attend
 % in' d' condition and its two closest neighbours. One point is therefore
 % being dropped.
@@ -373,6 +421,24 @@ function dprime_subset = get_relAttIn_dprimes( dmat )
     dprime_subset = [OffVals, OnVals, OffAvgVals, OnAvgVals];
 
 end
+
+function dprime_subset = get_maxAttIn_dprime( dmat )
+    Offs = dmat(:,2);
+    Ons  = dmat(:,3);
+    OffAvgs = dmat(:,6);
+    OnAvgs = dmat(:,7);
+    
+    maxOff_idx = find(Offs == max(Offs));
+
+    OffVal = Offs(maxOff_idx);
+    OnVal  = Ons( maxOff_idx );
+    OffAvgVal = OffAvgs(maxOff_idx);
+    OnAvgVal = OnAvgs(maxOff_idx);
+    
+    dprime_subset = [OffVal, OnVal, OffAvgVal, OnAvgVal];
+    
+end
+
 
 
 % Figures out what title to give this plot

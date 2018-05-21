@@ -45,7 +45,7 @@ function stat_struct = tmp_process(celltype)
 %         attend_struct = attIn_attOut_Contrasts( data_struct, currents{i} );
         for j = 1:length(attend_struct)
             if isempty( attend_struct(j).sden_summs ), continue, end
-            plot_att_sdens_Modified(attend_struct(j));%, fnames(i), num2str(attend_struct(j).current));
+            %plot_att_sdens_Modified(attend_struct(j));%, fnames(i), num2str(attend_struct(j).current));
             %plot_att_sdens_Modified_Contrasts(attend_struct(j), fnames(i), num2str(attend_struct(j).current));
            
         end

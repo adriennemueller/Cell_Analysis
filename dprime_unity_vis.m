@@ -14,8 +14,9 @@ function dprime_unity_vis( stat_struct, selected_current )
             
             if length(stat_struct(i).attend) > 1
                 for j = 1:length(stat_struct(i).attend)
-                    if (stat_struct(i).attend(j).current == selected_current)
-                        dprime_subset = get_dprime_subset( stat_struct(i).attend(j).vis_pval, stat_struct(i).attend(j).dmat );
+                    if (stat_struct(i).attend(j).current == selected_current)  %&& (test_attend(stat_struct(i).attend(j).anova_mat))
+                        %dprime_subset = get_dprime_subset( stat_struct(i).attend(j).vis_pval, stat_struct(i).attend(j).dmat );
+                        dprime_subset = get_dprime_subset_single( stat_struct(i).attend(j).vis_pval, stat_struct(i).attend(j).dmat );
                         curr_Off_dprimes = dprime_subset(:,1);
                         curr_On_dprimes  = dprime_subset(:,2);
                     else
@@ -25,8 +26,9 @@ function dprime_unity_vis( stat_struct, selected_current )
                 end
             
             else
-                    if (stat_struct(i).attend.current == selected_current)
-                        dprime_subset = get_dprime_subset( stat_struct(i).attend.vis_pval, stat_struct(i).attend.dmat );
+                    if (stat_struct(i).attend.current == selected_current) %&& (test_attend(stat_struct(i).attend.anova_mat))
+                        %dprime_subset = get_dprime_subset( stat_struct(i).attend.vis_pval, stat_struct(i).attend.dmat );
+                        dprime_subset = get_dprime_subset_single( stat_struct(i).attend.vis_pval, stat_struct(i).attend.dmat );
                         curr_Off_dprimes = dprime_subset(:,1);
                         curr_On_dprimes  = dprime_subset(:,2);
                     else
@@ -77,7 +79,8 @@ function dprime_unity_vis( stat_struct, selected_current )
     set(gca,'FontSize',12, 'FontWeight', 'bold');
     line( [-50 50], [-50 50], 'Color', 'black');
     
-    text(5, 45, ['p = ' num2str(round(SCH_rs, 2))], 'FontSize', 16, 'FontWeight', 'bold');
+    SCH_rs_pval_str = get_pval_string( SCH_rs );
+    text(5, 45, ['p ' SCH_rs_pval_str], 'FontSize', 16, 'FontWeight', 'bold');
     hold off;
     title(strcat( 'D1R Antagonist',{' '} , num2str(selected_current), 'nA' ), 'FontSize', 18, 'Color', 'r');
     
@@ -118,7 +121,8 @@ function dprime_unity_vis( stat_struct, selected_current )
     set(gca,'FontSize',12, 'FontWeight', 'bold');
     line( [-50 50], [-50 50], 'Color', 'black');
     
-    text(5, 45, ['p = ' num2str(round(SKF_rs, 2))], 'FontSize', 16, 'FontWeight', 'bold');
+    SKF_pval_str = get_pval_string( SKF_rs );
+    text(5, 45, ['p ' SKF_pval_str], 'FontSize', 16, 'FontWeight', 'bold');
     hold off;
     title(strcat( 'D1R Agonist',{' '} , num2str(selected_current), 'nA' ), 'FontSize', 18, 'Color', 'b');
     
@@ -147,6 +151,54 @@ function dprime_unity_vis( stat_struct, selected_current )
     
 
 end
+
+function pval_str = get_pval_string( pval )
+    if isempty(pval)
+        pval_str = '= NaN';
+    elseif pval >= 0.01
+        pval_str = [ '= ' num2str(round(pval, 2))];
+    elseif (0.001 < pval) && (pval < 0.01)
+        pval_str = ['< 0.01'];
+    elseif pval < 0.000001
+        pval_str = ['< 1*10-6' ];
+    elseif pval < 0.001
+        pval_str = ['< 0.001'];
+    else
+        pval_str = '= NaN';
+    end
+    % Make for smaller
+end
+
+
+function rslt = test_attend( anova_mat )
+    attend_anova_idxs = [3, 5, 6, 7];
+    pvals = anova_mat.p;
+    
+    rslt = pvals(attend_anova_idxs) <= 0.05;
+    rslt = max(rslt);
+    
+end
+
+
+% This function gets the subset of d's which are likely to be the 'attend
+% in' d' condition and its two closest neighbours. One point is therefore
+% being dropped.
+function dprime_subset = get_dprime_subset_single( vispval, dmat )
+    vis_Offs = vispval(:,4);
+    vis_Ons  = vispval(:,5);
+
+    Offs = dmat(:,2);
+    Ons  = dmat(:,3);
+    
+    maxOff_idx = find(Offs == max(Offs));
+    
+    OffVal = vis_Offs(maxOff_idx);
+    OnVal  = vis_Ons( maxOff_idx );
+
+    dprime_subset = [OffVal, OnVal];
+
+end
+
 
 % This function gets the subset of d's which are likely to be the 'attend
 % in' d' condition and its two closest neighbours. One point is therefore

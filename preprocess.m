@@ -40,23 +40,25 @@ function preprocess(tmp_struct)
         alignments = find_alignments( raw_struct );
         assignin( 'base', 'alignments', alignments);
         if isempty(fieldnames(alignments))
-           %master_file_struct.session( proc_idxs(i) ).preprocessed = 1;
-           %save('master_file_struct', 'master_file_struct');
+           master_file_struct.session( proc_idxs(i) ).preprocessed = 1;
+           save('master_file_struct', 'master_file_struct');
            continue
         end
         % Should have this purge entry, possibly.
                   
         % Make 'clean' structs for future analyses
-        session_struct = sanitize_structs(raw_struct, alignments);
+        [session_struct, valid_trialstruct_idxs] = sanitize_structs(raw_struct, alignments);
         assignin('base', 'session_struct', session_struct);
 
-        % Save Out the Clean Session Sub-Structs, Add them to the Master File Struct
-        processed_files = export_sessions( save_superdirec, master_file_struct.session(proc_idxs(i)), alignments, session_struct);
-        master_file_struct.session(proc_idxs(i)).processed_files = processed_files;
-        
-        % Also add details about the currents for each unit in a session to
-        % the master file struct
-        master_file_struct.session(proc_idxs(i)).currents = find_unique_currents(session_struct);
+        for j = 1:length(valid_trialstruct_idxs)
+            % Save Out the Clean Session Sub-Structs, Add them to the Master File Struct
+            processed_files = export_sessions( save_superdirec, master_file_struct.session(proc_idxs(i)), alignments, session_struct, valid_trialstruct_idxs);
+            master_file_struct.session(proc_idxs(i)).processed_files = processed_files;
+
+            % Also add details about the currents for each unit in a session to
+            % the master file struct
+            master_file_struct.session(proc_idxs(i)).currents = find_unique_currents(session_struct, valid_trialstruct_idxs);
+        end
         
         % Note that this session has now been preprocessed.
         master_file_struct.session( proc_idxs(i) ).preprocessed = 1;
@@ -74,11 +76,12 @@ function preprocess(tmp_struct)
 end
 
 % Make a list of the unique currents for each unit in a given session.
-function currents = find_unique_currents( session_struct )
+function currents = find_unique_currents( session_struct, valid_trialstruct_idxs )
     
     currents = {};
-    for i = 1:length(session_struct)
-        currents{i} = unique([session_struct{i}.drug]);
+    for i = 1:length(valid_trialstruct_idxs)
+        idx = valid_trialstruct_idxs(i);
+        currents{i} = unique([session_struct{idx}.drug]);
     end
 end
 
@@ -86,10 +89,11 @@ end
 % export_sessions loops through and exports clean structs for the found
 % bhv/unit pairs for the session and updates the main_file_struct with the
 % filenames for those output files.
-function processed_files = export_sessions( save_superdirec, file_struct, alignments, session_struct )
+function processed_files = export_sessions( save_superdirec, file_struct, alignments, session_struct, valid_idxs )
     processed_files = {};
-
-    for i = 1:length(alignments)
+    
+    for j = 1:length(valid_idxs)
+        i = valid_idxs(j);
         unit_file_idx = alignments(i).unit_file;
         unit_file = file_struct.unit_files{unit_file_idx};
         
@@ -105,7 +109,7 @@ function processed_files = export_sessions( save_superdirec, file_struct, alignm
         save( fullfile(save_direc, save_fname), 'data_struct');
         
         % Append the filename info to the file_struct that was passed in
-        processed_files{i} = save_fname;
+        processed_files{j} = save_fname;
     end
 
 end

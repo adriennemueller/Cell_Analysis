@@ -20,11 +20,6 @@ function rslt = attIn_attOut( full_trials, currents )
         correct_trial_idx = find([trials.trial_error] == 0);
         correct_trials = trials(correct_trial_idx);
         
-        % Remove trials that are too short ?!?! FIX THIS BY REMOVING AND
-        % LOOKING AT PREPROCESS.
-        
-        
-
         % Adjust Theta
         if length(unique([correct_trials.theta])) > 9
             correct_trials = adjust_theta( correct_trials );
@@ -33,13 +28,15 @@ function rslt = attIn_attOut( full_trials, currents )
         % Count spikes in attentional window for each trial. Get list of numbers
         % for attend in, list of numbers for attend out.
         correct_trials = remove_probe_trials( correct_trials );
-        window = get_attend_window( correct_trials );
-        correct_trials = count_spikes( correct_trials, window, 'attend' );
+        att_window = get_attend_window( correct_trials );
+        correct_trials = count_spikes( correct_trials, att_window, 'attend' );
 
         % For each direction - get idxs for attend in and attend out, when drug
         % is present and when drug is absent
         idx_struct = segregate( correct_trials );
 
+        event_durations = get_event_durations( correct_trials(1) );
+        
         % Get D' for result of this
         dmat = gen_dprime_struct( idx_struct, correct_trials );
         
@@ -47,11 +44,11 @@ function rslt = attIn_attOut( full_trials, currents )
         anova_mat = gen_anova_struct( idx_struct, correct_trials );
 
         % Get Attend In/Out Drug On/Off SDen averages and SEs
-        sdens = get_attend_sdens( idx_struct, correct_trials, window(1) );
+        sdens = get_attend_sdens( idx_struct, correct_trials, att_window(1) );
         sden_summs =  get_trial_sum( sdens );
 
         % Get Visual Reponse p-values %%% VERIFY VERIFY VERIFY %%%
-        vis_window = [124 window(1)]; %THIS WINDOW 1 THING IS CONFUSING. FIX.
+        vis_window = [124 att_window(1)]; %THIS WINDOW 1 THING IS CONFUSING. FIX.
         correct_trials = count_spikes( correct_trials, vis_window, 'visual' );
         vis_pval = gen_vis_pval( idx_struct, correct_trials );
     
@@ -62,10 +59,38 @@ function rslt = attIn_attOut( full_trials, currents )
         rslt(i-1).sdens = sdens;
         rslt(i-1).sden_summs = sden_summs;
         rslt(i-1).vis_pval = vis_pval;
+        rslt(i-1).event_durations = event_durations;
 
         % MAKE A FUNCTION TO RUN THIS FUNCTION AND ADD THE OUTPUT TO THE
         % SESSION_STRUCT AND SAVE IT OUT?
     end
+end
+
+%
+function event_durs = get_event_durations( trial )
+
+    e_times = trial.code_times;
+    codes = trial.event_codes;
+    
+    fix_on   = get_time_matching_code( e_times, codes, 120);
+    targ_on  = get_time_matching_code( e_times, codes, 124);
+    targ_off = get_time_matching_code( e_times, codes, 126);
+    targ_on2 = get_time_matching_code( e_times, codes, 128);
+    
+    if find(trial.event_codes == 121)
+        cue_on = get_time_matching_code( e_times, codes, 121);
+    else
+        cue_on = get_time_matching_code( e_times, codes, 133);
+    end
+
+    event_durs.pre_cue = round((cue_on - targ_on) / 50) * 50;
+    event_durs.cue     = round((targ_off - cue_on) / 50) * 50;
+    event_durs.blank   = round((targ_on2 - targ_off) / 50) * 50;
+end
+
+function e_time = get_time_matching_code(times, codes, code)
+    idx = find(codes == code);
+    e_time = times(idx);
 end
 
 % Make a new trials structure with only the retain trials and trials with
@@ -94,7 +119,7 @@ end
 % Event codes for attentional window (Cue on, before targets blank and flip);
 % Need a function for this because I changed the event codes in Jan/Mar 2016   
 function window = get_attend_window( correct_trials )
-    if find(correct_trials(1).event_codes == 121);
+    if find(correct_trials(1).event_codes == 121)
         window = [121 126];
     else
         window = [133 126];
@@ -109,7 +134,7 @@ function vis_pval = gen_vis_pval( idx_struct, trials )
 
     vis_pval = [];
 
-    for i = 1:length(unique([idx_struct.theta])); % For the 8 directions
+    for i = 1:length(unique([idx_struct.theta])) % For the 8 directions
         
         theta = map_direction(i);
         
@@ -351,7 +376,7 @@ function rslt = gen_anova_struct( idx_struct, trials )
     for i = 1:length(unique([idx_struct.theta])); % For the 8 directions % Only 4 dir b/c copied att in/out.
         
         theta = map_direction(i);
-        if (theta >= 180), continue, end;
+        if (theta >= 180), continue, end
         
         
         % Find the Drug Off, Attend In trials and make a vector of the

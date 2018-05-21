@@ -8,9 +8,10 @@
 % trial starts and after it ends) - there are two separate 'millis', one
 % for behavioral data, and one for the unit data - that contain the
 % relevant aligment times. They are coregistered.
-function session_struct = sanitize_structs( raw_struct, alignments )
+function [session_struct valid_trial_struct_idx] = sanitize_structs( raw_struct, alignments )
 
     session_struct = {};
+    valid_trial_struct_idx = [];
 
     % For each unit/bhv-file pair - Make a new trial-based struct, throwing
     % out trials without neural data.
@@ -39,7 +40,6 @@ function session_struct = sanitize_structs( raw_struct, alignments )
             if (unit_beg <= pl_beg ) && (unit_end >= pl_end)
                 
                 % Make a new struct with bhv_info for this trial
-                
                 bhv_code_times = bhv.CodeTimes{j};
                 offset = bhv_code_times(1);
                 % Subtract ~110ms offset caused by ML collecting ~110ms of analogue data before trial start.
@@ -70,17 +70,70 @@ function session_struct = sanitize_structs( raw_struct, alignments )
 
         end
 
+        % Remove any trials with fewer than 5 spikes because too sparse.
+        %%% CONSIDER ONLY DOING THIS IF CONSECUTIVE FOR STRETCH OF MORE
+        %%% THAN 5 trials or so.
+        trial_struct = remove_spikeless_trials( trial_struct, 5 );
+        
         % Add the drug field to the trial-struct and remove inappropriate
-        % drug trials
-        %%% TEST TEST TEST
+        % drug trials. 
         trial_struct = adjust_drug( trial_struct );
+
+        % Make sure there are enough trials of each unique drug condition
+        % in this trial_struct. If not empty the trial_struct
+        [trial_struct, keep] = verify_drug_trialcounts( trial_struct, 20 );
+        if keep, valid_trial_struct_idx = [valid_trial_struct_idx i]; end
         
         % Add the full trial-struct for this session to the session-struct.
         % (Each element a unit/bhv pairing).
         session_struct{i} = trial_struct;
     end
+   
+end
+
+
+% Go through trial_struct and remove any trials with fewer than min_spikes spikes
+function trial_struct = remove_spikeless_trials( trial_struct, min_spikes )
+
+    spike_sums = arrayfun(@(x) sum(x.spikes),trial_struct);
+    spikeless_trials = find( spike_sums < min_spikes );
+    trial_struct(spikeless_trials) = [];
 
 end
+
+
+
+% Go through all unique currents in a trial_struct; if there are fewer than
+% 20 trials for any unique current, remove those trials from the
+% trial_struct. If there are not two unique currents - one of which is -15,
+% do not keep the trial_struct.
+function [trial_struct, keep] = verify_drug_trialcounts( trial_struct, min_trial_num )
+  
+    % Find unique currents
+    unique_currents = unique([trial_struct.drug]);
+    keep = 1;
+    toss_curr = [];
+    
+    % Go through each current and identify whether there are enough trials
+    % or not. If there are not, remove those trials from trial_struct.
+    for i = 1:length(unique_currents)        
+        curr = unique_currents(i);
+        curr_idxs = find( [trial_struct.drug] == curr );
+        if length( curr_idxs ) < min_trial_num
+            trial_struct( curr_idxs ) = [];
+            toss_curr = [toss_curr i];
+        end
+    end
+    unique_currents(toss_curr) = [];
+    
+    % If there are fewer than two currents and there is no retain current
+    % info, report not to keep this trial_struct.
+    if (length(unique_currents) < 2) || ~ max(unique_currents == -15)
+        keep = 0;
+    end
+    
+end
+
 
 % truncate_trials takes an ML bhv struct and the number of trials in length
 % that it *should* be and removes trials from the end until it is the right
@@ -195,19 +248,7 @@ end
 
 % Adjust the current values so they are consistent within ~2nA error.
 function current = adjust_current( current )
-    if (-17 <= current) && (current <= -13)
-        current = -15;
-    elseif (18 <= current) && (current <= 22)
-        current = 20;
-    elseif (38 <= current) && (current <= 42)
-        current = 40;
-    elseif (43 <= current) && (current <= 47)
-        current = 45;
-    elseif (48 <= current) && (current <= 52)
-        current = 50;
-    elseif (95 <= current) && (current <= 105)
-        current = 100;
-    end
+    current = round( current / 5 ) * 5;
 end
 
 % Returns a list of spike-times re-aligned to trial-onset.
