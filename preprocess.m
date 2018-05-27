@@ -201,7 +201,7 @@ function alignments = find_alignments( raw_struct )
         
                         
         
-        if total > 10; % Should have at least 10 trials in any session being analyzed. 
+        if total > 10 % Should have at least 10 trials in any session being analyzed. 
             
             % Find associated unit files
             for j = 1:n_units
@@ -327,5 +327,4 @@ function raw_struct = load_data_files( main_direc, session_struct )
     raw_struct.units = units_struct;
    
 end
-%Maybe rename raw_struct to session_struct
 

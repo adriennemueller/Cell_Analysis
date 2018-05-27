@@ -6,18 +6,12 @@ function make_master_file_struct( clean )
 
     if nargin < 1, clean = 1; end % Clean old mfs by default.
 
-    master_file_struct.main_direc = '/Users/Adrienne/Documents/MATLAB/Cell_Analysis/';
-
-    ionto_super_direc = '/Volumes/Hnoss/Data/Iontophoresis';
-    
-    unit_sub_direcs = dir(ionto_super_direc);
-    unit_sub_direcs = unit_sub_direcs([unit_sub_direcs.isdir] == 1);
-    unit_sub_direcs = unit_sub_direcs( 3:end ); % Eliminate . and .. directories
 
     % Removes old master_file_struct
     if clean
         delete('master_file_struct.mat');
         master_file_struct = struct;
+        master_file_struct.main_direc = '/Users/Adrienne/Documents/MATLAB/Cell_Analysis/';
         save('master_file_struct', 'master_file_struct');
     else
         load( 'master_file_struct.mat' );                
@@ -28,6 +22,11 @@ function make_master_file_struct( clean )
         dud_idxs = find(matched_idx_list == 0);
         master_file_struct.session(dud_idxs) = [];        
     end
+        
+    ionto_super_direc = '/Volumes/Hnoss/Data/Iontophoresis';
+    unit_sub_direcs = dir(ionto_super_direc);
+    unit_sub_direcs = unit_sub_direcs([unit_sub_direcs.isdir] == 1);
+    unit_sub_direcs = unit_sub_direcs( 3:end ); % Eliminate . and .. directories
     
     % Iterate through unit_subdirecs
     for i = 1:length(unit_sub_direcs)
