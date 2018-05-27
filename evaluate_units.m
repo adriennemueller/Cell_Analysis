@@ -1,19 +1,24 @@
-function rslt = evaluate_units()
+function evaluate_units( query_input )
+
+    % By default, just show rasterplots - don't ask for decision on type.
+    if nargin < 1
+       query_input = 0;
+    end
+
+    % Open master_file_struct
+    load( 'master_file_struct', 'master_file_struct' );
     
-    % open master file struct
-    load( 'mfs', 'master_file_struct' );
-    
-    % if there is no evaluate units field, make one
+    % If there is no evaluate units field, make one
     if ~ isfield(master_file_struct.session, 'evaluated')
         master_file_struct.session(1).evaluated = [];
         [master_file_struct.session.evaluated] = deal(0);
     end
     
-    % find all the sessions that haven't been evaluated
+    % Find all the sessions that haven't been evaluated
     eval_idxs = find( [master_file_struct.session.evaluated] == 0 );
-    disp(['Unprocessed Sessions = ' num2str( length(eval_idxs) )] );
+    disp(['Unevaluated Sessions = ' num2str( length(eval_idxs) )] );
     
-    % go through them and evaluate thems
+    % Go through them and evaluate thems
     for i = 1:length(eval_idxs)
         
         proc_files = master_file_struct.session(eval_idxs(i)).processed_files;
@@ -33,12 +38,13 @@ function rslt = evaluate_units()
             
             currents = master_file_struct.session(eval_idxs(i)).currents(j);
             
-            spike_raster( curr_struct, currents{1} ); drawnow;
+            rasterplot_h = spike_raster( curr_struct, currents{1} ); drawnow;
             
-            %figure();
-            %set(0,'CurrentFigure',raster_plot)
-          %  type = input('What type of unit is this? 0(Trashy), 1(Vis-Att), 2(Pre-Trial), 3(Nonspecific), 4(Other):','s');
-          %  type_list = [type_list, str2num(type)];
+            if query_input
+                type = input('What type of unit is this? 0(Trashy), 1(Vis-Att), 2(Pre-Trial), 3(Nonspecific), 4(Other):','s');
+                type_list = [type_list, str2num(type)];
+                close( rasterplot_h );
+            end
             
         end
         master_file_struct.session(i).evaluated = 1;
@@ -46,8 +52,3 @@ function rslt = evaluate_units()
         save( 'mfs', 'master_file_struct' );
     end
 end
-
-% function keep = evaluate_unit( unit )
-% 
-% 
-% end

@@ -1,8 +1,8 @@
-function [ files ] = findfiles( folder, pattern, ret_direc )
 %FINDFILES Find all files in a folder, matching the pattern.
-
+function [ files ] = findfiles( folder, pattern, ret_direc )
     files = [];
     matches = dir(fullfile(folder, pattern));
+    
     % Don't return folders
     if (ret_direc == 0)
         matches = matches([matches.isdir] == 0);

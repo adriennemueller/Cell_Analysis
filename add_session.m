@@ -9,8 +9,6 @@
 
 % tmp_struct = an optional struct to use if you don't want to load and
 % append to the master_struct
-
-%%%% MAKE SOMETHING TO TEST THAT THE SESSION TO BE ADDED DOESN'T ALREADY EXIST!!!
 function master_file_struct = add_session( sub_direc, event_file, bhv_files, unit_files, drug, tmp_struct )
 
     
@@ -31,7 +29,7 @@ function master_file_struct = add_session( sub_direc, event_file, bhv_files, uni
     
     % Test whether this directory has already been added to the
     % master_struct; if so: skip it.
-    if sum(strcmp( {master_file_struct.session.sub_direc}, sub_direc ))
+    if max(strcmp( {master_file_struct.session.sub_direc}, sub_direc ))
         return
     end
     
@@ -41,7 +39,6 @@ function master_file_struct = add_session( sub_direc, event_file, bhv_files, uni
     master_file_struct.session( session_count + 1 ).unit_files   = unit_files;
     master_file_struct.session( session_count + 1 ).drug         = drug;
     master_file_struct.session( session_count + 1 ).preprocessed = 0; % Has not yet been preprocessed.
-    
     
     % Save the updated Master Struct if a new struct isn't defined
     if nargin < 6
