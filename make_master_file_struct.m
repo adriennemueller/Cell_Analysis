@@ -6,15 +6,20 @@ function make_master_file_struct( clean )
 
     if nargin < 1, clean = 1; end % Clean old mfs by default.
 
+    ionto_super_direc = '/Volumes/Hnoss/Data/Iontophoresis';
+    unit_sub_direcs = dir(ionto_super_direc);
+    unit_sub_direcs = unit_sub_direcs([unit_sub_direcs.isdir] == 1);
+    unit_sub_direcs = unit_sub_direcs( 3:end ); % Eliminate . and .. directories
 
     % Removes old master_file_struct
     if clean
+        disp( 'Cleaning old master_file_struct.');
         delete('master_file_struct.mat');
         master_file_struct = struct;
         master_file_struct.main_direc = '/Users/Adrienne/Documents/MATLAB/Cell_Analysis/';
         save('master_file_struct', 'master_file_struct');
     else
-        load( 'master_file_struct.mat' );                
+        load( 'master_file_struct.mat', 'master_file_struct' );                
         % If there are folders in master_file_struct that are no longer in
         % the superdirec, remove them from master_file_struct
         mfs_subdirecs = {master_file_struct.session.sub_direc};
@@ -23,10 +28,6 @@ function make_master_file_struct( clean )
         master_file_struct.session(dud_idxs) = [];        
     end
         
-    ionto_super_direc = '/Volumes/Hnoss/Data/Iontophoresis';
-    unit_sub_direcs = dir(ionto_super_direc);
-    unit_sub_direcs = unit_sub_direcs([unit_sub_direcs.isdir] == 1);
-    unit_sub_direcs = unit_sub_direcs( 3:end ); % Eliminate . and .. directories
     
     % Iterate through unit_subdirecs
     for i = 1:length(unit_sub_direcs)
@@ -83,7 +84,6 @@ function make_master_file_struct( clean )
         end
         
         % Add Session
-        disp( strcat( 'Adding session:', {' '}, folder.name ) );
         master_file_struct = add_session( folder.name, event_file, bhv_filelist, unit_filelist, drug, master_file_struct );
         
     end

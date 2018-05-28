@@ -4,13 +4,14 @@
 % which bhv files go with which units - generates set of new, clean structs
 % for each bhv/unit pair, saves them out and (if no tmp struct is specified)
 % updates the master file struct.
-function preprocess(tmp_struct)
+function preprocess(omni_cell_struct, tmp_struct )
 
     % Load Master File Struct
-    if nargin < 1
+    if nargin == 0
         load( 'master_file_struct', 'master_file_struct' );
-    else
-        master_file_struct = tmp_struct;
+        omni_cell_struct = 0; % Default no omni cell struct
+    elseif nargin == 1, load( 'master_file_struct', 'master_file_struct' );
+    else, master_file_struct = tmp_struct;
     end
     
     % Directory to Save Processed Files:
@@ -52,12 +53,16 @@ function preprocess(tmp_struct)
 
         for j = 1:length(valid_trialstruct_idxs)
             % Save Out the Clean Session Sub-Structs, Add them to the Master File Struct
-            processed_files = export_sessions( save_superdirec, master_file_struct.session(proc_idxs(i)), alignments, session_struct, valid_trialstruct_idxs);
+            [processed_files data_mats] = export_sessions( save_superdirec, master_file_struct.session(proc_idxs(i)), alignments, session_struct, valid_trialstruct_idxs);
             master_file_struct.session(proc_idxs(i)).processed_files = processed_files;
 
             % Also add details about the currents for each unit in a session to
             % the master file struct
             master_file_struct.session(proc_idxs(i)).currents = find_unique_currents(session_struct, valid_trialstruct_idxs);
+
+            % update omni_cell_struct, if asked to
+            if omni_cell_struct, master_file_struct.session(proc_idxs(i)).data_mat = data_mats; end
+        
         end
         
         % Note that this session has now been preprocessed.
@@ -65,8 +70,8 @@ function preprocess(tmp_struct)
 
         % Will only save out, and update, master_file_struct if told to
         % work on master_file_struct by lack of input argument
-        if nargin < 1
-        save('master_file_struct', 'master_file_struct');
+        if nargin < 2
+        save('master_file_struct', 'master_file_struct', '-v7.3');
         end
         
     end
@@ -89,8 +94,9 @@ end
 % export_sessions loops through and exports clean structs for the found
 % bhv/unit pairs for the session and updates the main_file_struct with the
 % filenames for those output files.
-function processed_files = export_sessions( save_superdirec, file_struct, alignments, session_struct, valid_idxs )
+function [processed_files data_mats] = export_sessions( save_superdirec, file_struct, alignments, session_struct, valid_idxs )
     processed_files = {};
+    data_mats = struct;
     
     for j = 1:length(valid_idxs)
         i = valid_idxs(j);
@@ -107,6 +113,7 @@ function processed_files = export_sessions( save_superdirec, file_struct, alignm
         % combinations in the session
         data_struct = session_struct{i};
         save( fullfile(save_direc, save_fname), 'data_struct');
+        data_mats(j).data_mat = data_struct;
         
         % Append the filename info to the file_struct that was passed in
         processed_files{j} = save_fname;

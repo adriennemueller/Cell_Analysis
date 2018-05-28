@@ -33,6 +33,8 @@ function master_file_struct = add_session( sub_direc, event_file, bhv_files, uni
         return
     end
     
+    disp( strcat( 'Adding session:', {' '}, sub_direc ) );
+
     master_file_struct.session( session_count + 1 ).sub_direc    = sub_direc;
     master_file_struct.session( session_count + 1 ).event_file   = event_file;
     master_file_struct.session( session_count + 1 ).bhv_files    = bhv_files;
