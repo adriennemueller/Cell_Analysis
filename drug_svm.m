@@ -4,39 +4,38 @@ function rslt = drug_svm( mfs )
     svm_mat = [];
     drug_labels = {};
 
-    % Go through all units and make matrices / vectors of drug off and drug on
-    % - for the different drugs individually
-    % Use only attend window from targ blank start - 300ms (or - 500?)
-    
-    num_sessions = length(mfs.session);
-    
-    for i = 1:num_sessions
-       
-        num_units = length(mfs.session(i).data_mat);
+    % Get the list of processed filenames
+    fn_ffps = get_ffps( mfs );
+    fnames = fn_ffps(1,:); ffpaths = fn_ffps(2,:); drug = fn_ffps(3,:); currents = fn_ffps(4,:);
+   
+    for i = 1:length(fnames)
         
-        for j = 1:num_units
-            % Make spike matrix of attend window
-            curr_data_mat = mfs.session(i).data_mat(j).data_mat;
-            
-            % Only keep correct trials in matrix
-            valid_idxs = find( [curr_data_mat.trial_error] == 0 );
-            spike_mat = {curr_data_mat(valid_idxs).spikes};
-            millis_mat = {curr_data_mat(valid_idxs).millis};
-            attend_spike_mat = attend_only_window( spike_mat, millis_mat, {curr_data_mat(valid_idxs).event_codes}, {curr_data_mat(valid_idxs).code_times} );
-            
-            % Get list of drug vals for correct trials
-            drug_vals = [curr_data_mat(valid_idxs).drug]; 
-            curr_drug_labels = relabel_drug_vals( drug_vals, mfs.session(i).currents(j), mfs.session(i).drug );
-            
-            % Append spike matrix to svm_mat and drug_labels to
-            % drug_labels.
-            svm_mat = vertcat(svm_mat, attend_spike_mat');
-            drug_labels = vertcat(drug_labels, curr_drug_labels');
-        end
+        % Make spike matrix of attend window
+        disp(strcat('Concatenating: ', {' '},  fnames(i)));
+        load( ffpaths{i}, 'data_struct' ); curr_data_mat = data_struct; 
+        
+        % Only keep correct attend trials in matrix
+        correct_idxs = find( [curr_data_mat.trial_error] == 0 );
+        attend_trial_idxs = find(cell2mat(cellfun( @(codes) ismember(126, codes), {curr_data_mat.event_codes}, 'Uniformoutput', 0 )));
+        valid_idxs = correct_idxs( ismember(correct_idxs, attend_trial_idxs) );
+        
+        spike_mat = {curr_data_mat(valid_idxs).spikes};
+        millis_mat = {curr_data_mat(valid_idxs).millis};
+        attend_spike_mat = attend_only_window( spike_mat, millis_mat, {curr_data_mat(valid_idxs).event_codes}, {curr_data_mat(valid_idxs).code_times} );
+
+        % Get list of drug vals for correct trials
+        drug_vals = [curr_data_mat(valid_idxs).drug]; 
+        curr_drug_labels = relabel_drug_vals( drug_vals, currents{i} , drug(i) );
+
+        % Append spike matrix to svm_mat and drug_labels to
+        % drug_labels.
+        svm_mat = vertcat(svm_mat, attend_spike_mat');
+        drug_labels = vertcat(drug_labels, curr_drug_labels');
+        
+        assignin( 'base', 'svm_mat', svm_mat);
+        assignin( 'base', 'drug_labels', drug_labels);
         
     end
-    
-    
 
     % Separate into training sets and test set
     
@@ -52,7 +51,6 @@ end
 
 % Take drug currents and convert them into a list of string labels
 function drug_labels = relabel_drug_vals( drug_vals, currents, drug )
-    currents = currents{1};
     drug_labels = cell(1,length(drug_vals));
 
     control_idxs = find(drug_vals == -15 );
@@ -64,6 +62,7 @@ function drug_labels = relabel_drug_vals( drug_vals, currents, drug )
         drug_labels(current_idxs) = {strcat( drug, '_', num2str(drug_curr))};
     end
 end
+
 
 % Make a smaller spike matrix of just the attend window from 300ms before
 % blank on to blank on.

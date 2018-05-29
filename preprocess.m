@@ -4,13 +4,10 @@
 % which bhv files go with which units - generates set of new, clean structs
 % for each bhv/unit pair, saves them out and (if no tmp struct is specified)
 % updates the master file struct.
-function preprocess(omni_cell_struct, tmp_struct )
+function preprocess( tmp_struct )
 
     % Load Master File Struct
-    if nargin == 0
-        load( 'master_file_struct', 'master_file_struct' );
-        omni_cell_struct = 0; % Default no omni cell struct
-    elseif nargin == 1, load( 'master_file_struct', 'master_file_struct' );
+    if nargin < 1, load( 'master_file_struct', 'master_file_struct' );
     else, master_file_struct = tmp_struct;
     end
     
@@ -59,10 +56,7 @@ function preprocess(omni_cell_struct, tmp_struct )
             % Also add details about the currents for each unit in a session to
             % the master file struct
             master_file_struct.session(proc_idxs(i)).currents = find_unique_currents(session_struct, valid_trialstruct_idxs);
-
-            % update omni_cell_struct, if asked to
-            if omni_cell_struct, master_file_struct.session(proc_idxs(i)).data_mat = data_mats; end
-        
+      
         end
         
         % Note that this session has now been preprocessed.
@@ -70,7 +64,7 @@ function preprocess(omni_cell_struct, tmp_struct )
 
         % Will only save out, and update, master_file_struct if told to
         % work on master_file_struct by lack of input argument
-        if nargin < 2
+        if nargin < 1
         save('master_file_struct', 'master_file_struct', '-v7.3');
         end
         
