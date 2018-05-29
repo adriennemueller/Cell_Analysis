@@ -39,10 +39,24 @@ function rslt = drug_svm( mfs )
 
     % Separate into training sets and test set
     
+    
+    
+    [train_idxs, unused, test_idxs] = divderand(svm_mat, 0.8, 0, 0.2);
+    train_svm_mat = svm_mat( train_idxs, : ); train_drug_labels = drug_labels( train_idxs );
+    test_svm_mat  = svm_mat( test_idxs, : );  test_drug_labels = drug_labels(  test_idxs );
+    
+    
+    
     % Train and crossvalidate
+    SVMModel = fitcsvm(train_svm_mat, train_drug_labels, 'KernelFunction','rbf', 'Standardize',true,'ClassNames',{'Control','SCH23390_50'});
+    CVSVMModel = crossval(SVMModel);
+    classLoss = kfoldLoss(CVSVMModel) % The output of this is the generalization rate.
+ 
     
     % Test
-    
+    [label,score] = predict( SVMModel, test_svm_mat )
+    ScoreSVMModel = fitPosterior( SVMModel, svm_mat, test_drug_labels)
+
     
     
     
