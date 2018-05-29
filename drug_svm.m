@@ -2,6 +2,7 @@
 function rslt = drug_svm( mfs )
 
     svm_mat = [];
+    drug_labels = {};
 
     % Go through all units and make matrices / vectors of drug off and drug on
     % - for the different drugs individually
@@ -29,8 +30,8 @@ function rslt = drug_svm( mfs )
             
             % Append spike matrix to svm_mat and drug_labels to
             % drug_labels.
-            svm_mat = vertcat(svm_mat, attend_spike_mat);
-            drug_labels = vertcat(drug_labels, curr_drug_labels);
+            svm_mat = vertcat(svm_mat, attend_spike_mat');
+            drug_labels = vertcat(drug_labels, curr_drug_labels');
         end
         
     end
@@ -68,18 +69,16 @@ end
 % blank on to blank on.
 function attend_mat = attend_only_window( spike_mat, millis_mat, event_codes, code_times )
 
-    %%% CHECK CELLFUN %%%
-
-    % Find the code_time that matches the event_code of target off (blank on).
-    targ_off_code_indexes = find( event_codes == 126 );
-    targ_off_times = code_times( targ_off_code_indexes );
-    
+    % Loops over matching cells in event_codes and code_times and applies
+    % the find (of eventcode 126 - blank off) to each pair.
+    targ_off_times = cellfun(@(codes, times) times(codes == 126), event_codes, code_times);
+        
     % Find the index of the milli value that corresponds to that time.
-    targ_off_idxs = find(millis_mat == targ_off_times);
+    targ_off_idxs = cellfun(@(millis, times) find(millis == times), millis_mat, num2cell(targ_off_times), 'uniformoutput', 0);
     
     % Grab the chunk of spikes from that index to -300 from that index
-    attend_mat = spike_mat( :, (targ_off_idxs - 300):targ_off_idxs);
-
+    attend_cellarray = cellfun(@(spikes, idxs) spikes( (idxs - 299):idxs ), spike_mat, targ_off_idxs, 'uniformoutput', 0);
+    attend_mat = cell2mat(attend_cellarray);
 end
 
 
