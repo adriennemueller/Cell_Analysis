@@ -56,6 +56,51 @@ function stat_struct = process2()
     save( 'stat_struct', 'stat_struct');
 end
 
+% Run through mfs, getting the filenames, full file paths, and drug of the different processed files   
+function ffps = get_ffps( mfs )
+    
+    ffps = {};
+    fnames = {};
+    drug = {};
+    currents = {};
+    if strcmp( comp_mac_address, 'iMac'), save_direc = '/Users/Adrienne/Documents/MATLAB/Cell_Analysis/Processed';
+    else save_direc = '/Users/eddi/Documents/MATLAB/Cell_Analysis/Processed';
+    end
+
+    for i = 1:length(mfs.session)
+        sub_direc = mfs.session(i).sub_direc;
+        
+        for j = 1:length( mfs.session(i).processed_files )
+            file =  [mfs.session(i).processed_files(j)];
+            fnames = [fnames file];
+            
+            ffp = fullfile( save_direc, sub_direc, file );
+            ffps = [ffps ffp];
+            
+            curr_drug = mfs.session(i).drug;
+            drug = [drug curr_drug];
+            
+            current = mfs.session(i).currents(j);
+            currents = [currents current];
+        end
+        
+    end
+    
+    ffps = [fnames; ffps; drug; currents];
+end
+
+function computer = comp_mac_address()
+
+    localhost = java.net.InetAddress.getLocalHost;
+    networkinterface = java.net.NetworkInterface.getByInetAddress(localhost);
+    macaddress = typecast(networkinterface.getHardwareAddress, 'uint8');
+    
+    if min(macaddress == [56;201;134;2;215;75]) == 1
+        computer = 'iMac';
+    else, computer = 'MacBook';
+    end
+
+end
 
 
 function writecsv( tbl, savename )
