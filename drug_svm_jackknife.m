@@ -27,7 +27,7 @@ function rslt = drug_svm_jackknife( mfs, drug_selection, current_selection, cros
     assignin( 'base', 'drug_labels', drug_labels);
     
     % Separate data into crossvalidation partitions 
-    partition_struct = partition_svm_mat( svm_mat, drug_labels, cross_val_n );
+    partition_struct = partition_svm_mat( svm_mat, drug_labels, crossval_n );
     
     % Generating training and test sets from the 10 partions
     svm_struct = gen_crossval_svm_struct( partition_struct );
@@ -46,8 +46,7 @@ function rslt = drug_svm_jackknife( mfs, drug_selection, current_selection, cros
         
         % Test SVM
         [label,score] = predict( SVMModel, test_svm_mat );
-        perc_corr = compare_labels( label, test_drug_labels );
-
+        
         svm_struct(i).predicted_labels = label;
         svm_struct(i).score = score;
         svm_struct(i).Model = SVMModel;
@@ -55,7 +54,7 @@ function rslt = drug_svm_jackknife( mfs, drug_selection, current_selection, cros
     end
     
     % Perform sign test on 'left out' trials
-    rslt
+    rslt = svm_struct;
       
 end
 
@@ -67,11 +66,14 @@ function svm_struct = gen_crossval_svm_struct( partition_struct )
 
     for left_out_idx = 1:length(partition_struct)
        
-        svm_struct(left_out_idx).train_svm_mat = vertcat(partition_struct( ~ left_out_idx ).svm_mat);
-        svm_struct(left_out_idx).train_drug_labels = vertcat(partition_struct( ~ left_out_idx ).orig_labels);
+        curr_svm_struct = partition_struct;
+        curr_svm_struct(left_out_idx) = [];
         
-        svm_struct(left_out_idx).test_svm_mat = vertcat(partition_struct( left_out_idx ).svm_mat);
-        svm_struct(left_out_idx).test_drug_labels = vertcat(partition_struct( left_out_idx ).orig_labels);
+        svm_struct(left_out_idx).train_svm_mat = vertcat(curr_svm_struct.svm_mat);
+        svm_struct(left_out_idx).train_drug_labels = vertcat(curr_svm_struct.orig_labels);
+        
+        svm_struct(left_out_idx).test_svm_mat = partition_struct(left_out_idx).svm_mat;
+        svm_struct(left_out_idx).test_drug_labels = partition_struct(left_out_idx).orig_labels;
 
     end
 
@@ -80,7 +82,7 @@ end
 
 % Break a matrix of trials and a matrix of data labels into cross_val_n
 % number of partitions. Return them in a struct.
-function partition_struct = partition_svm_mat( svm_mat, drug_labels, cross_val_n )
+function partition_struct = partition_svm_mat( svm_mat, drug_labels, crossval_n )
 
     partition_struct = struct;
 

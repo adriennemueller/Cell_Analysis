@@ -71,7 +71,10 @@ function rslt = drug_svm( mfs, drug_selection, current_selection, straps, scramb
 
         
     rslt = CVSVMModel;
-        
+    
+    signtest_pval = signtest( [CVSVMModel.perc_corr], [CVSVMModel.scr_perc_corr] );
+    disp( strcat( 'Signtest p-value = ', {' '}, num2str(signtest_pval) ) ); 
+    
     %SVMModel = fitclinear(train_svm_mat, train_drug_labels, 'ClassNames',{'Control', drug_label_string{1} });
     %classLoss = kfoldLoss(CVSVMModel) % The output of this is the generalization rate.
     %ScoreSVMModel = fitPosterior( SVMModel, train_svm_mat, train_drug_labels)
