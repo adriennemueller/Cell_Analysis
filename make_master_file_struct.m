@@ -1,7 +1,6 @@
 % This functions generates a master_file struct_from scratch
 % Want to update this so it adds new ones without overwriting old master
 % file struct, necessarily.
-
 function make_master_file_struct( clean )
 
     if nargin < 1, clean = 1; end % Clean old mfs by default.
@@ -28,7 +27,6 @@ function make_master_file_struct( clean )
         master_file_struct.session(dud_idxs) = [];        
     end
         
-    
     % Iterate through unit_subdirecs
     for i = 1:length(unit_sub_direcs)
         
