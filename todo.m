@@ -13,7 +13,8 @@ end
 % Will run through all processed files and calculate d's, anovas, etc for
 % different epochs of the trial and save them to master_file_struct
 
-%%% SHOULD MAKE PREPROCSS IDENTIFY WHETHER ATTEND OR WM TRIAL
+%%% SHOULD MAKE PREPROCSS IDENTIFY WHETHER ATTEND OR WM TRIAL, Attend
+%%% Contrast, Probe trials
 function rslt = process_stats( )
 
 end
