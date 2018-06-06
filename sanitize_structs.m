@@ -78,6 +78,9 @@ function [session_struct valid_trial_struct_idx] = sanitize_structs( raw_struct,
         % Add the drug field to the trial-struct and remove inappropriate
         % drug trials. 
         trial_struct = adjust_drug( trial_struct );
+        
+        % Add the paradigm field to the trial-struct.
+        trial_struct = identify_paradigm( trial_struct, bhv.ConditionsFile );
 
         % Make sure there are enough trials of each unique drug condition
         % in this trial_struct. If not empty the trial_struct
@@ -89,6 +92,33 @@ function [session_struct valid_trial_struct_idx] = sanitize_structs( raw_struct,
         session_struct{i} = trial_struct;
     end
    
+end
+
+
+% Go through trial_struct and identify, for each trial, whether it is an
+% attention trial, a working memory trial, a probe trial or an
+% attention-contrast trial. Unique event codes are:
+% Probe Trials:         153
+% Attention:            126
+% Attention Contrast:   126, need bhv_filename
+% Working Memory:       155 or 161
+function trials = identify_paradigm( trials, full_bhvfile )
+
+    for i = 1:length(trials)
+        if max([trials(i).event_codes] == 153)
+            trials(i).paradigm = 'Probe';
+        elseif max([trials(i).event_codes] == 126) && contains(full_bhvfile, 'Contrast')
+            trials(i).paradigm = 'Attention_Contrast';
+        elseif max([trials(i).event_codes] == 126)
+            trials(i).paradigm = 'Attention';
+        elseif max([trials(i).event_codes] == 155)
+            trials(i).paradigm = 'WM';
+        else
+            trials(i).paradigm = 'Unknown';
+        end
+        
+    end
+
 end
 
 

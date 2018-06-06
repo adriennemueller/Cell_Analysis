@@ -1,6 +1,13 @@
 %%% FUNCTIONS THAT WANT TO REPLACE process, process2, attIn_att_Out,
 %%% aIaOContrasts, WmIn, wmOut etc.
 
+% Will probably have wrapper functions for gen_overviw_fig - to loop
+% through all procssd files, and plot dprime unity - with favourite
+% selections - or could just put in comment in top of mfile.
+function gen_overview_figs( mfs )
+
+end
+
 
 % Will make and saveout a summary of att-in/att-out, drug-on/drug-off by
 % direction for a given file. May include anova sub_fig.
@@ -15,7 +22,12 @@ end
 
 %%% SHOULD MAKE PREPROCSS IDENTIFY WHETHER ATTEND OR WM TRIAL, Attend
 %%% Contrast, Probe trials
-function rslt = process_stats( )
+% Are probe trials tossed out in early sessions.
+% Do probe rials and wm trials share the same code(wm used)?
+% Are there MGS only files I haven't included?
+function mfs = process_stats( mfs )
+
+
 
 end
 
@@ -28,9 +40,6 @@ end
 
 
 %%% THINK %%%
-% Will probably have wrapper functions for gen_overviw_fig - to loop
-% through all procssd files, and plot dprime unity - with favourite
-% selections - or could just put in comment in top of mfile.
 
 % Should combined drug_svm?
 

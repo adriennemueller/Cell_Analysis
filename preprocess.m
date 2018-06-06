@@ -56,6 +56,10 @@ function preprocess( tmp_struct )
             % Also add details about the currents for each unit in a session to
             % the master file struct
             master_file_struct.session(proc_idxs(i)).currents = find_unique_currents(session_struct, valid_trialstruct_idxs);
+            
+            % Also add details about which trial types are present for each
+            % unit in a session to the master file struct.
+            master_file_struct.session(proc_idxs(i)).paradigms = find_unique_paradigms( session_struct, valid_trialstruct_idxs );
       
         end
         
@@ -73,6 +77,18 @@ function preprocess( tmp_struct )
 
 
 end
+
+% Make a list of the unique paradigms for each unit in a given session.
+function paradigms = find_unique_paradigms( session_struct, valid_trialstruct_idxs )
+
+    paradigms = {};
+    for i = 1:length(valid_trialstruct_idxs)
+        idx = valid_trialstruct_idxs(i);
+        paradigms{i} = unique([session_struct{idx}.paradigm]);
+    end
+
+end
+
 
 % Make a list of the unique currents for each unit in a given session.
 function currents = find_unique_currents( session_struct, valid_trialstruct_idxs )
