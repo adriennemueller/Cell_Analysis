@@ -17,19 +17,6 @@ function rslt = gen_overview_fig( file, trial_type )
 end
 
 
-% Will run through all processed files and calculate d's, anovas, etc for
-% different epochs of the trial and save them to master_file_struct
-
-%%% SHOULD MAKE PREPROCSS IDENTIFY WHETHER ATTEND OR WM TRIAL, Attend
-%%% Contrast, Probe trials
-% Are probe trials tossed out in early sessions.
-% Do probe rials and wm trials share the same code(wm used)?
-% Are there MGS only files I haven't included?
-function mfs = process_stats( mfs )
-
-
-
-end
 
 
 % Will replace original d_prime unitys for vis/combined, etc and plot

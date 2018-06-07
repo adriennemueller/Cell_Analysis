@@ -61,9 +61,9 @@ function make_master_file_struct( clean )
         folder_date = convert_folder_date(folder.name);
         
         bhv_filelist_struct = findfiles( ionto_super_direc, strcat('*',folder_date,'*'), 0 );
-        LP_file_exists = strfind( {bhv_filelist_struct.name}, 'LP' );
-        LP_file_indices = find(~cellfun(@isempty, LP_file_exists));
-        bhv_filelist_struct = bhv_filelist_struct( LP_file_indices );
+        bhv_file_exists = strfind( {bhv_filelist_struct.name}, 'bhv' );
+        bhv_file_indices = find(~cellfun(@isempty, bhv_file_exists));
+        bhv_filelist_struct = bhv_filelist_struct( bhv_file_indices );
         
         if isempty( bhv_filelist_struct )
             disp( strcat('No bhv files in folder:', {' '}, folder.name ) );

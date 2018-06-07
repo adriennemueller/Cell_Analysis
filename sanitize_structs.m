@@ -102,16 +102,20 @@ end
 % Attention:            126
 % Attention Contrast:   126, need bhv_filename
 % Working Memory:       155 or 161
+%%% NEED TO DEAL WITH ALL THE UNKNOWNs, which are probably error trials...
+%%% or maybe probe trials.
+% Are probe trials tossed out in early sessions.
+% Do probe rials and wm trials share the same code(wm used)?
 function trials = identify_paradigm( trials, full_bhvfile )
 
     for i = 1:length(trials)
-        if max([trials(i).event_codes] == 153)
+        if max([trials(i).event_codes] == 000) %%% NEED ACTUAL PROBE TRIAL IDENTIFIER
             trials(i).paradigm = 'Probe';
         elseif max([trials(i).event_codes] == 126) && contains(full_bhvfile, 'Contrast')
             trials(i).paradigm = 'Attention_Contrast';
         elseif max([trials(i).event_codes] == 126)
             trials(i).paradigm = 'Attention';
-        elseif max([trials(i).event_codes] == 155)
+        elseif max([trials(i).event_codes] == 155) % NEED SEPARATE ONE FOR MGS ONLY FILES?
             trials(i).paradigm = 'WM';
         else
             trials(i).paradigm = 'Unknown';
