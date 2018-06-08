@@ -1,5 +1,9 @@
 % Make spike matrix of (currently only) attend window
-function rslt_mat = filtered_windowed_spikemat( curr_data_mat, current, window, direction )
+
+
+%%% NEED DIRECTION AND INOUT FILTERING
+%%% NEED TO FIX DRUG SVM CODE SO INCLUDES INOUT
+function rslt_mat = filtered_windowed_spikemat( curr_data_mat, current, window, direction, inout )
     
     % Only keep correct attend trials in matrix
     correct_idxs = find( [curr_data_mat.trial_error] == 0 );

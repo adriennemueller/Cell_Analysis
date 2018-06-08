@@ -84,7 +84,7 @@ function paradigms = find_unique_paradigms( session_struct, valid_trialstruct_id
     paradigms = {};
     for i = 1:length(valid_trialstruct_idxs)
         idx = valid_trialstruct_idxs(i);
-        paradigms{i} = unique([session_struct{idx}.paradigm]);
+        paradigms{i} = unique({session_struct{idx}.paradigm});
     end
 
 end

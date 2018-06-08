@@ -140,31 +140,6 @@ function [svm_mat, drug_labels] = multicell_mat( mfs, drug_selection, current_se
     end
 end
 
-% Loads the chosen processed file
-function data_struct = load_processed_file( sub_direc, processed_fname )
-
-    if strcmp( comp_mac_address, 'iMac'), save_direc = '/Users/Adrienne/Documents/MATLAB/Cell_Analysis/Processed';
-    else save_direc = '/Users/eddi/Documents/MATLAB/Cell_Analysis/Processed';
-    end
-     
-    ffp = fullfile( save_direc, sub_direc, processed_fname );
-    load( ffp, 'data_struct' );
-end
-
-% Determines which computer the code is being run on - the iMac or the
-% MacBook
-function computer = comp_mac_address()
-    localhost = java.net.InetAddress.getLocalHost;
-    networkinterface = java.net.NetworkInterface.getByInetAddress(localhost);
-    macaddress = typecast(networkinterface.getHardwareAddress, 'uint8');
-    
-    if min(macaddress == [56;201;134;2;215;75]) == 1
-        computer = 'iMac';
-    else, computer = 'MacBook';
-    end
-end
-
-
 % Take drug currents and convert them into a list of string labels
 function drug_labels = get_drug_labels( control_length, drug_length )
     total_length = control_length+drug_length;
