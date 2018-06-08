@@ -3,63 +3,7 @@
 
 function rslt = attIn_attOut( full_trials, currents )
 
-    % If only one current was applied, return an empty rslt.
-    if length(currents) == 1
-        rslt = [];
-    end
-
-    % Go through all different ejected currents in the file. (currents(1)
-    % will be the retain current.
-    for i = 2:length(currents)
-        
-        % Get only retain trials and trials with that current
-        eject_current = currents(i); retain_current = currents(1);
-        trials = segregate_by_current( full_trials, retain_current, eject_current );
-
-        % Remove error trials
-        correct_trial_idx = find([trials.trial_error] == 0);
-        correct_trials = trials(correct_trial_idx);
-        
-        % Adjust Theta
-        if length(unique([correct_trials.theta])) > 9
-            correct_trials = adjust_theta( correct_trials );
-        end
-
-        % Count spikes in attentional window for each trial. Get list of numbers
-        % for attend in, list of numbers for attend out.
-        correct_trials = remove_probe_trials( correct_trials );
-        att_window = get_attend_window( correct_trials );
-        correct_trials = count_spikes( correct_trials, att_window, 'attend' );
-
-        % For each direction - get idxs for attend in and attend out, when drug
-        % is present and when drug is absent
-        idx_struct = segregate( correct_trials );
-
-        event_durations = get_event_durations( correct_trials(1) );
-        
-        % Get D' for result of this
-        dmat = gen_dprime_struct( idx_struct, correct_trials );
-        
-        % Get Anova for this
-        anova_mat = gen_anova_struct( idx_struct, correct_trials );
-
-        % Get Attend In/Out Drug On/Off SDen averages and SEs
-        sdens = get_attend_sdens( idx_struct, correct_trials, att_window(1) );
-        sden_summs =  get_trial_sum( sdens );
-
-        % Get Visual Reponse p-values %%% VERIFY VERIFY VERIFY %%%
-        vis_window = [124 att_window(1)]; %THIS WINDOW 1 THING IS CONFUSING. FIX.
-        correct_trials = count_spikes( correct_trials, vis_window, 'visual' );
-        vis_pval = gen_vis_pval( idx_struct, correct_trials );
     
-        % Return results for each current separately
-        rslt(i-1).current = eject_current;
-        rslt(i-1).dmat = dmat;
-        rslt(i-1).anova_mat = anova_mat;
-        rslt(i-1).sdens = sdens;
-        rslt(i-1).sden_summs = sden_summs;
-        rslt(i-1).vis_pval = vis_pval;
-        rslt(i-1).event_durations = event_durations;
 
         % MAKE A FUNCTION TO RUN THIS FUNCTION AND ADD THE OUTPUT TO THE
         % SESSION_STRUCT AND SAVE IT OUT?
