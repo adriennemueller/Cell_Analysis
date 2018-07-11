@@ -3,14 +3,17 @@
 function mfs = process_stats( mfs )
 
     if nargin < 1, load master_file_struct; mfs = master_file_struct; end
-  
+    
+    
     % Loop through all processed files
     for i = 1:length(mfs.session)
         for j = 1:length(mfs.session(i).processed_files)
             
             % Identify the paradigms present in those files
             data_struct = load_processed_file( mfs.session(i).sub_direc, mfs.session(i).processed_files{j} );
-            data_struct = adjust_theta( data_struct );
+             if length(unique([data_struct.theta])) > 9
+                 data_struct = adjust_theta( data_struct );
+             end
             paradigm_list = mfs.session(i).paradigms{j};
             currents = mfs.session(i).currents{j};
 
@@ -18,35 +21,35 @@ function mfs = process_stats( mfs )
             % save substruct of stats for each paradigm into mfs
             if contains( 'Attention', paradigm_list )
                 attend_trial_struct = data_struct( contains({data_struct.paradigm}, 'Attention' ) );
-                mfs.session(i).processed_files(j).attend_stats = attend_stats( attend_trial_struct, currents );
+                mfs.session(i).attend_stats = [ mfs.session(i).attend_stats windowed_stats( attend_trial_struct, currents, 'attend' ) ];
             end
 
             if contains( 'WM', paradigm_list )
+                if ~isfield(mfs.session(i), 'wm_stats'), mfs.session(i).wm_stats = []; end
                 wm_trial_struct = data_struct( contains({data_struct.paradigm}, 'WM' ) );
-                mfs.session(i).processed_files(j).wm_stats = wm_stats( wm_trial_struct, currents );
+                mfs.session(i).wm_stats = [ mfs.session(i).wm_stats windowed_stats( wm_trial_struct, currents, 'wm' ) ];
             end
             
-            if contains( 'Attenion_Contrast', paradigm_list )
-                attContrast_trial_struct = data_struct( contains({data_struct.paradigm}, 'Attention_Contrast' ) );
-                mfs.session(i).processed_files(j).wm_stats = wm_stats( attContrast_trial_struct, currents );
-            end
+%             if contains( 'Attenion_Contrast', paradigm_list )
+%                 attContrast_trial_struct = data_struct( contains({data_struct.paradigm}, 'Attention_Contrast' ) );
+%                 mfs.session(i).processed_files(j).wm_stats = wm_stats( attContrast_trial_struct, currents );
+%             end
             
+            % Pretrial Also. %%% TODO %%%
             
-            mfs.session(i).processed_stats = 1;
+          
     
         end
+        mfs.session(i).processed_stats = 1;
+
+        % Save out master_file_struct
+        master_file_struct = mfs;
+        save( 'master_file_struct', 'master_file_struct' );
     end
-    
-    % Save out master_file_struct
-    save( 'master_file_struct', 'master_file_struct', mfs );
 end
 
-function wm_stats = wm_stats( data_struct, currents )
-    % Identify whether there are enough correct trials within a given
-    % paradigm to process it for stats
-end
 
-function attend_stats = attend_stats( data_struct, currents )
+function win_stats = windowed_stats( data_struct, currents, window_str )
     % Identify whether there are enough correct trials within a given
     % paradigm to process it for stats
     
@@ -57,355 +60,128 @@ function attend_stats = attend_stats( data_struct, currents )
         retain_current = currents(1);
         eject_current  = currents(i); 
         
-        control_spikemat_attin  = get_directional_spikemat( data_struct, retain_current, 'in' );
-        control_spikemat_attout = get_directional_spikemat( data_struct, retain_current, 'out'  );
-        drug_spikemat_attin     = get_directional_spikemat( data_struct, eject_current, 'in' );
-        drug_spikemat_attout    = get_directional_spikemat( data_struct, eject_current, 'out' );
-                
-        % Adjust Theta
-        if length(unique([correct_trials.theta])) > 9
-            correct_trials = adjust_theta( correct_trials );
-        end
-
-        % Get D' for result of this
-        dmat = gen_dprime_struct( idx_struct, correct_trials );
+        corr_idx = find( [data_struct.trial_error] == 0 );
+        window = get_window( data_struct(corr_idx(1)), window_str );
         
-        % Get Anova for this
-        anova_mat = gen_anova_struct( idx_struct, correct_trials );
-
-        % Get Attend In/Out Drug On/Off SDen averages and SEs
-        sdens = get_attend_sdens( idx_struct, correct_trials, att_window(1) );
-        sden_summs =  get_trial_sum( sdens );
-
-        % Get Visual Reponse p-values %%% VERIFY VERIFY VERIFY %%%
-        vis_window = [124 att_window(1)]; %THIS WINDOW 1 THING IS CONFUSING. FIX.
-        correct_trials = count_spikes( correct_trials, vis_window, 'visual' );
-        vis_pval = gen_vis_pval( idx_struct, correct_trials );
+        control_spikemat_attin  = get_directional_spikemat( data_struct, retain_current, window, 'in' );
+        control_spikemat_attout = get_directional_spikemat( data_struct, retain_current, window, 'out'  );
+        drug_spikemat_attin     = get_directional_spikemat( data_struct, eject_current, window, 'in' );
+        drug_spikemat_attout    = get_directional_spikemat( data_struct, eject_current, window, 'out' );
+                
+        % Get D' for result of this
+        control_dmat = gen_dprime_struct( control_spikemat_attin, control_spikemat_attout );
+        drug_dmat    = gen_dprime_struct( drug_spikemat_attin, drug_spikemat_attout );
     
+        % Get Anova for this
+        anova_mat = gen_anova_struct( control_spikemat_attin, control_spikemat_attout, drug_spikemat_attin, drug_spikemat_attout );
+ 
         % Return results for each current separately
-        rslt(i-1).current = eject_current;
-        rslt(i-1).dmat = dmat;
-        rslt(i-1).anova_mat = anova_mat;
-        rslt(i-1).sdens = sdens;
-        rslt(i-1).sden_summs = sden_summs;
-        rslt(i-1).vis_pval = vis_pval;
-        rslt(i-1).event_durations = event_durations;
+        win_stats(i-1).current = eject_current;
+        win_stats(i-1).control_dmat = control_dmat;
+        win_stats(i-1).drug_dmat = drug_dmat;
+        win_stats(i-1).anova_mat = anova_mat;
     end
 end
 
 
-function spikemat_struct = get_directional_spikemat( spikemat, current, inout  )
-
+function spikemat_struct = get_directional_spikemat( spikemat, current, window, inout  )
     spikemat_struct = struct;
     directions = unique([spikemat.theta]);
-    
     % Loop through directions and place into struct
     for i = 1:length(directions)
         spikemat_struct(i).direction = directions(i);
-        spikemat_struct(i).spikes = filtered_windowed_spikemat( spikemat, current, 'attend', directions(i), inout);
-        
-    end
-end
-        
-function e_time = get_time_matching_code(times, codes, code)
-    idx = find(codes == code);
-    e_time = times(idx);
-end
-
-
-% Event codes for attentional window (Cue on, before targets blank and flip);
-% Need a function for this because I changed the event codes in Jan/Mar 2016   
-function window = get_attend_window( correct_trials )
-    if find(correct_trials(1).event_codes == 121)
-        window = [121 126];
-    else
-        window = [133 126];
+        spikemat_struct(i).spikes = filtered_windowed_spikemat( spikemat, current, window, directions(i), inout);
     end
 end
 
+ 
+function window = get_window( correct_trial, window_string )
 
-function vis_pval = gen_vis_pval( idx_struct, trials )
-
-    % Can combine AttendIn and AttendOut trials because identical during period
-    % of initial stimulus presentation
-
-    vis_pval = [];
-
-    for i = 1:length(unique([idx_struct.theta])) % For the 8 directions
-        
-        theta = map_direction(i);
-        
-        % Find the Drug Off, Attend In trials and make a vector of the
-        % number of spikes for them.
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 0) & ([idx_struct.attend] == 1));
-        drugOff_AttIn_n_spikes = [trials(idx_struct(row).idxs).visual_n_spikes];
-        drugOff_AttIn_n_spikes_baseline = [trials(idx_struct(row).idxs).baseline_n_spikes];
-        
-        % Same for Drug Off, Attend Out
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 0) & ([idx_struct.attend] == 0));
-        drugOff_AttOut_n_spikes = [trials(idx_struct(row).idxs).visual_n_spikes];
-        drugOff_AttOut_n_spikes_baseline = [trials(idx_struct(row).idxs).baseline_n_spikes];
-        
-        
-        % Combine lists
-        drugOff_vis_n_spikes = [drugOff_AttIn_n_spikes drugOff_AttOut_n_spikes];
-        drugOff_base_n_spikes = [drugOff_AttIn_n_spikes_baseline drugOff_AttOut_n_spikes_baseline];
-        
-        % Calculate the Wilcox Rank Sum for Drug Off Visual Response vs Baseline.
-        if ~ isempty(drugOff_vis_n_spikes) &&  ~ isempty(drugOff_base_n_spikes)
-            drugOff_ranksum = ranksum( drugOff_vis_n_spikes, drugOff_base_n_spikes );
+    if strcmp( window_string, 'attend' )
+        if find(correct_trial.event_codes == 121) % Need a function for this because I changed the event codes in Jan/Mar 2016 
+            window = [121 126];
         else
-            drugOff_ranksum = nan;
+            window = [133 126];
         end
+    elseif strcmp(window_string, 'wm')
+        window = [155 161]; 
+    elseif strcmp( window_string, 'pre_trial' )
+        %%% FILL THIS IN
+    end
+end
+
         
-        % Find the Drug On, Attend In trials and make a vector of the
-        % number of spikes for them.        
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 1) & ([idx_struct.attend] == 1));
-        drugOn_AttIn_n_spikes = [trials(idx_struct(row).idxs).visual_n_spikes];
-        drugOn_AttIn_n_spikes_baseline = [trials(idx_struct(row).idxs).baseline_n_spikes];
+% gen_dprime_struct takes two spike_mats and generates the d' value for
+% between respective elements. So, two spikemats with 8 directions each
+% would yield a vector of length 8, with each element betin a d' value.
+function dmat = gen_dprime_struct( groupA, groupB )   
+    dmat = struct;
+
+    for i = 1:length(unique([groupA.direction]))  % For the 8 directions
         
-        % Same for Drug On, Attend Out
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 1) & ([idx_struct.attend] == 0));
-        drugOn_AttOut_n_spikes = [trials(idx_struct(row).idxs).visual_n_spikes];
-        drugOn_AttOut_n_spikes_baseline = [trials(idx_struct(row).idxs).baseline_n_spikes];
+        dmat(i).direction = groupA(i).direction;
         
-        drugOn_vis_n_spikes = [drugOn_AttIn_n_spikes drugOn_AttOut_n_spikes];
-        drugOn_base_n_spikes = [drugOn_AttIn_n_spikes_baseline drugOn_AttOut_n_spikes_baseline];
+        groupA_n_spikes = sum(groupA(i).spikes);
+        groupB_n_spikes = sum(groupB(i).spikes);
         
-        % Calculate the D' and Wilcox Rank Sum for Drug On Attend In vs Attend Out.
-        if ~ isempty(drugOn_vis_n_spikes) &&  ~ isempty(drugOn_base_n_spikes)
-            drugOn_ranksum = ranksum( drugOn_vis_n_spikes, drugOn_base_n_spikes );
+        if ~ isempty(groupA_n_spikes) &&  ~ isempty(groupB_n_spikes)
+            dmat(i).ranksum_val = ranksum( groupA_n_spikes, groupB_n_spikes );
         else
-            drugOn_ranksum = nan;
+           dmat(i).ranksum_val = nan;
         end
-        
-        % Get Firing Rate for Drug Off and Drug On
-        drugOff_VisAvg = mean(drugOff_vis_n_spikes)/0.25; % So bad. So, so bad.
-        drugOn_VisAvg  = mean(drugOn_vis_n_spikes)/0.25;
-        
-        
-        % Append the result.
-        vis_pval = [vis_pval; theta drugOff_ranksum drugOn_ranksum drugOff_VisAvg drugOn_VisAvg];
-    end
-    
-    
-    
-end
-
-function rslt = get_trial_sum( trials )
-    
-    rslt = struct;
-
-    for i = 1:length(trials); % eight directions
-        rslt(i).dOaI_millis = trials(i).drugOff_attIn(1,:);
-        dOaI_sdens  = trials(i).drugOff_attIn(2:end,:);
-        [ts ms] = size(dOaI_sdens);
-        rslt(i).dOaI_avg    = mean(dOaI_sdens, 1);
-        rslt(i).dOaI_ste    = std(dOaI_sdens) / sqrt(ts); % Make sure std is in right dimension
-        
-        rslt(i).dOaO_millis = trials(i).drugOff_attOut(1,:);
-        dOaO_sdens  = trials(i).drugOff_attOut(2:end,:);
-        [ts ms] = size(dOaO_sdens);
-        rslt(i).dOaO_avg    = mean(dOaO_sdens, 1);
-        rslt(i).dOaO_ste    = std(dOaO_sdens) / sqrt(ts); % Make sure std is in right dimension
-
-        rslt(i).dNaI_millis = trials(i).drugOn_attIn(1,:);
-        dNaI_sdens  = trials(i).drugOn_attIn(2:end,:);
-        [ts ms] = size(dNaI_sdens);
-        rslt(i).dNaI_avg    = mean(dNaI_sdens, 1);
-        rslt(i).dNaI_ste    = std(dNaI_sdens) / sqrt(ts); % Make sure std is in right dimension
-
-        rslt(i).dNaO_millis = trials(i).drugOn_attOut(1,:);
-        dNaO_sdens  = trials(i).drugOn_attOut(2:end,:);
-        [ts ms] = size(dNaO_sdens);
-        rslt(i).dNaO_avg    = mean(dNaO_sdens, 1);
-        rslt(i).dNaO_ste    = std(dNaO_sdens) / sqrt(ts); % Make sure std is in right dimension
-
-        %%% ATT In and ATT Out Combined %%%
-        rslt(i).dN_millis = trials(i).drugOn_attIn(1,:);
-        dN_sdens = vertcat(dNaI_sdens, dNaO_sdens);
-        [ts ms] = size(dN_sdens);
-        rslt(i).dN_avg    = mean(dN_sdens, 1);
-        rslt(i).dN_ste    = std(dN_sdens) / sqrt(ts); % Make sure std is in right dimension
-
-        rslt(i).dO_millis = trials(i).drugOn_attOut(1,:);
-        dO_sdens  = vertcat(dOaI_sdens, dOaO_sdens);
-        [ts ms] = size(dO_sdens);
-        rslt(i).dO_avg    = mean(dO_sdens, 1);
-        rslt(i).dO_ste    = std(dO_sdens) / sqrt(ts); % Make sure std is in right dimension
-        
-        
+       
+        dmat(i).dprime_val = d_prime( groupA_n_spikes, groupB_n_spikes );
+       
     end
 end
 
 
-function sdens = get_attend_sdens( idx_struct, trials, align_idx )
-
-    drugOff_attIn = [];
-    drugOff_attOut = [];
-    drugOn_attIn = [];
-    drugOn_attOut = [];
-
-   for i = 1:length(unique([idx_struct.theta])); % For the 8 directions
-        
-        theta = map_direction(i);
-        
-        % Find the Drug Off, Attend In trials and
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 0) & ([idx_struct.attend] == 1));
-        sub_trials = trials(idx_struct(row).idxs);
-        sdens(i).drugOff_attIn = align_trials( sub_trials, align_idx );
-        
-        % Same for Drug Off, Attend Out
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 0) & ([idx_struct.attend] == 0));
-        sub_trials = trials(idx_struct(row).idxs);
-        sdens(i).drugOff_attOut = align_trials( sub_trials, align_idx );
-        
-        % Find the Drug On, Attend In trials and
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 1) & ([idx_struct.attend] == 1));
-        sub_trials = trials(idx_struct(row).idxs);
-        sdens(i).drugOn_attIn = align_trials( sub_trials, align_idx );
-        
-        % Same for Drug On, Attend Out
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 1) & ([idx_struct.attend] == 0));
-        sub_trials = trials(idx_struct(row).idxs);
-        sdens(i).drugOn_attOut = align_trials( sub_trials, align_idx );
-      
-        sdens(i).theta = theta;
-    end
-    
-    % Get averaged sdens, + Ses for the four matrices, for the 8
-    % directions
-    
-    % Save out a struct with the trial subset sdens, ses, (+ spikes? )
-
-end
-
-% Align all of them so the zeros are at cue_onset and crop to appropriate lengths.
-% They need to be of uniform length so that the average spike density
-% isn't calculated from just a subset of trials at the tails.
-% Put into a matrix of set length in ms, and n trials long
-
-%%% THE MILLIS ARE IN THE FIRST ROW!!!!!
-function [spike_mat, aligned_millis] = align_trials( trials, align_code )
-    window = [-500, 750];
-
-    aligned_millis = window(1) : window(2);
-    spike_mat = zeros(length(trials) + 1, window(2) - window(1) +1);
-    spike_mat(1,:) = aligned_millis;
-    
-    for i = 1:length(trials)
-        align_time = trials(i).code_times( [trials(i).event_codes] == align_code );
-        millis = trials(i).spike_millis;
-        sdens  = trials(i).sden150;
-        
-        align_idx = find(millis == align_time);
-        spike_mat(i+1,:) = sdens( (align_idx + window(1)) : (align_idx + window(2)) );
-    end
-end
-
-
-% gen_dprime_struct takes an index-struct (containing lists of trial
-% indexes for different conditions) and a trial struct (containing the
-% behavioral and spike info for the conditions themselves. It outputs a
-% matrix of the AttendIn vs AttendOut d' values for drug off, and drug on trials
-% separately; for each direction. So the first 2 lines of output would be:
-% 0  0.4 0.2
-% 45 1.0 0.5
-% For Direction DrugOff DrugOn
-function rslt = gen_dprime_struct( idx_struct, trials )   
-    rslt = [];
-
-    for i = 1:length(unique([idx_struct.theta])); % For the 8 directions
-        
-        theta = map_direction(i);
-        
-        % Find the Drug Off, Attend In trials and make a vector of the
-        % number of spikes for them.
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 0) & ([idx_struct.attend] == 1));
-        drugOff_AttIn_n_spikes = [trials(idx_struct(row).idxs).attend_n_spikes];
-        
-        % Same for Drug Off, Attend Out
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 0) & ([idx_struct.attend] == 0));
-        drugOff_AttOut_n_spikes = [trials(idx_struct(row).idxs).attend_n_spikes];
-        
-        % Calculate the D' and Wilcox Rank Sum for Drug Off Attend In vs Attend Out.
-        drugOff_dprime  = d_prime( drugOff_AttIn_n_spikes, drugOff_AttOut_n_spikes );
-        if ~ isempty(drugOff_AttIn_n_spikes) &&  ~ isempty(drugOff_AttOut_n_spikes)
-            drugOff_ranksum = ranksum( drugOff_AttIn_n_spikes, drugOff_AttOut_n_spikes );
-        else
-            drugOff_ranksum = nan;
-        
-        end
-        
-        % Find the Drug On, Attend In trials and make a vector of the
-        % number of spikes for them.        
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 1) & ([idx_struct.attend] == 1));
-        drugOn_AttIn_n_spikes = [trials(idx_struct(row).idxs).attend_n_spikes];
-        
-        % Same for Drug On, Attend Out
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 1) & ([idx_struct.attend] == 0));
-        drugOn_AttOut_n_spikes = [trials(idx_struct(row).idxs).attend_n_spikes];
-        
-        % Calculate the D' and Wilcox Rank Sum for Drug On Attend In vs Attend Out.
-        drugOn_dprime  = d_prime( drugOn_AttIn_n_spikes, drugOn_AttOut_n_spikes );
-        if ~ isempty(drugOn_AttIn_n_spikes) &&  ~ isempty(drugOn_AttOut_n_spikes)
-            drugOn_ranksum = ranksum( drugOn_AttIn_n_spikes, drugOn_AttOut_n_spikes );
-        else
-            drugOn_ranksum = nan;
-        end
-        
-        drugOff_avgFR = mean(horzcat(drugOff_AttIn_n_spikes, drugOff_AttOut_n_spikes)) / 0.3; % 300ms lat cue attend window - to get FR
-        drugOn_avgFR =  mean(horzcat(drugOn_AttIn_n_spikes, drugOn_AttOut_n_spikes)) / 0.3;
-        
-        
-        % Append the result.
-        rslt = [rslt; theta drugOff_dprime drugOn_dprime drugOff_ranksum drugOn_ranksum drugOff_avgFR drugOn_avgFR];
-    end
-end
-
-
-function rslt = gen_anova_struct( idx_struct, trials )
-    data_vec = [];
+function rslt = gen_anova_struct( ctrl_attin, ctrl_attout, drug_attin, drug_attout )
+    data_vec = []; 
     direction = [];
     drug = [];
     attend = [];
     
-    for i = 1:length(unique([idx_struct.theta])); % For the 8 directions % Only 4 dir b/c copied att in/out.
+    for i = 1:length(unique([ctrl_attin.direction])) 
         
-        theta = map_direction(i);
-        if (theta >= 180), continue, end
-        
-        
+        direc = ctrl_attin(i).direction;
+        if (direc >= 180), continue, end % Only 4 dir b/c copied att in/out.
+     
         % Find the Drug Off, Attend In trials and make a vector of the
         % number of spikes for them.
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 0) & ([idx_struct.attend] == 1));
-        drugOff_AttIn_n_spikes = [trials(idx_struct(row).idxs).attend_n_spikes];
+        if ~isempty(ctrl_attin(i).spikes)
+        data_vec = [data_vec sum(ctrl_attin(i).spikes)]; 
+        ctrl_attin_length = size(ctrl_attin(i).spikes, 2);
+        direction = [ direction repmat(direc, 1, ctrl_attin_length )];
+        drug = [drug zeros(1, ctrl_attin_length)];
+        attend = [attend ones(1, ctrl_attin_length)];end
         
         % Same for Drug Off, Attend Out
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 0) & ([idx_struct.attend] == 0));
-        drugOff_AttOut_n_spikes = [trials(idx_struct(row).idxs).attend_n_spikes];
+        if ~isempty(ctrl_attout(i).spikes)
+        data_vec = [data_vec sum(ctrl_attout(i).spikes)]; 
+        ctrl_attout_length = size(ctrl_attout(i).spikes, 2);
+        direction = [ direction repmat(direc, 1, ctrl_attout_length )];
+        drug = [drug zeros(1, ctrl_attout_length)];
+        attend = [attend zeros(1, ctrl_attout_length)]; end
         
         
         % Find the Drug On, Attend In trials and make a vector of the
         % number of spikes for them.        
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 1) & ([idx_struct.attend] == 1));
-        drugOn_AttIn_n_spikes = [trials(idx_struct(row).idxs).attend_n_spikes];
+        if ~isempty(drug_attin(i).spikes)
+        data_vec = [data_vec sum(drug_attin(i).spikes)]; 
+        drug_attin_length = size(drug_attin(i).spikes, 2);
+        direction = [ direction repmat(direc, 1, drug_attin_length )];
+        drug = [drug ones(1, drug_attin_length)];
+        attend = [attend ones(1, drug_attin_length)]; end
         
         % Same for Drug On, Attend Out
-        row = find(([idx_struct.theta] == theta) & ([idx_struct.drug] == 1) & ([idx_struct.attend] == 0));
-        drugOn_AttOut_n_spikes = [trials(idx_struct(row).idxs).attend_n_spikes];
+        if ~isempty(drug_attout(i).spikes)
+        data_vec = [data_vec sum(drug_attout(i).spikes)]; 
+        drug_attout_length = size(drug_attout(i).spikes, 2);
+        direction = [ direction repmat(direc, 1, drug_attout_length )];
+        drug = [drug ones(1, drug_attout_length)];
+        attend = [attend zeros(1, drug_attout_length)]; end
         
-        % Append the result.
-        
-        l_dOff_AI = length(drugOff_AttIn_n_spikes);
-        l_dOff_AO = length(drugOff_AttOut_n_spikes);
-        l_dOn_AI  = length(drugOn_AttIn_n_spikes);
-        l_dOn_AO  = length(drugOn_AttOut_n_spikes);
-        
-        data_vec = [data_vec drugOff_AttIn_n_spikes drugOff_AttOut_n_spikes drugOn_AttIn_n_spikes drugOn_AttOut_n_spikes];
-        direction = [ direction repmat(theta, 1, l_dOff_AI) repmat(theta, 1, l_dOff_AO) repmat(theta, 1, l_dOn_AI) repmat(theta, 1, l_dOn_AO) ];
-        drug = [ drug zeros(1, l_dOff_AI) zeros(1, l_dOff_AO) ones(1, l_dOn_AI) ones(1, l_dOn_AO) ];
-        attend = [ attend ones(1, l_dOff_AI) zeros(1, l_dOff_AO) ones(1, l_dOn_AI) zeros(1, l_dOn_AO) ];
     end
     
     [p,tbl] = anovan( data_vec, {direction, drug, attend}, 'model','full','varnames',{'direction','drug','attend'}, 'display','off', 'sstype', 1 );
@@ -414,132 +190,6 @@ function rslt = gen_anova_struct( idx_struct, trials )
     rslt.tbl = tbl;
 end
 
-
-% count_spikes counts the number of spikes in a given window (eg cue,
-% blank, etc) for each trial and appends it to the trial_structure that was
-% input. The window is given by two behavioral codes. eg:
-% [121 126] - Event codes for attentional window [Cue On, Targets Blank];
-function trials = count_spikes( trials, window, type )
-
-    for i = 1:length(trials)
-        
-        % Find the times during the trial at which the window of interest (eg cue on, blank, etc) 
-        % starts and ends.
-        start_idx = trials(i).code_times( [trials(i).event_codes] == window(1) );
-        end_idx   = trials(i).code_times( [trials(i).event_codes] == window(2) );
-        
-        % For cue period (attention period) - ditch the beginning of the
-        % post-cue period and only take the last 300ms before the target
-        % changes.
-        if strcmp(type, 'attend')
-            start_idx = (end_idx - 300);
-        end
-        if strcmp(type, 'visual')
-            start_idx = (end_idx - 250);
-        end
-        
-        % Get the start and end indexes for the window we want to count the
-        % spikes in, but finding the index at which they occur in the
-        % spike_millis vector for the trial. (The spikes vector is always
-        % longer than the behavioral data vectors, but they are both
-        % aligned to trial onset == 0.)
-        spike_start_idx = find(trials(i).spike_millis == start_idx );
-        spike_end_idx   = find(trials(i).spike_millis == end_idx );
-        
-        % Add up the number of spikes in the window
-        n_spikes = sum(trials(i).spikes(spike_start_idx:spike_end_idx));
-        
-        % This will be ambiguous if there are ever other spike counts in the
-        % struct.
-        if strcmp(type, 'attend')
-            trials(i).attend_n_spikes = n_spikes;
-        elseif strcmp(type, 'visual')
-            trials(i).visual_n_spikes = n_spikes;
-            
-            % baseline
-            dur = spike_end_idx - spike_start_idx;
-            base_start_idx = spike_start_idx - dur;
-            base_end_idx = spike_end_idx - dur;
-            
-            trials(i).baseline_n_spikes = sum(trials(i).spikes(base_start_idx:base_end_idx));
-        end
-    end
-    
-
-end
-
-
-% segregate takes a structure of trials and makes a new index_struct which
-% lists the indexes of trials matching particular conditions, eg:
-% Direction 45º, Drug On, Attend Out
-% Direction 180º, Drug Off, Attend In
-% Currently allows for only two drug conditions: drug off (-), drug on (+).
-function idx_struct = segregate( trials )
-    idx_struct = struct;
-    tmp_struct = struct;
-    
-    % For each possible of 8 directions
-    for direction = 1:8
-        
-        % Get what theta that direction matches up to.
-        tmp_struct.theta = map_direction(direction);
-        
-        % And for conditions whether the drug is on or off.
-        for drug = 0:1
-            
-            tmp_struct.drug = drug;
-            
-            % Currently assuming retaining a drug is a negative sign and
-            % ejecting it is a positive sign. Also not allowing for
-            % different values of injected drug. Should amend to allow.
-            % (Unique?)
-            if drug == 0;
-                drug_sign = -1;
-            else
-                drug_sign = 1;
-            end
-            
-            % And for either attend-in or attend-out conditions.
-            for attend = 0:1
-                
-                tmp_struct.attend = attend;
-                
-                % Attend-out conditions are when the attention is in the
-                % oposite direction.
-                if attend == 0
-                    attend_direction = reversed(direction);
-                else
-                    attend_direction = direction;
-                end
-                
-                % Get all the trials that match
-                tmp_struct.idxs = find( (sign([trials.drug]) == drug_sign) & ...
-                                                   ([trials.theta] == map_direction(attend_direction)));
-                                               
-                if isempty(fieldnames(idx_struct))
-                    idx_struct = tmp_struct;
-                else
-                    idx_struct = [idx_struct tmp_struct];
-                end
-            end
-        end
-    end
-end
-
-
-
-% reversed gives you the opposite direction (1-8) to the one you input. eg
-% 1->5, 3->7, 6->2, etc.
-function rslt = reversed(direction)
-    rslt = mod((direction + 3), 8)+1;
-end
-
-
-% map_direction takes a value of 1-8 and maps it to a direction from 0-315.
-function rslt = map_direction( dir_theta )
-    theta_vec = [0 45 90 135 180 225 270 315];
-    rslt = theta_vec(dir_theta); % TEST ME
-end
 
 
 % adjust_theta takes a trial-struct and changes the thetas to the closest

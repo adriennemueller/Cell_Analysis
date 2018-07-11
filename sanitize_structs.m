@@ -108,6 +108,8 @@ end
 % Do probe rials and wm trials share the same code(wm used)?
 function trials = identify_paradigm( trials, full_bhvfile )
 
+    % Perform only for Correct Trials TODO TODO TODO
+
     for i = 1:length(trials)
         if max([trials(i).event_codes] == 000) %%% NEED ACTUAL PROBE TRIAL IDENTIFIER
             trials(i).paradigm = 'Probe';
