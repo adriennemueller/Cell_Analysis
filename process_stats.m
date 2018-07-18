@@ -4,9 +4,15 @@ function mfs = process_stats( mfs )
 
     if nargin < 1, load master_file_struct; mfs = master_file_struct; end
     
+    % If process_stats has not been run before, prepare the master file
+    % struct to receive stats output by making appropriate fields.
+    mfs = populate_fields( mfs );
     
     % Loop through all processed files
     for i = 1:length(mfs.session)
+        
+        if mfs.session(i).processed_stats == 1, continue; end % Skip this session if stats already processed.
+        
         for j = 1:length(mfs.session(i).processed_files)
             
             % Identify the paradigms present in those files
@@ -16,6 +22,7 @@ function mfs = process_stats( mfs )
              end
             paradigm_list = mfs.session(i).paradigms{j};
             currents = mfs.session(i).currents{j};
+            
 
             % Calculate stats for each paradigm (anova, d', etc) and 
             % save substruct of stats for each paradigm into mfs
@@ -48,10 +55,19 @@ function mfs = process_stats( mfs )
     end
 end
 
+function mfs = populate_fields( mfs )
+    if ~isfield( mfs.session, 'attend_stats' )
+        mfs.session(1).attend_stats = [];
+    end
+    
+    if ~isfield( mfs.session, 'wm_stats' )
+        mfs.session(1).wm_stats = [];
+    end 
+
+end
+
 
 function win_stats = windowed_stats( data_struct, currents, window_str )
-    % Identify whether there are enough correct trials within a given
-    % paradigm to process it for stats
     
     % Go through all different ejected currents in the file. (currents(1)
     % will be the retain current.

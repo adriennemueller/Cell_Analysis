@@ -108,7 +108,6 @@ end
 % Do probe rials and wm trials share the same code(wm used)?
 function trials = identify_paradigm( trials, full_bhvfile )
 
-    % Perform only for Correct Trials TODO TODO TODO
 
     for i = 1:length(trials)
         if max([trials(i).event_codes] == 000) %%% NEED ACTUAL PROBE TRIAL IDENTIFIER
@@ -159,6 +158,20 @@ function [trial_struct, keep] = verify_drug_trialcounts( trial_struct, min_trial
             trial_struct( curr_idxs ) = [];
             toss_curr = [toss_curr i];
         end
+        
+        % For this current - go through all of the paradigms and ensure
+        % that there are enough correct trials of a given paraidgm. If not;
+        % eliminate those trials from the trial struct.
+        unique_paradigms = unique( {trial_struct.paradigm} );
+        for j = 1:length( unique_paradigms )       
+            corr_paridigm_idxs = find( ([trial_struct.drug] == curr) &  ...
+                                       (strcmp( {trial_struct.paradigm}, unique_paradigms(j))) & ...
+                                       ([trial_struct.trial_error] == 0) );
+            if length( corr_paridigm_idxs ) < min_trial_num
+               trial_struct( corr_paridigm_idxs ) = []; 
+            end
+        end
+        
     end
     unique_currents(toss_curr) = [];
     
