@@ -38,7 +38,7 @@ end
 function windowed_mat = extract_window( window, spike_mat, millis_mat, event_codes, code_times )
     win_beg = window(1);
     win_end = window(2);
-
+    
     % Loops over matching cells in event_codes and code_times and applies
     % the find of the win_beg and win_end event_codes to each pair.
     win_beg_times = cellfun(@(codes, times) times(codes == win_beg), event_codes, code_times);

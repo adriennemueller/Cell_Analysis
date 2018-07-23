@@ -168,7 +168,9 @@ function [trial_struct, keep] = verify_drug_trialcounts( trial_struct, min_trial
                                        (strcmp( {trial_struct.paradigm}, unique_paradigms(j))) & ...
                                        ([trial_struct.trial_error] == 0) );
             if length( corr_paridigm_idxs ) < min_trial_num
-               trial_struct( corr_paridigm_idxs ) = []; 
+                paradigm_idxs = find( ([trial_struct.drug] == curr) &  ...
+                                       (strcmp( {trial_struct.paradigm}, unique_paradigms(j))) );
+                trial_struct( paradigm_idxs ) = []; 
             end
         end
         
@@ -177,7 +179,8 @@ function [trial_struct, keep] = verify_drug_trialcounts( trial_struct, min_trial
     
     % If there are fewer than two currents and there is no retain current
     % info, report not to keep this trial_struct.
-    if (length(unique_currents) < 2) || ~ max(unique_currents == -15)
+    now_unique_currents = unique([trial_struct.drug]);
+    if (length(now_unique_currents) < 2) || ~ max(now_unique_currents == -15)
         keep = 0;
     end
     

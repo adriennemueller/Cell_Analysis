@@ -11,8 +11,6 @@ function mfs = process_stats( mfs )
     % Loop through all processed files
     for i = 1:length(mfs.session)
         
-        if mfs.session(i).processed_stats == 1, continue; end % Skip this session if stats already processed.
-        
         for j = 1:length(mfs.session(i).processed_files)
             
             % Identify the paradigms present in those files
@@ -23,46 +21,42 @@ function mfs = process_stats( mfs )
             paradigm_list = mfs.session(i).paradigms{j};
             currents = mfs.session(i).currents{j};
             
-
             % Calculate stats for each paradigm (anova, d', etc) and 
             % save substruct of stats for each paradigm into mfs
             if contains( 'Attention', paradigm_list )
                 attend_trial_struct = data_struct( contains({data_struct.paradigm}, 'Attention' ) );
-                mfs.session(i).attend_stats = [ mfs.session(i).attend_stats windowed_stats( attend_trial_struct, currents, 'attend' ) ];
+                mfs.session(i).attend_stats{j} = windowed_stats( attend_trial_struct, currents, 'attend' );
+                mfs.session(i).attend_fixation_stats{j} = windowed_stats( attend_trial_struct, currents, 'fixation' );
             end
 
             if contains( 'WM', paradigm_list )
-                if ~isfield(mfs.session(i), 'wm_stats'), mfs.session(i).wm_stats = []; end
                 wm_trial_struct = data_struct( contains({data_struct.paradigm}, 'WM' ) );
-                mfs.session(i).wm_stats = [ mfs.session(i).wm_stats windowed_stats( wm_trial_struct, currents, 'wm' ) ];
+                mfs.session(i).wm_stats{j} = windowed_stats( wm_trial_struct, currents, 'wm' );
+                mfs.session(i).wm_fixation_stats{j} = windowed_stats( wm_trial_struct, currents, 'fixation' );
             end
             
 %             if contains( 'Attenion_Contrast', paradigm_list )
 %                 attContrast_trial_struct = data_struct( contains({data_struct.paradigm}, 'Attention_Contrast' ) );
-%                 mfs.session(i).processed_files(j).wm_stats = wm_stats( attContrast_trial_struct, currents );
+%                 mfs.session(i).attContrast_stats{j} = windowed_stats( attContrast_trial_struct, currents, 'attContrast' );
 %             end
             
-            % Pretrial Also. %%% TODO %%%
-            
-          
     
         end
-        mfs.session(i).processed_stats = 1;
-
+        
         % Save out master_file_struct
         master_file_struct = mfs;
         save( 'master_file_struct', 'master_file_struct' );
     end
 end
 
+% Clear out old stats
 function mfs = populate_fields( mfs )
-    if ~isfield( mfs.session, 'attend_stats' )
-        mfs.session(1).attend_stats = [];
+    fnames = fieldnames( mfs.session );
+    if sum( contains( fnames, 'stats' ) )
+        stat_fields_idxs = contains( fnames, 'stats' );
+        stat_fields = fnames( stat_fields_idxs );
+        mfs.session = rmfield( mfs.session, stat_fields );
     end
-    
-    if ~isfield( mfs.session, 'wm_stats' )
-        mfs.session(1).wm_stats = [];
-    end 
 
 end
 
@@ -121,8 +115,12 @@ function window = get_window( correct_trial, window_string )
         end
     elseif strcmp(window_string, 'wm')
         window = [155 161]; 
-    elseif strcmp( window_string, 'pre_trial' )
-        %%% FILL THIS IN
+    elseif strcmp( window_string, 'fixation' )
+        if find(correct_trial.event_codes == 153)  
+            window = [120 153]; % WM Trials
+        else
+            window = [120 124]; % Attend Trials
+        end
     end
 end
 
@@ -205,7 +203,6 @@ function rslt = gen_anova_struct( ctrl_attin, ctrl_attout, drug_attin, drug_atto
     rslt.p = p;
     rslt.tbl = tbl;
 end
-
 
 
 % adjust_theta takes a trial-struct and changes the thetas to the closest
