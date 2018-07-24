@@ -23,23 +23,23 @@ function mfs = process_stats( mfs )
             
             % Calculate stats for each paradigm (anova, d', etc) and 
             % save substruct of stats for each paradigm into mfs
-            if contains( 'Attention', paradigm_list )
+            if sum( strcmp( paradigm_list, 'Attention' ) )
                 attend_trial_struct = data_struct( contains({data_struct.paradigm}, 'Attention' ) );
                 mfs.session(i).attend_stats{j} = windowed_stats( attend_trial_struct, currents, 'attend' );
                 mfs.session(i).attend_fixation_stats{j} = windowed_stats( attend_trial_struct, currents, 'fixation' );
             end
 
-            if contains( 'WM', paradigm_list )
+            if sum( strcmp( paradigm_list, 'WM' ) )
                 wm_trial_struct = data_struct( contains({data_struct.paradigm}, 'WM' ) );
                 mfs.session(i).wm_stats{j} = windowed_stats( wm_trial_struct, currents, 'wm' );
                 mfs.session(i).wm_fixation_stats{j} = windowed_stats( wm_trial_struct, currents, 'fixation' );
             end
             
-%             if contains( 'Attenion_Contrast', paradigm_list )
-%                 attContrast_trial_struct = data_struct( contains({data_struct.paradigm}, 'Attention_Contrast' ) );
-%                 mfs.session(i).attContrast_stats{j} = windowed_stats( attContrast_trial_struct, currents, 'attContrast' );
-%             end
-            
+            if sum( strcmp( paradigm_list, 'Attention_Contrast' ) )
+                attContrast_trial_struct = data_struct( contains({data_struct.paradigm}, 'Attention_Contrast' ) );
+                mfs.session(i).attContrast_stats{j} = windowed_stats( attContrast_trial_struct, currents, 'attContrast' );
+                mfs.session(i).attContrast_fixation_stats{j} = windowed_stats( attContrast_trial_struct, currents, 'fixation' );
+            end
     
         end
         
@@ -100,14 +100,44 @@ function spikemat_struct = get_directional_spikemat( spikemat, current, window, 
     % Loop through directions and place into struct
     for i = 1:length(directions)
         spikemat_struct(i).direction = directions(i);
-        spikemat_struct(i).spikes = filtered_windowed_spikemat( spikemat, current, window, directions(i), inout);
+        spikemat_struct(i).spikes = filtered_windowed_spikemat( spikemat, current, window, directions(i), inout );
+        
+        % Add contrast data, if attend_Contrast paradigm
+        if isfield( spikemat, 'contrast' )
+            spikemat_struct(i).contrast = get_contrasts( spikemat, current, directions(i), inout );
+        end
+        
     end
+end
+
+% Get a vector of contrasts for the subset of data that is being processed.
+% This function repeats a lot of the work done in
+% filtered_windowed_spikemat. Might want to consider adding contrast as a
+% filterable variable for filtered_windowed_spikemat instead.
+function contrast_vec = get_contrasts( curr_data_mat, current, direction, inout )
+    % Filter for correct trials
+    correct_idxs = find( [curr_data_mat.trial_error] == 0 );
+
+    % Filter for current
+    corr_current_idxs = find( [curr_data_mat.drug] == current );
+    valid_idxs = correct_idxs( ismember( correct_idxs, corr_current_idxs ) );
+ 
+    % Filter for (attend) direction
+    if strcmp( inout, 'out' )
+        direction = reversed(direction);
+    end
+    if ~ isempty(direction)
+         corr_direc_idxs = find( [curr_data_mat.theta] == direction );
+         valid_idxs = valid_idxs( ismember( valid_idxs, corr_direc_idxs ) );
+    end        
+    
+    contrast_vec = [curr_data_mat(valid_idxs).contrast];
 end
 
  
 function window = get_window( correct_trial, window_string )
 
-    if strcmp( window_string, 'attend' )
+    if strcmp( window_string, 'attend' ) || strcmp( window_string, 'attContrast' )
         if find(correct_trial.event_codes == 121) % Need a function for this because I changed the event codes in Jan/Mar 2016 
             window = [121 126];
         else
@@ -124,6 +154,12 @@ function window = get_window( correct_trial, window_string )
     end
 end
 
+% reversed gives you the opposite direction (1-8) to the one you input. eg
+% 0->180, 270->90 etc.
+function rslt = reversed(direction)
+    rslt = mod((direction + 135), 360) + 45;
+    if rslt == 360, rslt = 0; end
+end
         
 % gen_dprime_struct takes two spike_mats and generates the d' value for
 % between respective elements. So, two spikemats with 8 directions each
@@ -156,6 +192,10 @@ function rslt = gen_anova_struct( ctrl_attin, ctrl_attout, drug_attin, drug_atto
     drug = [];
     attend = [];
     
+    % Identify whether this is attend_Contrast paradigm data.
+    contrast_flag = isfield( ctrl_attin, 'contrast' );
+    if contrast_flag, contrast = []; end    
+    
     for i = 1:length(unique([ctrl_attin.direction])) 
         
         direc = ctrl_attin(i).direction;
@@ -168,7 +208,9 @@ function rslt = gen_anova_struct( ctrl_attin, ctrl_attout, drug_attin, drug_atto
         ctrl_attin_length = size(ctrl_attin(i).spikes, 2);
         direction = [ direction repmat(direc, 1, ctrl_attin_length )];
         drug = [drug zeros(1, ctrl_attin_length)];
-        attend = [attend ones(1, ctrl_attin_length)];end
+        attend = [attend ones(1, ctrl_attin_length)];
+        if contrast_flag, contrast = [contrast ctrl_attin(i).contrast]; end
+        end
         
         % Same for Drug Off, Attend Out
         if ~isempty(ctrl_attout(i).spikes)
@@ -176,8 +218,9 @@ function rslt = gen_anova_struct( ctrl_attin, ctrl_attout, drug_attin, drug_atto
         ctrl_attout_length = size(ctrl_attout(i).spikes, 2);
         direction = [ direction repmat(direc, 1, ctrl_attout_length )];
         drug = [drug zeros(1, ctrl_attout_length)];
-        attend = [attend zeros(1, ctrl_attout_length)]; end
-        
+        attend = [attend zeros(1, ctrl_attout_length)];
+        if contrast_flag, contrast = [contrast ctrl_attout(i).contrast]; end
+        end
         
         % Find the Drug On, Attend In trials and make a vector of the
         % number of spikes for them.        
@@ -186,7 +229,9 @@ function rslt = gen_anova_struct( ctrl_attin, ctrl_attout, drug_attin, drug_atto
         drug_attin_length = size(drug_attin(i).spikes, 2);
         direction = [ direction repmat(direc, 1, drug_attin_length )];
         drug = [drug ones(1, drug_attin_length)];
-        attend = [attend ones(1, drug_attin_length)]; end
+        attend = [attend ones(1, drug_attin_length)]; 
+        if contrast_flag, contrast = [contrast drug_attin(i).contrast]; end
+        end
         
         % Same for Drug On, Attend Out
         if ~isempty(drug_attout(i).spikes)
@@ -194,11 +239,17 @@ function rslt = gen_anova_struct( ctrl_attin, ctrl_attout, drug_attin, drug_atto
         drug_attout_length = size(drug_attout(i).spikes, 2);
         direction = [ direction repmat(direc, 1, drug_attout_length )];
         drug = [drug ones(1, drug_attout_length)];
-        attend = [attend zeros(1, drug_attout_length)]; end
+        attend = [attend zeros(1, drug_attout_length)];
+        if contrast_flag, contrast = [contrast drug_attout(i).contrast]; end
+        end
         
     end
     
-    [p,tbl] = anovan( data_vec, {direction, drug, attend}, 'model','full','varnames',{'direction','drug','attend'}, 'display','off', 'sstype', 1 );
+    if contrast_flag
+        [p,tbl] = anovan( data_vec, {direction, drug, attend, contrast}, 'model','full','varnames',{'direction','drug','attend', 'contrast'}, 'display','off', 'sstype', 1 );
+    else
+        [p,tbl] = anovan( data_vec, {direction, drug, attend}, 'model','full','varnames',{'direction','drug','attend'}, 'display','off', 'sstype', 1 );
+    end
     
     rslt.p = p;
     rslt.tbl = tbl;

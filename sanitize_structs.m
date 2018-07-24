@@ -247,7 +247,9 @@ function ctd = get_clean_trial_data( bhv, idx, offset, bhv_code_times )
     ctd.theta = bhv.UserVars(idx).theta * (180/pi); % Converted to Degrees
     ctd.theta = adjust_theta(ctd.theta);
     ctd.radius = bhv.UserVars(idx).radius; % Still in MLUs. Must change.
-    ctd.contrast = map_contrast(bhv.ConditionNumber(idx));
+    if contains(bhv.ConditionsFile, 'Contrast')
+        ctd.contrast = map_contrast(bhv.ConditionNumber(idx));
+    end
     
 end
 

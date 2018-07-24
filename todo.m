@@ -38,3 +38,16 @@ end
 
 % Plot SVM performance vs scrambled SVM Performance (unity plot? or two
 % histograms)
+
+
+Remove?
+    att_drug_comp
+    attIn_attOut_Contrasts
+    some of the prime unities
+    evaluate_units?
+    plot_att functions
+    plot_wm
+    process and process2
+    segregate_stat_struct?
+    spike_density spike_density_psp and spike raster?
+    
