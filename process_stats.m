@@ -23,21 +23,24 @@ function mfs = process_stats( mfs )
             
             % Calculate stats for each paradigm (anova, d', etc) and 
             % save substruct of stats for each paradigm into mfs
-            if sum( strcmp( paradigm_list, 'Attention' ) )
+            if contains( paradigm_list, 'Attention' )
                 attend_trial_struct = data_struct( contains({data_struct.paradigm}, 'Attention' ) );
                 mfs.session(i).attend_stats{j} = windowed_stats( attend_trial_struct, currents, 'attend' );
+                mfs.session(i).attend_visual_stats{j} = windowed_stats( attend_trial_struct, currents, 'visual' );
                 mfs.session(i).attend_fixation_stats{j} = windowed_stats( attend_trial_struct, currents, 'fixation' );
             end
 
             if sum( strcmp( paradigm_list, 'WM' ) )
                 wm_trial_struct = data_struct( contains({data_struct.paradigm}, 'WM' ) );
                 mfs.session(i).wm_stats{j} = windowed_stats( wm_trial_struct, currents, 'wm' );
+                mfs.session(i).wm_visual_stats{j} = windowed_stats( wm_trial_struct, currents, 'visual' );
                 mfs.session(i).wm_fixation_stats{j} = windowed_stats( wm_trial_struct, currents, 'fixation' );
             end
             
             if sum( strcmp( paradigm_list, 'Attention_Contrast' ) )
                 attContrast_trial_struct = data_struct( contains({data_struct.paradigm}, 'Attention_Contrast' ) );
                 mfs.session(i).attContrast_stats{j} = windowed_stats( attContrast_trial_struct, currents, 'attContrast' );
+                mfs.session(i).attContrast_visual_stats{j} = windowed_stats( attContrast_trial_struct, currents, 'visual' );
                 mfs.session(i).attContrast_fixation_stats{j} = windowed_stats( attContrast_trial_struct, currents, 'fixation' );
             end
     
@@ -63,6 +66,11 @@ end
 
 function win_stats = windowed_stats( data_struct, currents, window_str )
     
+    % Set contrast_flag
+    if strcmp(window_str, 'attContrast')
+        contrast_flag = 1; else contrast_flag = 0;
+    end
+
     % Go through all different ejected currents in the file. (currents(1)
     % will be the retain current.
     for i = 2:length(currents)
@@ -73,14 +81,14 @@ function win_stats = windowed_stats( data_struct, currents, window_str )
         corr_idx = find( [data_struct.trial_error] == 0 );
         window = get_window( data_struct(corr_idx(1)), window_str );
         
-        control_spikemat_attin  = get_directional_spikemat( data_struct, retain_current, window, 'in' );
-        control_spikemat_attout = get_directional_spikemat( data_struct, retain_current, window, 'out'  );
-        drug_spikemat_attin     = get_directional_spikemat( data_struct, eject_current, window, 'in' );
-        drug_spikemat_attout    = get_directional_spikemat( data_struct, eject_current, window, 'out' );
+        control_spikemat_attin  = get_directional_spikemat( data_struct, retain_current, window, 'in', contrast_flag );
+        control_spikemat_attout = get_directional_spikemat( data_struct, retain_current, window, 'out', contrast_flag  );
+        drug_spikemat_attin     = get_directional_spikemat( data_struct, eject_current, window, 'in', contrast_flag );
+        drug_spikemat_attout    = get_directional_spikemat( data_struct, eject_current, window, 'out', contrast_flag );
                 
         % Get D' for result of this
-        control_dmat = gen_dprime_struct( control_spikemat_attin, control_spikemat_attout );
-        drug_dmat    = gen_dprime_struct( drug_spikemat_attin, drug_spikemat_attout );
+        control_dmat = gen_dprime_struct_wrapper( control_spikemat_attin, control_spikemat_attout );
+        drug_dmat    = gen_dprime_struct_wrapper( drug_spikemat_attin, drug_spikemat_attout );
     
         % Get Anova for this
         anova_mat = gen_anova_struct( control_spikemat_attin, control_spikemat_attout, drug_spikemat_attin, drug_spikemat_attout );
@@ -94,7 +102,35 @@ function win_stats = windowed_stats( data_struct, currents, window_str )
 end
 
 
-function spikemat_struct = get_directional_spikemat( spikemat, current, window, inout  )
+% Wrapper for generating dprime statistics. Needed because of contrast
+% paradigm - will return single struct when no contrasts present, or deeper
+% struct if contrast info present.
+function rslt = gen_dprime_struct_wrapper( groupA, groupB )
+
+    if isfield( groupA, 'contrast' )
+        contrasts = unique( [groupA.contrast] );
+        for i = 1:length(contrasts)
+            contrast = contrasts(i);
+            rslt(i).contrast = contrast;
+            
+            groupAmod = cell2struct( num2cell([groupA.direction]), {'direction'} ); 
+            Aspikes = cellfun(@(spks, ctrst) spks( :, ctrst == contrast ), {groupA.spikes}, {groupA.contrast}, 'UniformOutput', 0);
+            [groupAmod.spikes] = Aspikes{:};
+            groupAmod = groupAmod';
+          
+            groupBmod = cell2struct( num2cell([groupB.direction]), {'direction'} ); 
+            Bspikes = cellfun(@(spks, ctrst) spks( :, ctrst == contrast ), {groupB.spikes}, {groupB.contrast}, 'UniformOutput', 0);
+            [groupBmod.spikes] = Bspikes{:};
+            groupBmod = groupBmod';
+
+            rslt(i).dmat = gen_dprime_struct( groupAmod, groupBmod);
+        end
+    else
+        rslt.dmat = gen_dprime_struct( groupA, groupB);
+    end
+end
+
+function spikemat_struct = get_directional_spikemat( spikemat, current, window, inout, contrast_flag  )
     spikemat_struct = struct;
     directions = unique([spikemat.theta]);
     % Loop through directions and place into struct
@@ -103,7 +139,7 @@ function spikemat_struct = get_directional_spikemat( spikemat, current, window, 
         spikemat_struct(i).spikes = filtered_windowed_spikemat( spikemat, current, window, directions(i), inout );
         
         % Add contrast data, if attend_Contrast paradigm
-        if isfield( spikemat, 'contrast' )
+        if contrast_flag
             spikemat_struct(i).contrast = get_contrasts( spikemat, current, directions(i), inout );
         end
         
@@ -143,8 +179,16 @@ function window = get_window( correct_trial, window_string )
         else
             window = [133 126];
         end
-    elseif strcmp(window_string, 'wm')
+    elseif strcmp( window_string, 'wm' )
         window = [155 161]; 
+    elseif strcmp( window_string, 'visual' )
+        if find(correct_trial.event_codes == 121)
+            window = [124 121]; % Attend Trials Early Sessions
+        elseif find(correct_trial.event_codes == 133)
+            window = [124 133]; % Attend Trials Late Sessions
+        else
+            window = [153 155]; % WM Trials
+        end
     elseif strcmp( window_string, 'fixation' )
         if find(correct_trial.event_codes == 153)  
             window = [120 153]; % WM Trials
