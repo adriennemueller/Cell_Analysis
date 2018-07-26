@@ -8,33 +8,32 @@ function gen_overview_figs()
     fnames = fn_ffps(1,:); ffpaths = fn_ffps(2,:); drug = fn_ffps(3,:); currents = fn_ffps(4,:);
    
     % Get list of all unique paradigms in master_file_struct
-    
-    paradigms = {}; %%% TODO TODO
+    paradigms = {}; %%% TODO TODO %Using horzcat?
     
     % Plot Overview Figs For Each File
     for i = 1:length(fnames)
         
         disp(fnames(i));
-        load( ffpaths{i} );
+        data_struct = load( ffpaths{i} ); %data_struct?
 
         % Loop through all paradigms in that file and gen over view fig
-        file_paradigms = {};
+        file_paradigms = {}; %%% TODO TODO
         for j = 1:length(file_paradigms)
         
+            %data_struct = ; %%% TODO
             paradigm = file_paradigms(j);
-            overview_fig = gen_overview_fig( data_struct, paradigm )
+            filtered_data_struct = data_struct( data_struct.paradigm == paradigm );
+            overview_fig = gen_overview_fig( filtered_data_struct );
+            
+            % Make some sort of composite overview_fig for contrast data?
+            % What about multiple different paradigms in same cell?
+            % What about multiple currents in same cell?
     
-            % Saveout fig in appropriate directory
-
-%             save_name_mat = strcat('tmp_figs/',fnames(i), '_', num2str(attend_struct(j).current));
-%             save_name = strrep(save_name_mat,'.mat','');
-%               
-%             saveas( att_sden_modded_fig, strcat(save_name{1}, '_Modded_DOn.png') );
-%             saveas( att_sden_modded_fig, strcat(save_name{1}, '_Modded_DOn.svg') );
-%             savefig( att_sden_modded_fig, strcat(save_name{1}, '_Modded_DOn.fig') );              
-    
-    
-    
+            % Save out fig in appropriate directory
+            save_name_mat = strcat('tmp_figs/',fnames(i), '_', num2str(attend_struct(j).current));
+            save_name = strrep(save_name_mat,'.mat','');
+               
+            saveas( overview_fig, strcat(save_name{1}, '_', paradigm, '_', '.svg') ); % .png and .fig also posisble.
         end
     end
 
