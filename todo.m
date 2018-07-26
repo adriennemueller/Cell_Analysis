@@ -1,5 +1,4 @@
-%%% FUNCTIONS THAT WANT TO REPLACE process, process2, attIn_att_Out,
-%%% aIaOContrasts, WmIn, wmOut etc.
+%%% FUNCTIONS THAT WANT TO REPLACE process, process2, 
 
 % Will probably have wrapper functions for gen_overviw_fig - to loop
 % through all procssd files, and plot dprime unity - with favourite
@@ -9,12 +8,6 @@ function gen_overview_figs( mfs )
 end
 
 
-% Will make and saveout a summary of att-in/att-out, drug-on/drug-off by
-% direction for a given file. May include anova sub_fig.
-function rslt = gen_overview_fig( file, trial_type )
-
-
-end
 
 
 
@@ -41,13 +34,22 @@ end
 
 
 Remove?
-    att_drug_comp
-    attIn_attOut_Contrasts
     some of the prime unities
-    evaluate_units?
+    
     plot_att functions
     plot_wm
     process and process2
+    
+    evaluate_units?
     segregate_stat_struct?
     spike_density spike_density_psp and spike raster?
+   
     
+    MOTOR WINDOW
+    
+Make ReadMe with Workflow?
+ make_master_file_struct
+ preprocess
+ process_stats
+ - gen_overview_figs
+ - plot_dprime_unity
