@@ -1,21 +1,12 @@
-%%% FUNCTIONS THAT WANT TO REPLACE process, process2, 
-
-% Will probably have wrapper functions for gen_overviw_fig - to loop
-% through all procssd files, and plot dprime unity - with favourite
-% selections - or could just put in comment in top of mfile.
-function gen_overview_figs( mfs )
-
-end
-
-
-
-
-
 
 % Will replace original d_prime unitys for vis/combined, etc and plot
 % dprimes handed to it.
 function rslt = plot_dprime_unity()
 end
+
+
+%%% Want function to make summary anova fig - how many cells with attend
+%%% effects exhibit drug/attend interactions. How many drug effects etc.
 
 
 
@@ -36,14 +27,11 @@ end
 Remove?
     some of the prime unities
     
-    plot_att functions
-    plot_wm
-    process and process2
-    
     evaluate_units?
     segregate_stat_struct?
     spike_density spike_density_psp and spike raster?
    
+    Check others - update)soujenat? shadedErrorBar? add_session?
     
     MOTOR WINDOW
     
