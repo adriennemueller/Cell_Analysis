@@ -67,10 +67,12 @@ function out_array = truncate( in_array )
     out_array = cellfun(@(in_arr) in_arr( (end-min_length+1):end ), in_array, 'uniformoutput', 0);
 end
 
+
 % reversed gives you the opposite direction (1-8) to the one you input. eg
 % 0->180, 270->90 etc.
 function rslt = reversed(direction)
     rslt = mod((direction + 135), 360) + 45;
     if rslt == 360, rslt = 0; end
 end
+
 

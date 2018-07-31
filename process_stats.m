@@ -130,21 +130,6 @@ function rslt = gen_dprime_struct_wrapper( groupA, groupB )
     end
 end
 
-function spikemat_struct = get_directional_spikemat( spikemat, current, window, inout, contrast_flag  )
-    spikemat_struct = struct;
-    directions = unique([spikemat.theta]);
-    % Loop through directions and place into struct
-    for i = 1:length(directions)
-        spikemat_struct(i).direction = directions(i);
-        spikemat_struct(i).spikes = filtered_windowed_spikemat( spikemat, current, window, directions(i), inout );
-        
-        % Add contrast data, if attend_Contrast paradigm
-        if contrast_flag
-            spikemat_struct(i).contrast = get_contrasts( spikemat, current, directions(i), inout );
-        end
-        
-    end
-end
 
 % Get a vector of contrasts for the subset of data that is being processed.
 % This function repeats a lot of the work done in
@@ -168,34 +153,6 @@ function contrast_vec = get_contrasts( curr_data_mat, current, direction, inout 
     end        
     
     contrast_vec = [curr_data_mat(valid_idxs).contrast];
-end
-
- 
-function window = get_window( correct_trial, window_string )
-
-    if strcmp( window_string, 'attend' ) || strcmp( window_string, 'attContrast' )
-        if find(correct_trial.event_codes == 121) % Need a function for this because I changed the event codes in Jan/Mar 2016 
-            window = [121 126];
-        else
-            window = [133 126];
-        end
-    elseif strcmp( window_string, 'wm' )
-        window = [155 161]; 
-    elseif strcmp( window_string, 'visual' )
-        if find(correct_trial.event_codes == 121)
-            window = [124 121]; % Attend Trials Early Sessions
-        elseif find(correct_trial.event_codes == 133)
-            window = [124 133]; % Attend Trials Late Sessions
-        else
-            window = [153 155]; % WM Trials
-        end
-    elseif strcmp( window_string, 'fixation' )
-        if find(correct_trial.event_codes == 153)  
-            window = [120 153]; % WM Trials
-        else
-            window = [120 124]; % Attend Trials
-        end
-    end
 end
 
 % reversed gives you the opposite direction (1-8) to the one you input. eg

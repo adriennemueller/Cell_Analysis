@@ -1,18 +1,56 @@
 % Will make and saveout a summary of att-in/att-out, drug-on/drug-off by
-% direction for a given file. May include anova sub_fig.
-function rslt = gen_overview_fig( file, trial_type )
-    
-    % Filter Data by Trial Type (e.g. attend / wm / attend_contrast )
+% direction for a given file.
+function overview_fig = gen_overview_fig( data_struct, currents )
 
-    % Get the window-filtered spikes for each subset of data 
-    
+    all_paradigms = {'Attention', 'WM', 'Attention_Contrast' };
+    file_paradigms = unique({data_struct.paradigm});
+    usable_paradigms = file_paradigms(contains( file_paradigms, all_paradigms ) ); % TEST ME
+
     % Set up superfig
+    overview_fig = figure();
+    base_overview_fig_numplots = 5; % 4 Drug off/on raster+sden + 1, overlapping d' (fix, vis, att/wm)
+    numplots =  base_overview_fig_numplots * length(currents) * length(usable_paradigms);
     
-    % Plot Histograms and SDen Overlay for the subsets
-    
-    % Plot d' plot for each sub-window (Fix, Vis, Attend/WM)
+    % Filter Data by current and paradigm
+    % Loop through all paradigms in that file an
+    for i = 2:length(currents) 
+        for j = 1:length(usable_paradigms)
 
-    % Plot Anova -pval plot?
+            % Filtered data_struct by paradigm
+            data_struct = data_struct( strcmp( {data_struct.paradigm}, usable_paradigms{j} ) );
+            
+            if strcmp( usable_paradigms{j}, 'Attention_Contrast' )
+                contrast_flag = 1; else, contrast_flag = 0;
+            end
+            
+            retain_current = currents(1);
+            eject_current = currents(i);
+            
+            window_str = 'fullNoMotor';
+            corr_idx = find( [data_struct.trial_error] == 0 );
+            window = get_window( data_struct(corr_idx(1)), window_str );
+            
+            % Filter by direction
+            control_spikemat_attin  = get_directional_spikemat( data_struct, retain_current, window, 'in', contrast_flag );
+            control_spikemat_attout = get_directional_spikemat( data_struct, retain_current, window, 'out', contrast_flag  );
+            drug_spikemat_attin     = get_directional_spikemat( data_struct, eject_current, window, 'in', contrast_flag );
+            drug_spikemat_attout    = get_directional_spikemat( data_struct, eject_current, window, 'out', contrast_flag );
+
+            % Plot Histograms and SDen Overlay for the subsets
+            for k = 1:length( control_spike_mat_att_in ) % Number of Directions
+                control_attin_ax = subplot( ); %%%% TODO
+                spike_sden_subplot = raster_sden_plot( control_spikemat_attin(k).spikes, control_spikemat_attout(k).spikes, ...
+                                                       drug_spikemat_attin(k).spikes, drug_spikemat_attout(k).spikes );
+                plot( control_attin_ax, spike_sden_subplot ) % TEST TEST TEST
+            end
+
+            % Plot d' plot for each sub-window (Fix, Vis, Attend/WM)
+
+            % Plot Anova -pval plot?
+        end
+    end
+    
+    % Make some sort of composite overview_fig for contrast data?
     
 end
 
