@@ -54,6 +54,14 @@ function overview_fig = gen_overview_fig( data_struct, currents )
     
 end
 
+function output_plot = raster_sden_plot( ctrl_in, ctrl_out, drug_in, drug_out )
+
+    
+
+
+
+end
+
 function att_sden_fig = plot_att_sdens_Modified_Contrasts( attend_struct, fname, curr_current )
 
    
