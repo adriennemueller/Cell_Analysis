@@ -16,6 +16,9 @@ function gen_overview_figs()
         
         disp(fnames(i));
         load( ffpaths{i}, 'data_struct' ); % Loads data_struct
+        if length(unique([data_struct.theta])) > 9
+            data_struct = adjust_theta( data_struct );
+        end
 
         overview_fig = gen_overview_fig( data_struct, currents{i} );
 

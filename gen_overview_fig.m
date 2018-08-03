@@ -28,20 +28,26 @@ function overview_fig = gen_overview_fig( data_struct, currents )
             
             window_str = 'fullNoMotor';
             corr_idx = find( [data_struct.trial_error] == 0 );
-            window = get_window( data_struct(corr_idx(1)), window_str );
+            sample_correct_trial = data_struct(corr_idx(1)); 
+            window = get_window( sample_correct_trial, window_str );
             
             % Filter by direction
-            control_spikemat_attin  = get_directional_spikemat( data_struct, retain_current, window, 'in', contrast_flag );
-            control_spikemat_attout = get_directional_spikemat( data_struct, retain_current, window, 'out', contrast_flag  );
-            drug_spikemat_attin     = get_directional_spikemat( data_struct, eject_current, window, 'in', contrast_flag );
-            drug_spikemat_attout    = get_directional_spikemat( data_struct, eject_current, window, 'out', contrast_flag );
+            control_spikemat_in  = get_directional_spikemat( data_struct, retain_current, window, 'in', contrast_flag );
+            control_spikemat_out = get_directional_spikemat( data_struct, retain_current, window, 'out', contrast_flag );
+            drug_spikemat_in     = get_directional_spikemat( data_struct, eject_current, window, 'in', contrast_flag );
+            drug_spikemat_out    = get_directional_spikemat( data_struct, eject_current, window, 'out', contrast_flag );
 
             % Plot Histograms and SDen Overlay for the subsets
-            for k = 1:length( control_spike_mat_att_in ) % Number of Directions
-                control_attin_ax = subplot( ); %%%% TODO
-                spike_sden_subplot = raster_sden_plot( control_spikemat_attin(k).spikes, control_spikemat_attout(k).spikes, ...
-                                                       drug_spikemat_attin(k).spikes, drug_spikemat_attout(k).spikes );
-                plot( control_attin_ax, spike_sden_subplot ) % TEST TEST TEST
+            for k = 1:(length( control_spikemat_in ) /2 ) % Number of Directions / 2; because data the same in other four - just flipped in and out
+                plot_data.ctrl_in  = logical(control_spikemat_in(k).spikes');
+                plot_data.ctrl_out = logical(control_spikemat_out(k).spikes');
+                plot_data.drug_in  = logical(drug_spikemat_in(k).spikes');
+                plot_data.drug_out = logical(drug_spikemat_out(k).spikes');
+             
+                spike_sden_subplot = raster_sden_plot( plot_data, sample_correct_trial, window_str );
+
+                %control_attin_ax = subplot( ); %%%% TODO
+%                plot( control_attin_ax, spike_sden_subplot ) % TEST TEST TEST
             end
 
             % Plot d' plot for each sub-window (Fix, Vis, Attend/WM)
@@ -54,13 +60,95 @@ function overview_fig = gen_overview_fig( data_struct, currents )
     
 end
 
-function output_plot = raster_sden_plot( ctrl_in, ctrl_out, drug_in, drug_out )
+function output_plot = raster_sden_plot( plot_data, sample_correct_trial, window_str  )
 
+    %output_plot = figure(); % Maybe?
+
+    % Plot the four rasters with appropriate colors
+    output_plot(1) = subplot(6,1,1);
+    [ctrlOut_xs, ctrlOut_ys] = plotSpikeRaster( plot_data.ctrl_out, 'PlotType', 'scatter' );
     
+    output_plot(2) = subplot(6,1,2);
+    [ctrlIn_xs, ctrlIn_ys]   = plotSpikeRaster( plot_data.ctrl_in, 'PlotType', 'scatter' );
+    
+    output_plot(3) = subplot(6,1,3);
+    [drugOut_xs, drugOut_ys] = plotSpikeRaster( plot_data.drug_out, 'PlotType', 'scatter' );
 
+    output_plot(4) = subplot(6,1,4);
+    [drugIn_xs, drugIn_ys]   = plotSpikeRaster( plot_data.drug_in, 'PlotType', 'scatter' );
 
+        
+    % Add the two Sden Overlay plots.
 
+    % Find the times for the different events during the trial
+    event_struct = find_event_times( sample_correct_trial, window_str );
+    for i = 1:4 % number of plots
+        for j = 1:length(event_struct)
+        
+            curr_plot = output_plot(i);
+            
+            % Add the lines for the events 
+            ylimits = ylim( curr_plot ); ylength = ylimits(2) - ylimits(1) + 1;
+            line( output_plot(i), repmat(event_struct(j).e_time, ylength), ylimits(1):ylimits(2), 'Color','r' ); %%% TODO
+    
+            set(output_plot(i), 'xticklabel', {});
+        end
+    end
+
+    % Add Event Strings to X Axis
+    e_strings = {event_struct.e_string}; xlabel_times = [event_struct.e_time];
+    set(output_plot(4), 'xtick', xlabel_times, 'xticklabel', e_strings);
+    
+    
+    % Make plot pretty
 end
+
+
+% This will only work for fullNoMotor trials
+function event_struct = find_event_times( corr_trial, window_str )
+    
+    if ~strcmp( window_str, 'fullNoMotor' )
+        disp( 'Inappropriate trial window selection. Only fullNoMotor case currently handled.' );
+    end
+
+    event_struct = struct;
+
+    e_codes = corr_trial.event_codes;
+    e_times = corr_trial.code_times;
+  
+    attend_earlysession_flag = find(e_codes == 121);
+    attend_latesession_flag  = find(e_codes == 133);
+    wm_flag                  = find(e_codes == 153);
+    
+    offset = e_times(e_codes == 120) + 1; 
+    
+    % Fixation Onset the same for all trials.
+    event_struct(1).e_string = 'Fix'; 
+    event_struct(1).e_time = e_times(e_codes == 120) - offset; 
+    
+    % Visual Onset
+    event_struct(2).e_string = 'Target'; 
+    if attend_earlysession_flag || attend_latesession_flag
+        event_struct(2).e_time = e_times(e_codes == 124) - offset; % Attend Conditions
+    else
+        event_struct(2).e_time = e_times(e_codes == 153) - offset; % WM Condition
+    end
+    
+    if attend_earlysession_flag
+        event_struct(3).e_string = 'Cue';
+        event_struct(3).e_time   = e_times(e_codes == 121) - offset;
+    elseif attend_latesession_flag
+        event_struct(3).e_string = 'Cue';
+        event_struct(3).e_time   = e_times(e_codes == 133) - offset;
+    else % WM Condition
+        event_struct(3).e_string = 'Delay';
+        event_struct(3).e_time   = e_times(e_cdoes == 155) - offset;
+    end
+    
+    
+    
+end
+
 
 function att_sden_fig = plot_att_sdens_Modified_Contrasts( attend_struct, fname, curr_current )
 
