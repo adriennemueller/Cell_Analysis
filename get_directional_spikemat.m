@@ -14,4 +14,6 @@ function spikemat_struct = get_directional_spikemat( spikemat, current, window, 
         end
         
     end
+        
 end
+

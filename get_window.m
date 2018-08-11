@@ -8,7 +8,10 @@
 % 'fixation'    - fixation onset to targets onset 
 % 'fullNoMotor' - fixation onset to blank onset (attend trials) or to fixation offset (wm trials)
 % 
-function window = get_window( correct_trial, window_string )
+% Will return a pair of numbers:
+% end_code of the window
+% win_length - how many samples should be counted back from that window
+function win_info = get_window( correct_trial, window_string )
     attend_earlysession_flag = find(correct_trial.event_codes == 121);
     attend_latesession_flag  = find(correct_trial.event_codes == 133);
     wm_flag                  = find(correct_trial.event_codes == 153);
@@ -33,4 +36,41 @@ function window = get_window( correct_trial, window_string )
         else, window = [120 126]; 
         end
     end
+    
+    end_code = window(2);
+    win_length = get_win_length( correct_trial, window, window_string );
+    
+    win_info = [end_code win_length];
+end
+
+
+function win_length = get_win_length( correct_trial, window, window_string )
+
+    %attend_earlysession_flag = find(correct_trial.event_codes == 121);
+    %attend_latesession_flag  = find(correct_trial.event_codes == 133);
+    wm_flag                  = find(correct_trial.event_codes == 153);
+
+    fix_win_length = 300; % Always take the last 300ms of the fixation window
+    
+    % If fixation window 
+    if strcmp(window_string, 'fixation' )
+        win_length = fix_win_length; 
+        
+    % fullNoMotor window
+    elseif strcmp( window_string, 'fullNoMotor' )
+        if wm_flag, fix_end_code = 153;
+        else, fix_end_code = 124; 
+        end
+        
+        end_time = correct_trial.code_times( correct_trial.event_codes == window(2) );
+        fix_end_time = correct_trial.code_times( correct_trial.event_codes == fix_end_code );
+        win_length = (end_time - fix_end_time) + fix_win_length;
+        
+    % If visual or attend or working memory windows - consistent times
+    else
+        beg_time = correct_trial.code_times( correct_trial.event_codes == window(1) );
+        end_time = correct_trial.code_times( correct_trial.event_codes == window(2) );
+        win_length = end_time - beg_time;
+    end
+    
 end
