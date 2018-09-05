@@ -157,7 +157,7 @@ function event_struct = find_event_times( corr_trial, window_str )
     attend_latesession_flag  = find(e_codes == 133);
     wm_flag                  = find(e_codes == 153);
     
-    offset = e_times(e_codes == 120) + 1; 
+    offset = e_times(e_codes == 120) - 1; 
     
     % Fixation Onset the same for all trials.
     event_struct(1).e_string = 'Fix'; 
