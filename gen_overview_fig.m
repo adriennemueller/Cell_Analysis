@@ -7,7 +7,7 @@ function overview_fig = gen_overview_fig( data_struct, currents )
     usable_paradigms = file_paradigms(contains( file_paradigms, all_paradigms ) ); % TEST ME
 
     % Set up superfig
-    overview_fig = figure();
+    overview_fig = figure('visible', 'off');
     base_overview_fig_numplots = 5; % 4 Drug off/on raster+sden + 1, overlapping d' (fix, vis, att/wm)
     numplots =  base_overview_fig_numplots * length(currents) * length(usable_paradigms);
     
@@ -28,6 +28,11 @@ function overview_fig = gen_overview_fig( data_struct, currents )
             
             window_str = 'fullNoMotor';
             corr_idx = find( [data_struct.trial_error] == 0 );
+            
+%             if isempty( corr_idx ) %%%HACK FOR TESTING - CAN BE REMOVED!
+%                 disp()
+%             end
+%             
             sample_correct_trial = data_struct(corr_idx(1)); 
             window = get_window( sample_correct_trial, window_str );
             
@@ -45,6 +50,7 @@ function overview_fig = gen_overview_fig( data_struct, currents )
                 plot_data.drug_out = logical(drug_spikemat_out(k).spikes');
              
                 spike_sden_subplot = raster_sden_plot( plot_data, sample_correct_trial, window_str );
+
             end
 
             % Plot d' plot for each sub-window (Fix, Vis, Attend/WM)
@@ -61,6 +67,7 @@ function output_plot = raster_sden_plot( plot_data, sample_correct_trial, window
 
     %output_plot = figure(); % Maybe?
 
+
     % Plot the four rasters with appropriate colors
     output_plot(1) = subplot(6,1,1);
     [ctrlOut_xs, ctrlOut_ys] = plotSpikeRaster( plot_data.ctrl_out, 'PlotType', 'scatter' );
@@ -74,7 +81,15 @@ function output_plot = raster_sden_plot( plot_data, sample_correct_trial, window
     output_plot(4) = subplot(6,1,4);
     [drugIn_xs, drugIn_ys]   = plotSpikeRaster( plot_data.drug_in, 'PlotType', 'scatter' );
 
-        
+    % If any of these plots is void of data, skip the rest of the code
+    % here. HACK. FIX LATER.
+    if isempty( plot_data.ctrl_out) || isempty( plot_data.ctrl_in ) || isempty( plot_data.drug_out ) || isempty( plot_data.drug_in )
+        output_plot(5) = subplot(6,1,5); plot( 0,0);
+        output_plot(6) = subplot(6,1,6); plot( 0,0);
+        return
+    end
+    
+    
     % Add the two Sden Overlay plots.
 
     % Calculate SDens, and SEs
@@ -153,9 +168,9 @@ function event_struct = find_event_times( corr_trial, window_str )
     e_codes = corr_trial.event_codes;
     e_times = corr_trial.code_times;
   
-    attend_earlysession_flag = find(e_codes == 121);
-    attend_latesession_flag  = find(e_codes == 133);
-    wm_flag                  = find(e_codes == 153);
+    attend_earlysession_flag = ~isempty( find(e_codes == 121) );
+    attend_latesession_flag  = ~isempty( find(e_codes == 133) );
+    wm_flag                  = ~isempty( find(e_codes == 153) );
     
     offset = e_times(e_codes == 120) - 1; 
     

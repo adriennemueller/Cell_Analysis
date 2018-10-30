@@ -17,7 +17,7 @@ function rslt_mat = filtered_windowed_spikemat( curr_data_mat, current, window, 
     valid_idxs = correct_idxs( ismember( correct_idxs, corr_current_idxs ) );
 
     % Filter for (attend) direction
-    if ~ isempty( inout) && strcmp( inout, 'out' )
+    if ~ isempty( inout ) && strcmp( inout, 'out' )
         direction = reversed(direction);
     end
         
@@ -44,7 +44,7 @@ function windowed_mat = extract_window( window, spike_mat, millis_mat, event_cod
 
     % Loops over matching cells in event_codes and code_times and applies
     % the find of the win_end event_codes to each pair.
-    win_end_times = cellfun(@(codes, times) times(codes == win_end), event_codes, code_times);
+    win_end_times = cellfun(@(codes, times) times(codes == win_end), event_codes, code_times, 'UniformOutput', 0);
 
     
     % Find the indices of the milli value that corresponds to those times.

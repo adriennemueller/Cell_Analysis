@@ -33,7 +33,7 @@ function rslt = drug_svm( mfs, drug_selection, current_selection, straps, scramb
     % SVM_Model = fitcsvm( svm_mat, drug_labels );
     % CVSVMModel = crossval(SVMModel);
 
-    CVSVMModel = struct;
+     CVSVMModel = struct;
      for i = 1:straps
          
         % Separate into training sets and test set
@@ -124,8 +124,8 @@ function [svm_mat, drug_labels] = multicell_mat( mfs, drug_selection, current_se
                     disp(strcat('Concatenating: ', {' '},  fname));
         
                     data_struct = load_processed_file( mfs.session(i).sub_direc, fname );
-                    control_trials = filtered_windowed_spikemat( data_struct, -15, 'attend', [] );
-                    drug_trials    = filtered_windowed_spikemat( data_struct, current_selection, 'attend', [] );
+                    control_trials = filtered_windowed_spikemat( data_struct, -15, 'attend', [], [] );
+                    drug_trials    = filtered_windowed_spikemat( data_struct, current_selection, 'attend', [], [] );
         
                     % Append spike matrix to svm_mat and drug_labels to
                     % drug_labels.

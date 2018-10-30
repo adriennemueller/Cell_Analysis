@@ -9,9 +9,9 @@ function spikemat_struct = get_directional_spikemat( spikemat, current, window, 
         spikemat_struct(i).spikes = filtered_windowed_spikemat( spikemat, current, window, directions(i), inout );
         
         % Add contrast data, if attend_Contrast paradigm
-        if contrast_flag
-            spikemat_struct(i).contrast = get_contrasts( spikemat, current, directions(i), inout );
-        end
+%         if contrast_flag
+%             spikemat_struct(i).contrast = get_contrasts( spikemat, current, directions(i), inout );
+%         end
         
     end
         

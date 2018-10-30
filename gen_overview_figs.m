@@ -21,12 +21,12 @@ function gen_overview_figs()
         end
 
         overview_fig = gen_overview_fig( data_struct, currents{i} );
-
+        
         % Save out fig in appropriate directory %%% AS YET UNTESTED
-        save_name_mat = strcat('tmp_figs/',fnames(i), '_', num2str(attend_struct(j).current));
+        current_list = currents{i};
+        save_name_mat = strcat( 'tmp_figs/',fnames(i), '_', num2str(current_list(2)), 'nA' );
         save_name = strrep(save_name_mat,'.mat','');
-
-        saveas( overview_fig, strcat(save_name{1}, '_', paradigm, '_', '.svg') ); % .png and .fig also posisble.
+        saveas( overview_fig, strcat(save_name{1}, '.svg') ); % .png and .fig also posisble. % May Want to add paradigm to this eventually
     end
 
 end

@@ -105,7 +105,7 @@ end
 %%% NEED TO DEAL WITH ALL THE UNKNOWNs, which are probably error trials...
 %%% or maybe probe trials.
 % Are probe trials tossed out in early sessions.
-% Do probe rials and wm trials share the same code(wm used)?
+% Do probe trials and wm trials share the same code(wm used)?
 function trials = identify_paradigm( trials, full_bhvfile )
 
 

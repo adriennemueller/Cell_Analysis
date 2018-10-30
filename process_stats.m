@@ -92,14 +92,41 @@ function win_stats = windowed_stats( data_struct, currents, window_str )
     
         % Get Anova for this
         anova_mat = gen_anova_struct( control_spikemat_attin, control_spikemat_attout, drug_spikemat_attin, drug_spikemat_attout );
+        
+        % Get Summary Statistics for this window
+        control_summ_stats = gen_summ_stats( control_spikemat_attin, control_spikemat_attout ); 
+        drug_summ_stats    = gen_summ_stats( drug_spikemat_attin, drug_spikemat_attout );
+        
  
         % Return results for each current separately
         win_stats(i-1).current = eject_current;
         win_stats(i-1).control_dmat = control_dmat;
         win_stats(i-1).drug_dmat = drug_dmat;
         win_stats(i-1).anova_mat = anova_mat;
+        win_stats(i-1).control_summ_stats = control_summ_stats;
+        win_stats(i-1).drug_summ_stats    = drug_summ_stats;
     end
 end
+
+
+
+function rslt = gen_summ_stats( attin_vals, attout_vals) 
+    
+    for i = 1:length( [attin_vals.direction] )
+        
+        
+        rslt(i).direction = attin_vals(i).direction;
+        
+        spikes = horzcat( attin_vals(i).spikes, attout_vals(i).spikes );
+        [ms, trials] = size( spikes );
+        numspikes = sum( spikes, 2 );
+        
+        rslt(i).avg_fr = mean(numspikes ./ ms) * 1000;
+        rslt(i).num_trials = trials;
+    end
+
+end
+
 
 
 % Wrapper for generating dprime statistics. Needed because of contrast

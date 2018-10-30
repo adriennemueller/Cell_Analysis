@@ -31,7 +31,7 @@ Remove?
     segregate_stat_struct?
     spike_density spike_density_psp and spike raster?
    
-    Check others - update-soujenat? shadedErrorBar? add_session?
+    Check others - update-spikemat? shadedErrorBar? add_session?
     
     MOTOR WINDOW
     
