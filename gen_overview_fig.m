@@ -34,13 +34,13 @@ function overview_fig = gen_overview_fig( data_struct, currents )
 %             end
 %             
             sample_correct_trial = data_struct(corr_idx(1)); 
-            window = get_window( sample_correct_trial, window_str );
+            %window = get_window( sample_correct_trial, window_str );
             
             % Filter by direction
-            control_spikemat_in  = get_directional_spikemat( data_struct, retain_current, window, 'in', contrast_flag );
-            control_spikemat_out = get_directional_spikemat( data_struct, retain_current, window, 'out', contrast_flag );
-            drug_spikemat_in     = get_directional_spikemat( data_struct, eject_current, window, 'in', contrast_flag );
-            drug_spikemat_out    = get_directional_spikemat( data_struct, eject_current, window, 'out', contrast_flag );
+            control_spikemat_in  = get_directional_spikemat( data_struct, retain_current, window_str, 'in', contrast_flag );
+            control_spikemat_out = get_directional_spikemat( data_struct, retain_current, window_str, 'out', contrast_flag );
+            drug_spikemat_in     = get_directional_spikemat( data_struct, eject_current, window_str, 'in', contrast_flag );
+            drug_spikemat_out    = get_directional_spikemat( data_struct, eject_current, window_str, 'out', contrast_flag );
 
             % Plot Histograms and SDen Overlay for the subsets
             for k = 1:(length( control_spikemat_in ) /2 ) % Number of Directions / 2; because data the same in other four - just flipped in and out

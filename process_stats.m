@@ -21,6 +21,9 @@ function mfs = process_stats( mfs )
             paradigm_list = mfs.session(i).paradigms{j};
             currents = mfs.session(i).currents{j};
             
+            %%%
+            disp({'Processing', mfs.session(i).processed_files{j}})
+            
             % Calculate stats for each paradigm (anova, d', etc) and 
             % save substruct of stats for each paradigm into mfs
             if contains( paradigm_list, 'Attention' )
@@ -39,9 +42,22 @@ function mfs = process_stats( mfs )
             
             if sum( strcmp( paradigm_list, 'Attention_Contrast' ) )
                 attContrast_trial_struct = data_struct( contains({data_struct.paradigm}, 'Attention_Contrast' ) );
-                mfs.session(i).attContrast_stats{j} = windowed_stats( attContrast_trial_struct, currents, 'attContrast' );
-                mfs.session(i).attContrast_visual_stats{j} = windowed_stats( attContrast_trial_struct, currents, 'visual' );
-                mfs.session(i).attContrast_fixation_stats{j} = windowed_stats( attContrast_trial_struct, currents, 'fixation' );
+                
+                % Analyze irrespective of Contrast
+                mfs.session(i).attend_stats{j} = windowed_stats( attContrast_trial_struct, currents, 'attend' );
+                mfs.session(i).attend_visual_stats{j} = windowed_stats( attContrast_trial_struct, currents, 'visual' );
+                mfs.session(i).attend_fixation_stats{j} = windowed_stats( attContrast_trial_struct, currents, 'fixation' );
+                
+                % Analyze for each Contrast separately
+                %contrasts = unique( [attContrast_trial_struct.contrast] );
+                %for k = 1:length(contrasts)
+                    % Make Contrast-Specific Substruct
+                    %curr_attContrast_trial_struct = attContrast_trial_struct( [attContrast_trial_struct.contrast] == contrasts(k) );
+                    %mfs.session(i).attendContrast{j,k} = contrasts(k);
+                    mfs.session(i).attendContrast_stats{j} = windowed_stats( attContrast_trial_struct, currents, 'attContrast' );
+                    mfs.session(i).attendContrast_visual_stats{j} = windowed_stats( attContrast_trial_struct, currents, 'visual' );
+                    mfs.session(i).attendContrast_fixation_stats{j} = windowed_stats( attContrast_trial_struct, currents, 'fixation' );
+                %end
             end
     
         end
@@ -79,19 +95,19 @@ function win_stats = windowed_stats( data_struct, currents, window_str )
         eject_current  = currents(i); 
         
         corr_idx = find( [data_struct.trial_error] == 0 );
-        window = get_window( data_struct(corr_idx(1)), window_str );
+        %window = get_window( data_struct(corr_idx(1)), window_str );
         
-        control_spikemat_attin  = get_directional_spikemat( data_struct, retain_current, window, 'in', contrast_flag );
-        control_spikemat_attout = get_directional_spikemat( data_struct, retain_current, window, 'out', contrast_flag  );
-        drug_spikemat_attin     = get_directional_spikemat( data_struct, eject_current, window, 'in', contrast_flag );
-        drug_spikemat_attout    = get_directional_spikemat( data_struct, eject_current, window, 'out', contrast_flag );
+        control_spikemat_attin  = get_directional_spikemat( data_struct, retain_current, window_str, 'in', contrast_flag );
+        control_spikemat_attout = get_directional_spikemat( data_struct, retain_current, window_str, 'out', contrast_flag );
+        drug_spikemat_attin     = get_directional_spikemat( data_struct, eject_current, window_str, 'in', contrast_flag );
+        drug_spikemat_attout    = get_directional_spikemat( data_struct, eject_current, window_str, 'out', contrast_flag );
                 
         % Get D' for result of this
         control_dmat = gen_dprime_struct_wrapper( control_spikemat_attin, control_spikemat_attout );
         drug_dmat    = gen_dprime_struct_wrapper( drug_spikemat_attin, drug_spikemat_attout );
     
         % Get Anova for this
-        anova_mat = gen_anova_struct( control_spikemat_attin, control_spikemat_attout, drug_spikemat_attin, drug_spikemat_attout );
+        anova_mat = gen_anova_struct( control_spikemat_attin, control_spikemat_attout, drug_spikemat_attin, drug_spikemat_attout, contrast_flag );
         
         % Get Summary Statistics for this window
         control_summ_stats = gen_summ_stats( control_spikemat_attin, control_spikemat_attout ); 
@@ -119,7 +135,7 @@ function rslt = gen_summ_stats( attin_vals, attout_vals)
         
         spikes = horzcat( attin_vals(i).spikes, attout_vals(i).spikes );
         [ms, trials] = size( spikes );
-        numspikes = sum( spikes, 2 );
+        numspikes = sum( spikes, 1 );
         
         rslt(i).avg_fr = mean(numspikes ./ ms) * 1000;
         rslt(i).num_trials = trials;
@@ -214,15 +230,18 @@ function dmat = gen_dprime_struct( groupA, groupB )
 end
 
 
-function rslt = gen_anova_struct( ctrl_attin, ctrl_attout, drug_attin, drug_attout )
+function rslt = gen_anova_struct( ctrl_attin, ctrl_attout, drug_attin, drug_attout, contrast_flag )
     data_vec = []; 
     direction = [];
     drug = [];
     attend = [];
     
     % Identify whether this is attend_Contrast paradigm data.
-    contrast_flag = isfield( ctrl_attin, 'contrast' );
-    if contrast_flag, contrast = []; end    
+    %contrast_flag = isfield( ctrl_attin, 'contrast' ); % NO SUCH DATA IN
+    %ATT MAT
+    if contrast_flag, 
+        contrast = [];
+    end    
     
     for i = 1:length(unique([ctrl_attin.direction])) 
         
@@ -237,7 +256,7 @@ function rslt = gen_anova_struct( ctrl_attin, ctrl_attout, drug_attin, drug_atto
         direction = [ direction repmat(direc, 1, ctrl_attin_length )];
         drug = [drug zeros(1, ctrl_attin_length)];
         attend = [attend ones(1, ctrl_attin_length)];
-        if contrast_flag, contrast = [contrast ctrl_attin(i).contrast]; end
+        if contrast_flag, contrast = [contrast ctrl_attin(i).contrasts]; end
         end
         
         % Same for Drug Off, Attend Out
@@ -247,7 +266,7 @@ function rslt = gen_anova_struct( ctrl_attin, ctrl_attout, drug_attin, drug_atto
         direction = [ direction repmat(direc, 1, ctrl_attout_length )];
         drug = [drug zeros(1, ctrl_attout_length)];
         attend = [attend zeros(1, ctrl_attout_length)];
-        if contrast_flag, contrast = [contrast ctrl_attout(i).contrast]; end
+        if contrast_flag, contrast = [contrast ctrl_attout(i).contrasts]; end
         end
         
         % Find the Drug On, Attend In trials and make a vector of the
@@ -258,7 +277,7 @@ function rslt = gen_anova_struct( ctrl_attin, ctrl_attout, drug_attin, drug_atto
         direction = [ direction repmat(direc, 1, drug_attin_length )];
         drug = [drug ones(1, drug_attin_length)];
         attend = [attend ones(1, drug_attin_length)]; 
-        if contrast_flag, contrast = [contrast drug_attin(i).contrast]; end
+        if contrast_flag, contrast = [contrast drug_attin(i).contrasts]; end
         end
         
         % Same for Drug On, Attend Out
@@ -268,13 +287,13 @@ function rslt = gen_anova_struct( ctrl_attin, ctrl_attout, drug_attin, drug_atto
         direction = [ direction repmat(direc, 1, drug_attout_length )];
         drug = [drug ones(1, drug_attout_length)];
         attend = [attend zeros(1, drug_attout_length)];
-        if contrast_flag, contrast = [contrast drug_attout(i).contrast]; end
+        if contrast_flag, contrast = [contrast drug_attout(i).contrasts]; end
         end
         
     end
     
     if contrast_flag
-        [p,tbl] = anovan( data_vec, {direction, drug, attend, contrast}, 'model','full','varnames',{'direction','drug','attend', 'contrast'}, 'display','off', 'sstype', 1 );
+        [p,tbl] = anovan( data_vec, {direction, drug, attend, cell2mat(contrast)}, 'model','full','varnames',{'direction','drug','attend', 'contrast'}, 'display','off', 'sstype', 1 );
     else
         [p,tbl] = anovan( data_vec, {direction, drug, attend}, 'model','full','varnames',{'direction','drug','attend'}, 'display','off', 'sstype', 1 );
     end

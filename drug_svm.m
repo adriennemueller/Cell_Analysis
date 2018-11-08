@@ -16,8 +16,8 @@
 % that were control trials.
 function rslt = drug_svm( mfs, drug_selection, current_selection, straps, scramble )
     
-    if nargin < 5, scramble = 0; end
-    if nargin < 4, straps = 100; end
+    if nargin < 5, scramble = 1; end
+    if nargin < 4, straps = 10; end
 
     % Get giant matrix of trials for all cells with drug selection and
     % current selection
@@ -127,6 +127,10 @@ function [svm_mat, drug_labels] = multicell_mat( mfs, drug_selection, current_se
                     control_trials = filtered_windowed_spikemat( data_struct, -15, 'attend', [], [] );
                     drug_trials    = filtered_windowed_spikemat( data_struct, current_selection, 'attend', [], [] );
         
+                    % Restrict matrix lengths to be the same widths (times)
+                    % by removing columns (time points) from the front.
+                    [svm_mat, control_trials, drug_trials] = shave_bins( svm_mat, control_trials, drug_trials );
+                    
                     % Append spike matrix to svm_mat and drug_labels to
                     % drug_labels.
                     svm_mat = vertcat(svm_mat, control_trials');
@@ -138,6 +142,29 @@ function [svm_mat, drug_labels] = multicell_mat( mfs, drug_selection, current_se
             end
         end
     end
+end
+
+% Restrict matrix lengths to be the same widths (times)
+% by removing columns (time points) from the front.
+function [svm_mat, control_trials, drug_trials] = shave_bins( svm_mat, control_trials, drug_trials );
+    [svm_mat_x svm_mat_y] = size( svm_mat );
+    [ctrl_x ctrl_y]       = size( control_trials );
+    [drug_x drug_y] = size( drug_trials );
+
+    if svm_mat_x == 0
+        return
+    end
+
+    shortest_val = min( [svm_mat_y, ctrl_x, drug_x] );
+    
+    svm_discrepancy = svm_mat_y - shortest_val;
+    ctrl_discrepancy = ctrl_x - shortest_val;
+    drug_discrepancy = drug_x - shortest_val;
+    
+    svm_mat = svm_mat( :, svm_discrepancy+1:end ); 
+    control_trials = control_trials( ctrl_discrepancy+1:end,:);
+    drug_trials    = drug_trials( drug_discrepancy+1:end,:);
+    
 end
 
 % Take drug currents and convert them into a list of string labels

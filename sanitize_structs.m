@@ -273,6 +273,25 @@ function theta = adjust_theta( val )
     else
         theta = val;
     end
+    
+    % Make this prettier, if possible.
+    if theta > 337 || theta < 22
+        theta = 0;
+    elseif (23 < theta) && (theta < 67)
+        theta = 45;
+    elseif (68 < theta) && (theta < 112)
+        theta = 90;
+    elseif (112 < theta) && (theta < 157)
+        theta = 135;
+    elseif (157 < theta) && (theta < 202)
+        theta = 180;
+    elseif (202 < theta) && (theta < 247)
+        theta = 225;
+    elseif (248 < theta) && (theta < 292)
+        theta = 270;
+    elseif (292 < theta) && (theta < 338)
+        theta = 315;
+    end
 end
 
 

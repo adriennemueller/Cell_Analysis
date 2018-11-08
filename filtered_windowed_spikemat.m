@@ -7,48 +7,82 @@
 % Beautiful way to identify attend trials - no longer necessary:
 % attend_trial_idxs = find(cell2mat(cellfun( @(codes) ismember(126, codes), {curr_data_mat.event_codes}, 'Uniformoutput', 0 )));
 
-function rslt_mat = filtered_windowed_spikemat( curr_data_mat, current, window, direction, inout )
-    
+function [rslt_mat, contrasts] = filtered_windowed_spikemat( curr_data_mat, current, window_str, direction, inout, contrast_flag )
+    contrasts = [];
+
     % Filter for correct trials
     correct_idxs = find( [curr_data_mat.trial_error] == 0 );
     
-    % Filter for current
-    corr_current_idxs = find( [curr_data_mat.drug] == current );
+    
+    % Filter for current & paradigm %%% BROKEN _ NEED MORE PARADIGMS
+    if strcmp( window_str, 'attend'), paradigms = {'Attention', 'Attention_Contrast'}; 
+        corr_current_idxs = find( [curr_data_mat.drug] == current & ismember({curr_data_mat.paradigm}, paradigms) );
+    else 
+        corr_current_idxs = find( [curr_data_mat.drug] == current );
+    end
     valid_idxs = correct_idxs( ismember( correct_idxs, corr_current_idxs ) );
-
+    
+        %%% CHECK THIS IS NECESSARY AFTER FIGURE OUT SKF ISSUE
+    if isempty(valid_idxs) % || isempty( trial_window )
+        rslt_mat = [];
+        return;
+    end
+    
+      % Get actual window values
+    tmp_data_mat = curr_data_mat(valid_idxs);
+    trial_window = get_window( tmp_data_mat(1), window_str );
+    
     % Filter for (attend) direction
     if ~ isempty( inout ) && strcmp( inout, 'out' )
         direction = reversed(direction);
     end
-        
+    
     if ~ isempty(direction)
         corr_direc_idxs = find( [curr_data_mat.theta] == direction );
         valid_idxs = valid_idxs( ismember( valid_idxs, corr_direc_idxs ) );
     end    
-   
+    
+
+    
      % Filter for window
     spike_mat = {curr_data_mat(valid_idxs).spikes};
     millis_mat = {curr_data_mat(valid_idxs).millis};
     event_codes = {curr_data_mat(valid_idxs).event_codes};
     code_times = {curr_data_mat(valid_idxs).code_times};
-    rslt_mat = extract_window( window, spike_mat, millis_mat, event_codes, code_times  );
+    rslt_mat = extract_window( trial_window, spike_mat, millis_mat, event_codes, code_times  );
+    
+    if contrast_flag
+        contrasts = {curr_data_mat(valid_idxs).contrast};
+    end
     
 end
 
 
-% Make a smaller spike matrix of just the specified window
-function windowed_mat = extract_window( window, spike_mat, millis_mat, event_codes, code_times)
-    
-    win_end      = window(1);
-    win_length   = window(2);
+%%% EXPAND ON THIS
+function correct_trial = get_example_correct_trial( data_mat, window_str )
+    if strcmp(  window_str, 'attend' )
+        attend_trials = data_mat(find(strcmp({data_mat.paradigm}, 'Attention' )));
+        correct_trial = attend_trials(1);
+    else
+        correct_trial = data_mat(1);
+    end
 
+end
+
+
+% Make a smaller spike matrix of just the specified window
+function windowed_mat = extract_window( trial_window, spike_mat, millis_mat, event_codes, code_times)
+    
+    win_end      = trial_window(1);
+    win_length   = trial_window(2);
+    
     % Loops over matching cells in event_codes and code_times and applies
     % the find of the win_end event_codes to each pair.
     win_end_times = cellfun(@(codes, times) times(codes == win_end), event_codes, code_times, 'UniformOutput', 0);
 
     
     % Find the indices of the milli value that corresponds to those times.
-    win_end_idxs = cellfun(@(millis, times) find(millis == times), millis_mat, num2cell(win_end_times), 'uniformoutput', 0);
+    win_end_idxs = cellfun(@(millis, times) find(millis == times), millis_mat, win_end_times, 'uniformoutput', 0);
 
     % Grab the chunk of spikes from beginning index to end index
     %windowed_cellarray = cellfun(@(spikes, beg_idxs, end_idxs) spikes( beg_idxs:end_idxs ), spike_mat, win_beg_idxs, win_end_idxs, 'uniformoutput', 0);

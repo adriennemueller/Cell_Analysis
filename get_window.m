@@ -17,34 +17,34 @@ function win_info = get_window( correct_trial, window_string )
     wm_flag                  = find(correct_trial.event_codes == 153);
 
     if strcmp( window_string, 'attend' ) || strcmp( window_string, 'attContrast' )
-        if attend_earlysession_flag, window = [121 126]; % Need a function for this because I changed the event codes in Jan/Mar 2016 
-        else, window = [133 126];
+        if attend_earlysession_flag, trial_window = [121 126]; % Need a function for this because I changed the event codes in Jan/Mar 2016 
+        else, trial_window = [133 126];
         end
     elseif strcmp( window_string, 'wm' )
-        window = [155 161]; 
+        trial_window = [155 161]; 
     elseif strcmp( window_string, 'visual' )
-        if attend_earlysession_flag, window = [124 121]; % Attend Trials Early Sessions
-        elseif attend_latesession_flag, window = [124 133]; % Attend Trials Late Sessions
-        else, window = [153 155]; % WM Trials
+        if attend_earlysession_flag, trial_window = [124 121]; % Attend Trials Early Sessions
+        elseif attend_latesession_flag, trial_window = [124 133]; % Attend Trials Late Sessions
+        else, trial_window = [153 155]; % WM Trials
         end
     elseif strcmp( window_string, 'fixation' )
-        if wm_flag, window = [120 153]; % WM Trials
-        else, window = [120 124]; % Attend Trials
+        if wm_flag, trial_window = [120 153]; % WM Trials
+        else, trial_window = [120 124]; % Attend Trials
         end
     elseif strcmp( window_string, 'fullNoMotor' )
-        if wm_flag, window = [120 161];
-        else, window = [120 126]; 
+        if wm_flag, trial_window = [120 161];
+        else, trial_window = [120 126]; 
         end
     end
     
-    end_code = window(2);
-    win_length = get_win_length( correct_trial, window, window_string );
+    end_code = trial_window(2);
+    win_length = get_win_length( correct_trial, trial_window, window_string );
     
     win_info = [end_code win_length];
 end
 
 
-function win_length = get_win_length( correct_trial, window, window_string )
+function win_length = get_win_length( correct_trial, trial_window, window_string )
 
     %attend_earlysession_flag = find(correct_trial.event_codes == 121);
     %attend_latesession_flag  = find(correct_trial.event_codes == 133);
@@ -62,14 +62,14 @@ function win_length = get_win_length( correct_trial, window, window_string )
         else, fix_end_code = 124; 
         end
         
-        end_time = correct_trial.code_times( correct_trial.event_codes == window(2) );
+        end_time = correct_trial.code_times( correct_trial.event_codes == trial_window(2) );
         fix_end_time = correct_trial.code_times( correct_trial.event_codes == fix_end_code );
         win_length = (end_time - fix_end_time) + fix_win_length;
         
     % If visual or attend or working memory windows - consistent times
     else
-        beg_time = correct_trial.code_times( correct_trial.event_codes == window(1) );
-        end_time = correct_trial.code_times( correct_trial.event_codes == window(2) );
+        beg_time = correct_trial.code_times( correct_trial.event_codes == trial_window(1) );
+        end_time = correct_trial.code_times( correct_trial.event_codes == trial_window(2) );
         win_length = end_time - beg_time;
     end
     
