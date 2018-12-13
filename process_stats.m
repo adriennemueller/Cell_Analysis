@@ -15,9 +15,6 @@ function mfs = process_stats( mfs )
             
             % Identify the paradigms present in those files
             data_struct = load_processed_file( mfs.session(i).sub_direc, mfs.session(i).processed_files{j} );
-             if length(unique([data_struct.theta])) > 9
-                 data_struct = adjust_theta( data_struct );
-             end
             paradigm_list = mfs.session(i).paradigms{j};
             currents = mfs.session(i).currents{j};
             

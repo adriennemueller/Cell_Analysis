@@ -21,9 +21,9 @@ function plot_h = spike_raster( full_trials, currents )
         correct_trials = trials(correct_trial_idx);
 
         % Adjust Theta
-        if length(unique([correct_trials.theta])) > 9
-            correct_trials = adjust_theta( correct_trials );
-        end
+%         if length(unique([correct_trials.theta])) > 9
+%             correct_trials = adjust_theta( correct_trials );
+%         end
 
         % Count spikes in attentional window for each trial. Get list of numbers
         % for attend in, list of numbers for attend out.
@@ -175,28 +175,28 @@ end
 % directions down to 1 direction, if the RFs are small, will only make my
 % signal worse.
 % Crude method.
-function adjusted_trials = adjust_theta( trials )
-
-    for i = 1:length(trials)
-        theta = round(trials(i).theta);
-        if (theta <= 20) || (340 <= theta);
-            trials(i).theta = 0;
-        elseif (30 <= theta) && (theta <= 60)
-            trials(i).theta = 45;
-        elseif (70 <= theta) && (theta <= 110)
-            trials(i).theta = 90;
-        elseif (120 <= theta) && (theta <= 150)
-            trials(i).theta = 135;
-        elseif (160 <= theta) && (theta <= 200)
-            trials(i).theta = 180;
-        elseif (210 <= theta) && (theta <= 240)
-            trials(i).theta = 225;
-        elseif (250 <= theta) && (theta <= 290)
-            trials(i).theta = 270;
-        elseif (300 <= theta) && (theta <= 330)
-            trials(i).theta = 315;
-        end
-    end
-    
-    adjusted_trials = trials;
-end
+% function adjusted_trials = adjust_theta( trials )
+% 
+%     for i = 1:length(trials)
+%         theta = round(trials(i).theta);
+%         if (theta <= 20) || (340 <= theta);
+%             trials(i).theta = 0;
+%         elseif (30 <= theta) && (theta <= 60)
+%             trials(i).theta = 45;
+%         elseif (70 <= theta) && (theta <= 110)
+%             trials(i).theta = 90;
+%         elseif (120 <= theta) && (theta <= 150)
+%             trials(i).theta = 135;
+%         elseif (160 <= theta) && (theta <= 200)
+%             trials(i).theta = 180;
+%         elseif (210 <= theta) && (theta <= 240)
+%             trials(i).theta = 225;
+%         elseif (250 <= theta) && (theta <= 290)
+%             trials(i).theta = 270;
+%         elseif (300 <= theta) && (theta <= 330)
+%             trials(i).theta = 315;
+%         end
+%     end
+%     
+%     adjusted_trials = trials;
+% end

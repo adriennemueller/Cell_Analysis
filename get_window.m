@@ -20,7 +20,7 @@ function win_info = get_window( correct_trial, window_string )
         if attend_earlysession_flag, trial_window = [121 126]; % Need a function for this because I changed the event codes in Jan/Mar 2016 
         else, trial_window = [133 126];
         end
-    elseif strcmp( window_string, 'wm' )
+    elseif strcmp( window_string, 'wm' ) % These are variable durations.
         trial_window = [155 161]; 
     elseif strcmp( window_string, 'visual' )
         if attend_earlysession_flag, trial_window = [124 121]; % Attend Trials Early Sessions
@@ -51,6 +51,7 @@ function win_length = get_win_length( correct_trial, trial_window, window_string
     wm_flag                  = find(correct_trial.event_codes == 153);
 
     fix_win_length = 300; % Always take the last 300ms of the fixation window
+    wm_win_length  = 750; % Always take the last 750ms of the delay window in the WM task
     
     % If fixation window 
     if strcmp(window_string, 'fixation' )
@@ -60,11 +61,10 @@ function win_length = get_win_length( correct_trial, trial_window, window_string
     elseif strcmp( window_string, 'fullNoMotor' )
         if wm_flag, fix_end_code = 153;
         else, fix_end_code = 124; 
+            end_time = correct_trial.code_times( correct_trial.event_codes == trial_window(2) );
+            fix_end_time = correct_trial.code_times( correct_trial.event_codes == fix_end_code );
+            win_length = (end_time - fix_end_time) + fix_win_length;
         end
-        
-        end_time = correct_trial.code_times( correct_trial.event_codes == trial_window(2) );
-        fix_end_time = correct_trial.code_times( correct_trial.event_codes == fix_end_code );
-        win_length = (end_time - fix_end_time) + fix_win_length;
         
     % If visual or attend or working memory windows - consistent times
     else

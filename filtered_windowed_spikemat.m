@@ -21,14 +21,8 @@ function [rslt_mat, contrasts] = filtered_windowed_spikemat( curr_data_mat, curr
         corr_current_idxs = find( [curr_data_mat.drug] == current );
     end
     valid_idxs = correct_idxs( ismember( correct_idxs, corr_current_idxs ) );
-    
-        %%% CHECK THIS IS NECESSARY AFTER FIGURE OUT SKF ISSUE
-    if isempty(valid_idxs) % || isempty( trial_window )
-        rslt_mat = [];
-        return;
-    end
-    
-      % Get actual window values
+
+    % Get actual window values
     tmp_data_mat = curr_data_mat(valid_idxs);
     trial_window = get_window( tmp_data_mat(1), window_str );
     
@@ -41,8 +35,6 @@ function [rslt_mat, contrasts] = filtered_windowed_spikemat( curr_data_mat, curr
         corr_direc_idxs = find( [curr_data_mat.theta] == direction );
         valid_idxs = valid_idxs( ismember( valid_idxs, corr_direc_idxs ) );
     end    
-    
-
     
      % Filter for window
     spike_mat = {curr_data_mat(valid_idxs).spikes};

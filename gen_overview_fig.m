@@ -1,13 +1,13 @@
 % Will make and saveout a summary of att-in/att-out, drug-on/drug-off by
 % direction for a given file.
-function overview_fig = gen_overview_fig( data_struct, currents )
+function overview_fig = gen_overview_fig( data_struct_in, currents )
 
     all_paradigms = {'Attention', 'WM', 'Attention_Contrast' };
-    file_paradigms = unique({data_struct.paradigm});
+    file_paradigms = unique({data_struct_in.paradigm});
     usable_paradigms = file_paradigms(contains( file_paradigms, all_paradigms ) ); % TEST ME
 
     % Set up superfig
-    overview_fig = figure('visible', 'off');
+    overview_fig = figure();%'visible', 'off');
     base_overview_fig_numplots = 5; % 4 Drug off/on raster+sden + 1, overlapping d' (fix, vis, att/wm)
     numplots =  base_overview_fig_numplots * length(currents) * length(usable_paradigms);
     
@@ -17,7 +17,7 @@ function overview_fig = gen_overview_fig( data_struct, currents )
         for j = 1:length(usable_paradigms)
 
             % Filtered data_struct by paradigm
-            data_struct = data_struct( strcmp( {data_struct.paradigm}, usable_paradigms{j} ) );
+            data_struct = data_struct_in( strcmp( {data_struct_in.paradigm}, usable_paradigms{j} ) );
             
             if strcmp( usable_paradigms{j}, 'Attention_Contrast' )
                 contrast_flag = 1; else, contrast_flag = 0;
@@ -26,15 +26,16 @@ function overview_fig = gen_overview_fig( data_struct, currents )
             retain_current = currents(1);
             eject_current = currents(i);
             
-            window_str = 'fullNoMotor';
-            corr_idx = find( [data_struct.trial_error] == 0 );
+            % Use Different Window for WM - NEEDS TO BE HANDLED
+            if strcmp( usable_paradigms{j}, 'WM' )
+                %window_str = 'wm';
+                continue;
+            else            
+                window_str = 'fullNoMotor';
+            end
             
-%             if isempty( corr_idx ) %%%HACK FOR TESTING - CAN BE REMOVED!
-%                 disp()
-%             end
-%             
+            corr_idx = find( [data_struct.trial_error] == 0 );
             sample_correct_trial = data_struct(corr_idx(1)); 
-            %window = get_window( sample_correct_trial, window_str );
             
             % Filter by direction
             control_spikemat_in  = get_directional_spikemat( data_struct, retain_current, window_str, 'in', contrast_flag );
@@ -43,14 +44,16 @@ function overview_fig = gen_overview_fig( data_struct, currents )
             drug_spikemat_out    = get_directional_spikemat( data_struct, eject_current, window_str, 'out', contrast_flag );
 
             % Plot Histograms and SDen Overlay for the subsets
-            for k = 1:(length( control_spikemat_in ) /2 ) % Number of Directions / 2; because data the same in other four - just flipped in and out
+            total_num_directions = length( control_spikemat_in ) / 2;
+            for k = 1:total_num_directions % Number of Directions / 2; because data the same in other four - just flipped in and out
                 plot_data.ctrl_in  = logical(control_spikemat_in(k).spikes');
                 plot_data.ctrl_out = logical(control_spikemat_out(k).spikes');
                 plot_data.drug_in  = logical(drug_spikemat_in(k).spikes');
                 plot_data.drug_out = logical(drug_spikemat_out(k).spikes');
-             
+                
                 spike_sden_subplot = raster_sden_plot( plot_data, sample_correct_trial, window_str );
-
+                
+                overview_fig = insert_subpanel( overview_fig, spike_sden_subplot, k, total_num_directions );
             end
 
             % Plot d' plot for each sub-window (Fix, Vis, Attend/WM)
@@ -63,10 +66,23 @@ function overview_fig = gen_overview_fig( data_struct, currents )
     
 end
 
+function overview_fig = insert_subpanel( overview_fig, ss_subplot, direc_num, total_num_directions )
+    
+    num_subfig_panels = length(ss_subplot);
+    figure(overview_fig); % Make this figure the current figure
+
+    for i = 1:num_subfig_panels
+        curr_panel_num = sub2ind( [total_num_directions, num_subfig_panels], direc_num, i );
+        subplot_child = get(ss_subplot(i), 'children');
+        curr_subplot = subplot( num_subfig_panels, total_num_directions, curr_panel_num );
+        copyobj(subplot_child, curr_subplot);
+    end
+end
+
+
 function output_plot = raster_sden_plot( plot_data, sample_correct_trial, window_str  )
 
-    %output_plot = figure(); % Maybe?
-
+    output_plot = figure();%'visible', 'off');
 
     % Plot the four rasters with appropriate colors
     output_plot(1) = subplot(6,1,1);
@@ -90,7 +106,7 @@ function output_plot = raster_sden_plot( plot_data, sample_correct_trial, window
     end
     
     
-    % Add the two Sden Overlay plots.
+    %%% Add the two Sden Overlay plots %%%
 
     % Calculate SDens, and SEs
     sden_kernelwidth = 50; %ms Gaussian
@@ -100,20 +116,20 @@ function output_plot = raster_sden_plot( plot_data, sample_correct_trial, window
     [drug_in_sden, drug_in_se]   = gen_sden_data( plot_data.drug_in, sden_kernelwidth );
     
     % Control In vs Out
-    output_plot(5) = subplot(6,1,5);
-    x = [ 1 :(2 * length(ctrl_out_sden)) ]; % x, forwards and backwards
+    output_plot(5) = subplot(6,1,5); hold on;
+    x = [ 1 : length(ctrl_out_sden), length(ctrl_out_sden) : -1 : 1];
     yy = [ctrl_out_sden, fliplr(max(ctrl_out_sden, ctrl_in_sden))]; % Draw where attIn > attOut
     fill(x,yy,'k', 'FaceAlpha', 0.3, 'LineStyle', 'none');
     yy = [ctrl_out_sden, fliplr(min(ctrl_out_sden, ctrl_in_sden))]; % Draw where attIn < attOut
-    fill(x,yy,'k', 'FaceAlpha', 0.1, 'LineStyle', 'none');
+    fill(x,yy,'k', 'FaceAlpha', 0.1, 'LineStyle', 'none'); hold off;
     
     % Drug In vs Out
-    output_plot(6) = subplot(6,1,6);
-    x = [ 1 :(2 * length(drug_out_sden)) ]; % x, forwards and backwards
+    output_plot(6) = subplot(6,1,6); hold on;
+    x = [ 1 : length(drug_out_sden), length(drug_out_sden) : -1 : 1];
     yy = [drug_out_sden, fliplr(max(drug_out_sden, drug_in_sden))]; % Draw where attIn > attOut
     fill(x,yy,'r', 'FaceAlpha', 0.3, 'LineStyle', 'none');
     yy = [drug_out_sden, fliplr(min(drug_out_sden, drug_in_sden))]; % Draw where attIn < attOut
-    fill(x,yy,'r', 'FaceAlpha', 0.1, 'LineStyle', 'none');
+    fill(x,yy,'r', 'FaceAlpha', 0.1, 'LineStyle', 'none'); hold off;
     
     % Find the times for the different events during the trial
     event_struct = find_event_times( sample_correct_trial, window_str );
