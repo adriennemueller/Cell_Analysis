@@ -189,10 +189,11 @@ end
 function spike_mat =  get_attend_spikemat( data_struct, current, window, direc, inout )
     direcs = [ 270, 315, 0, 45 ];
     spike_mat = [];
+    contrast_flag = 0;
     % Do only for right four of the eight directions 
     for i = 1:length(direcs)
         direc = direcs(i);
-        tmp_mat = filtered_windowed_spikemat( data_struct, current, window, direc, inout );
+        tmp_mat = filtered_windowed_spikemat( data_struct, current, window, direc, inout, contrast_flag );
         spike_mat = horzcat( spike_mat, tmp_mat );
     end
     
