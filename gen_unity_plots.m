@@ -86,13 +86,13 @@ function [control_vals, drug_vals, rs_pval] = gen_unity_plots( mfs, drug, curren
             best_idx = find([stripped_struct(i).attend_visual_stats.control_summ_stats.avg_fr] == max([stripped_struct(i).attend_visual_stats.control_summ_stats.avg_fr]));
            %  best_idx = best_idx(ismember( best_idx, [7,8,1,2] ));
 %           
-             best_idx = best_idx(ismember( best_idx, [1,2,3,4] )); %%% THIS ONE
+            best_idx = best_idx(ismember( best_idx, [1,2,3,4] )); %%% THIS ONE
 
 
             tmp_bestdir_ctrl_vals = [stripped_struct(i).attend_fixation_stats.control_summ_stats.avg_fr];
             tmp_bestdir_drug_vals = [stripped_struct(i).attend_fixation_stats.drug_summ_stats.avg_fr];
             
-             bestdir_ctrl_vals = horzcat( bestdir_ctrl_vals, tmp_bestdir_ctrl_vals(1, best_idx) );
+            bestdir_ctrl_vals = horzcat( bestdir_ctrl_vals, tmp_bestdir_ctrl_vals(1, best_idx) );
             bestdir_drug_vals = horzcat( bestdir_drug_vals, tmp_bestdir_drug_vals(1, best_idx) );
         end
        [control_vals, drug_vals, rs_pval] = unity_plot( bestdir_ctrl_vals, bestdir_drug_vals, drug, current, 'mean_fr' );
