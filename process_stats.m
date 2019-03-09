@@ -11,6 +11,11 @@ function mfs = process_stats( mfs )
     % Loop through all processed files
     for i = 1:length(mfs.session)
         
+        % Debug Code to test a specific session
+        if ~ strcmp(mfs.session(i).sub_direc, '2016.08.26')
+            continue
+        end
+        
         for j = 1:length(mfs.session(i).processed_files)
             
             % Identify the paradigms present in those files

@@ -26,12 +26,12 @@ function overview_fig = gen_overview_fig( data_struct_in, currents )
             retain_current = currents(1);
             eject_current = currents(i);
             
-            % Use Different Window for WM - NEEDS TO BE HANDLED
+            % Different Window for WM
             if strcmp( usable_paradigms{j}, 'WM' )
-                %window_str = 'wm';
-                continue;
+                window_str = 'wm_last500'; %Not 'wm' - full, variable 'wm' range currently.
             else            
                 window_str = 'fullNoMotor';
+                continue; %%% REMOVE !!! %%%
             end
             
             corr_idx = find( [data_struct.trial_error] == 0 );
@@ -175,10 +175,6 @@ end
 % This will only work for fullNoMotor trials
 function event_struct = find_event_times( corr_trial, window_str )
     
-    if ~strcmp( window_str, 'fullNoMotor' )
-        disp( 'Inappropriate trial window selection. Only fullNoMotor case currently handled.' );
-    end
-
     event_struct = struct;
 
     e_codes = corr_trial.event_codes;
@@ -190,27 +186,32 @@ function event_struct = find_event_times( corr_trial, window_str )
     
     offset = e_times(e_codes == 120) - 1; 
     
-    % Fixation Onset the same for all trials.
-    event_struct(1).e_string = 'Fix'; 
-    event_struct(1).e_time = e_times(e_codes == 120) - offset; 
     
-    % Visual Onset
-    event_struct(2).e_string = 'Target'; 
-    if attend_earlysession_flag || attend_latesession_flag
-        event_struct(2).e_time = e_times(e_codes == 124) - offset; % Attend Conditions
-    else
-        event_struct(2).e_time = e_times(e_codes == 153) - offset; % WM Condition
+    if strcmp( window_str, 'fullNoMotor' )
+        % Fixation Onset the same for all trials.
+        event_struct(1).e_string = 'Fix'; 
+        event_struct(1).e_time = e_times(e_codes == 120) - offset; 
+
+        % Visual Onset
+        event_struct(2).e_string = 'Target'; 
+        if attend_earlysession_flag || attend_latesession_flag
+            event_struct(2).e_time = e_times(e_codes == 124) - offset; % Attend Conditions
+        else
+            event_struct(2).e_time = e_times(e_codes == 153) - offset; % WM Condition
+        end
+
+        if attend_earlysession_flag
+            event_struct(3).e_string = 'Cue';
+            event_struct(3).e_time   = e_times(e_codes == 121) - offset;
+        elseif attend_latesession_flag
+            event_struct(3).e_string = 'Cue';
+            event_struct(3).e_time   = e_times(e_codes == 133) - offset;
+        end
+    elseif strcmp( window_str, 'wm_last500' )    % WM Condition  %%% TEST TEST TEST TEST
+            event_struct(1).e_string = 'Delay End';
+            event_struct(1).e_time   = e_times(e_codes == 155) - offset;
+        
     end
     
-    if attend_earlysession_flag
-        event_struct(3).e_string = 'Cue';
-        event_struct(3).e_time   = e_times(e_codes == 121) - offset;
-    elseif attend_latesession_flag
-        event_struct(3).e_string = 'Cue';
-        event_struct(3).e_time   = e_times(e_codes == 133) - offset;
-    else % WM Condition
-        event_struct(3).e_string = 'Delay';
-        event_struct(3).e_time   = e_times(e_cdoes == 155) - offset;
-    end
     
 end

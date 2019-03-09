@@ -14,7 +14,7 @@ function [rslt_mat, contrasts] = filtered_windowed_spikemat( curr_data_mat, curr
     correct_idxs = find( [curr_data_mat.trial_error] == 0 );
     
     
-    % Filter for current & paradigm %%% BROKEN _ NEED MORE PARADIGMS
+    % Filter for current & paradigm %%% BROKEN _ NEED MORE PARADIGMS ?
     if strcmp( window_str, 'attend'), paradigms = {'Attention', 'Attention_Contrast'}; 
         corr_current_idxs = find( [curr_data_mat.drug] == current & ismember({curr_data_mat.paradigm}, paradigms) );
     else 
@@ -36,7 +36,7 @@ function [rslt_mat, contrasts] = filtered_windowed_spikemat( curr_data_mat, curr
         valid_idxs = valid_idxs( ismember( valid_idxs, corr_direc_idxs ) );
     end    
     
-     % Filter for window
+    % Filter for window
     spike_mat = {curr_data_mat(valid_idxs).spikes};
     millis_mat = {curr_data_mat(valid_idxs).millis};
     event_codes = {curr_data_mat(valid_idxs).event_codes};

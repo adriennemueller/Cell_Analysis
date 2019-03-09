@@ -20,7 +20,7 @@ function win_info = get_window( correct_trial, window_string )
         if attend_earlysession_flag, trial_window = [121 126]; % Need a function for this because I changed the event codes in Jan/Mar 2016 
         else, trial_window = [133 126];
         end
-    elseif strcmp( window_string, 'wm' ) % These are variable durations.
+    elseif strcmp( window_string, 'wm' ) || strcmp( window_string, 'wm_last500' )% These are variable durations.
         trial_window = [155 161]; 
     elseif strcmp( window_string, 'visual' )
         if attend_earlysession_flag, trial_window = [124 121]; % Attend Trials Early Sessions
@@ -39,6 +39,10 @@ function win_info = get_window( correct_trial, window_string )
     
     end_code = trial_window(2);
     win_length = get_win_length( correct_trial, trial_window, window_string );
+    
+    if strcmp( window_string, 'wm_last500' ) % Useful because WM ranges are variable duration.
+        win_length = 500;
+    end
     
     win_info = [end_code win_length];
 end
