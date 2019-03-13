@@ -42,11 +42,8 @@ function preprocess( tmp_struct )
            save('master_file_struct', 'master_file_struct');
            continue
         end
-        % Should have this purge entry, possibly. YES CREATE PURGE CODE.
+        % Should have this purge entry, possibly. 
         
-        % Identify whether have at least two currents for each paradigm -
-        % and if not purge the paradigm.
-                  
         % Make 'clean' structs for future analyses
         [session_struct, valid_trialstruct_idxs] = sanitize_structs(raw_struct, alignments);
         assignin('base', 'session_struct', session_struct);
