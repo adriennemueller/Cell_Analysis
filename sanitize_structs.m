@@ -144,6 +144,47 @@ end
 % do not keep the trial_struct.
 function [trial_struct, keep] = verify_drug_trialcounts( trial_struct, min_trial_num )
   
+    % Identify whether have at least two currents for each paradigm - one
+    % of which is -15 and if not purge the remaining trials for that paradigm.
+    unique_paradigms = unique( {trial_struct.paradigm} );
+    for i = 1:length(unique_paradigms)        
+        paradigm = unique_paradigms(i);
+        corr_paradigm_idxs = find( strcmp( {trial_struct.paradigm}, unique_paradigms(i)) & ...
+                                      ([trial_struct.trial_error] == 0) );
+        
+        %%% Check whether there are more than a min number of trials for
+        %%% each current for this paradigm. If not; remove those trials
+        %%% from the trial struct.
+        pard_currents_list = [trial_struct.drug]; pard_currents_list = pard_currents_list(corr_paradigm_idxs);
+        pard_unique_currs = unique( pard_currents_list );
+        rem_paradigm_idxs = [];
+        for j = 1:length(pard_unique_currs)
+            num_of_curr = length( find( pard_currents_list == pard_unique_currs(j) ) );
+            if num_of_curr < min_trial_num
+                
+                rem_paradigm_idxs = [rem_paradigm_idxs find( ([trial_struct.drug] == pard_unique_currs(j)) &  ...
+                                       (strcmp( {trial_struct.paradigm}, paradigm) ) ) ];
+                
+            end
+        end
+        trial_struct( rem_paradigm_idxs ) = [];
+
+        % For this paradigm - go through all of the currents and ensure
+        % that there are two currents - one of which is -15. If not;
+        % eliminate those trials from the trial struct.
+        corr_paradigm_idxs = find( strcmp( {trial_struct.paradigm}, unique_paradigms(i)) & ...
+                                      ([trial_struct.trial_error] == 0) );
+        pard_currents_list = [trial_struct.drug]; pard_currents_list = pard_currents_list(corr_paradigm_idxs);
+        pard_unique_currs = unique( pard_currents_list );
+        if (length(pard_unique_currs) < 2) || ~ max(pard_unique_currs == -15)
+            paradigm_idxs = find( strcmp( {trial_struct.paradigm}, unique_paradigms(i)) );
+            trial_struct( paradigm_idxs ) = []; 
+        end
+
+        
+    end     
+
+
     % Find unique currents
     unique_currents = unique([trial_struct.drug]);
     keep = 1;
@@ -176,25 +217,7 @@ function [trial_struct, keep] = verify_drug_trialcounts( trial_struct, min_trial
         
     end
     unique_currents(toss_curr) = [];
-    
-    % Identify whether have at least two currents for each paradigm - one
-    % of which is -15 and if not purge the remaining trials for that paradigm.
-    unique_paradigms = unique( {trial_struct.paradigm} );
-    for i = 1:length(unique_paradigms)        
-        paradigm = unique_paradigms(i);
-        paradigm_idxs = find( strcmp( {trial_struct.paradigm}, unique_paradigms(i)) );
         
-        % For this paradigm - go through all of the currents and ensure
-        % that there are two currents - one of which is -15. If not;
-        % eliminate those trials from the trial struct.
-        pard_currents_list = [trial_struct.drug]; pard_currents_list(paradigm_idxs);
-        pard_unique_currs = unique( pard_currents_list );
-
-        if (length(pard_unique_currs) < 2) || ~ max(pard_unique_currs == -15)
-            trial_struct( paradigm_idxs ) = []; 
-        end
-    end %%% SHOULD THIS actually check whether there are more than a min number of trials for each current for this paradigm? Probably.    
-    
     % If there are fewer than two currents and there is no retain current
     % info, report not to keep this trial_struct.
     now_unique_currents = unique([trial_struct.drug]);
