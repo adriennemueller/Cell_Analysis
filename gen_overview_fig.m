@@ -31,7 +31,7 @@ function overview_fig = gen_overview_fig( data_struct_in, currents )
                 window_str = 'wm_last500'; %Not 'wm' - full, variable 'wm' range currently.
             else            
                 window_str = 'fullNoMotor';
-                continue; %%% REMOVE !!! %%%
+                %continue; %%% REMOVE !!! %%%
             end
             
             corr_idx = find( [data_struct.trial_error] == 0 );

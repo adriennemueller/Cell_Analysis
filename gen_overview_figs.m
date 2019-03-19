@@ -24,6 +24,8 @@ function gen_overview_figs()
         save_name_mat = strcat( 'tmp_figs/',fnames(i), '_', num2str(current_list(2)), 'nA' );
         save_name = strrep(save_name_mat,'.mat','');
         saveas( overview_fig, strcat(save_name{1}, '.svg') ); % .png and .fig also posisble. % May Want to add paradigm to this eventually
+        
+        close all;
     end
 
 end
@@ -37,7 +39,7 @@ function ffps = get_ffps( mfs )
     currents = {};
     
     if strcmp( comp_mac_address, 'iMac'), save_direc = '/Users/Adrienne/Documents/MATLAB/Cell_Analysis/Processed';
-    else save_direc = '/Users/eddi/Documents/MATLAB/Cell_Analysis/Processed';
+    else save_direc = '/Users/adrienne/Documents/MATLAB/Cell_Analysis/Processed';
     end
 
     for i = 1:length(mfs.session)
