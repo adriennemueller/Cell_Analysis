@@ -10,6 +10,13 @@ function get_anova_counts( mfs, drug, current, paradigm )
     % Get Substruct of Specified Drug
     substruct = mfs.session( find( strcmp( {mfs.session.drug}, drug ) ) );
     
+    %%% TMP - JOSE ONLY CODE %%%
+    tmp_list = strfind( {substruct.event_file}, 'Jose' );
+    tmp_list( cellfun(@isempty, tmp_list) ) = {0};
+    tmp_list = cell2mat( tmp_list );
+    substruct = substruct( tmp_list ~= 0 );
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
     % Loop through substruct and strip out actual data - not filtered for
     % current or paradigm yet
     
@@ -54,8 +61,8 @@ function get_anova_counts( mfs, drug, current, paradigm )
 
     ylabel( '% of Neurons' );
     TickLabel_FontSize = 12;
-    set( gca, 'YTick', [0 25 50 100], 'XTick', [1, 2, 3, 4, 5, 6, 7], 'XTickLabel', xt_labs, 'FontSize', TickLabel_FontSize,  ... 
-        'FontWeight', 'Bold' ); xlim([0 8]); ylim( [0 100] ); box( gca, 'off');
+    set( gca, 'YTick', [0 5 10 15 20 25], 'XTick', [1, 2, 3, 4, 5, 6, 7], 'XTickLabel', xt_labs, 'FontSize', TickLabel_FontSize,  ... 
+        'FontWeight', 'Bold' ); xlim([0 8]); ylim( [0 30] ); box( gca, 'off');
 
     text(7.5, 5, ['N = ' num2str(total)], 'FontSize', 16, 'FontWeight', 'bold');
     title(strcat( drug,{' '} , num2str(current), 'nA' ), 'FontSize', 18, 'Color', m_color);

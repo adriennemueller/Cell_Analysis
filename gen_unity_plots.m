@@ -60,20 +60,20 @@ function [control_vals, drug_vals, rs_pval] = gen_unity_plots( mfs, drug, curren
     %%% FOUR POINTS 
     % Loop through structs making a vector of drug on and drug off for
     % specified period and unity_type (d_prime or mean_fr )
-%     if strcmp( unity_type, 'd_prime' )
-%         four_pt_ctrl_vals = [];
-%         four_pt_drug_vals = [];
-% 
-%         for i = 1:length(stripped_struct)
-%         
-%             tmp_four_pt_ctrl_vals = [stripped_struct(i).attend_stats.control_dmat.dmat.dprime_val];
-%             tmp_four_pt_drug_vals = [stripped_struct(i).attend_stats.drug_dmat.dmat.dprime_val];
-%             
-%             four_pt_ctrl_vals = horzcat( four_pt_ctrl_vals, tmp_four_pt_ctrl_vals(1, [7,8,1,2]) );
-%             four_pt_drug_vals = horzcat( four_pt_drug_vals, tmp_four_pt_drug_vals(1, [7,8,1,2]) );
-%         end
-%         unity_plot( four_pt_ctrl_vals, four_pt_drug_vals, drug, current, 'd_prime' );
-%     end
+    if strcmp( unity_type, 'd_prime' )
+        four_pt_ctrl_vals = [];
+        four_pt_drug_vals = [];
+
+        for i = 1:length(stripped_struct)
+        
+            tmp_four_pt_ctrl_vals = [stripped_struct(i).attend_stats.control_dmat.dmat.dprime_val];
+            tmp_four_pt_drug_vals = [stripped_struct(i).attend_stats.drug_dmat.dmat.dprime_val];
+            
+            four_pt_ctrl_vals = horzcat( four_pt_ctrl_vals, tmp_four_pt_ctrl_vals(1, [8,1,2]) );
+            four_pt_drug_vals = horzcat( four_pt_drug_vals, tmp_four_pt_drug_vals(1, [8,1,2]) );
+        end
+        unity_plot( four_pt_ctrl_vals, four_pt_drug_vals, drug, current, 'd_prime' );
+    end
 
     
     %%% FIXATION FIRING RATE
@@ -100,30 +100,30 @@ function [control_vals, drug_vals, rs_pval] = gen_unity_plots( mfs, drug, curren
     
     
     %%% Best PreCue Direction
-%     if strcmp( unity_type, 'd_prime' )
-%         bestdir_ctrl_vals = [];
-%         bestdir_drug_vals = [];
-% 
-%         for i = 1:length(stripped_struct)
-%         
-%             best_idx = find([stripped_struct(i).attend_visual_stats.control_summ_stats.avg_fr] == max([stripped_struct(i).attend_visual_stats.control_summ_stats.avg_fr]));
-%              best_idx = best_idx(ismember( best_idx, [7,8,1,2] ));
-% %             best_idx = best_idx(ismember( best_idx, [8,1,2,3] ));
-% %             best_idx = best_idx(ismember( best_idx, [2,3,4,5] ));
-% %             best_idx = best_idx(ismember( best_idx, [3,4,5,6] ));
-% %             best_idx = best_idx(ismember( best_idx, [4,5,6,7] ));
-% %             best_idx = best_idx(ismember( best_idx, [5,6,7,8] ));
-% %             best_idx = best_idx(ismember( best_idx, [6,7,8,1] ));
-%                 
-%             tmp_bestdir_ctrl_vals = [stripped_struct(i).attend_stats.control_dmat.dmat.dprime_val];
-%             tmp_bestdir_drug_vals = [stripped_struct(i).attend_stats.drug_dmat.dmat.dprime_val];
-%             
-%             bestdir_ctrl_vals = horzcat( bestdir_ctrl_vals, tmp_bestdir_ctrl_vals(1, best_idx) );
-%             bestdir_drug_vals = horzcat( bestdir_drug_vals, tmp_bestdir_drug_vals(1, best_idx) );
-%         end
-%         [control_vals, drug_vals, rs_pval] = unity_plot( bestdir_ctrl_vals, bestdir_drug_vals, drug, current, 'd_prime' );
-%     end
-%     
+    if strcmp( unity_type, 'd_prime' )
+        bestdir_ctrl_vals = [];
+        bestdir_drug_vals = [];
+
+        for i = 1:length(stripped_struct)
+        
+            best_idx = find([stripped_struct(i).attend_visual_stats.control_summ_stats.avg_fr] == max([stripped_struct(i).attend_visual_stats.control_summ_stats.avg_fr]));
+%             best_idx = best_idx(ismember( best_idx, [7,8,1,2] ));
+%             best_idx = best_idx(ismember( best_idx, [8,1,2,3] ));
+%             best_idx = best_idx(ismember( best_idx, [2,3,4,5] ));
+%             best_idx = best_idx(ismember( best_idx, [3,4,5,6] ));
+%             best_idx = best_idx(ismember( best_idx, [4,5,6,7] ));
+%             best_idx = best_idx(ismember( best_idx, [5,6,7,8] ));
+%             best_idx = best_idx(ismember( best_idx, [6,7,8,1] ));
+                
+            tmp_bestdir_ctrl_vals = [stripped_struct(i).attend_stats.control_dmat.dmat.dprime_val];
+            tmp_bestdir_drug_vals = [stripped_struct(i).attend_stats.drug_dmat.dmat.dprime_val];
+            
+            bestdir_ctrl_vals = horzcat( bestdir_ctrl_vals, tmp_bestdir_ctrl_vals(1, best_idx) );
+            bestdir_drug_vals = horzcat( bestdir_drug_vals, tmp_bestdir_drug_vals(1, best_idx) );
+        end
+        [control_vals, drug_vals, rs_pval] = unity_plot( bestdir_ctrl_vals, bestdir_drug_vals, drug, current, 'd_prime' );
+    end
+    
    
     %%% ATTEND WINDOW FIRING RATE
     

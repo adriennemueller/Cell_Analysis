@@ -5,8 +5,8 @@ function [control_vals, drug_vals, rs_pval] = unity_plot( control_vals, drug_val
     nanidxs = [find(isnan(control_vals) )  find(isnan( drug_vals) ) ];
 
     if ~ isempty(nanidxs)
-        control_vals = control_vals( 1:end ~= nanidxs );
-        drug_vals    = drug_vals(    1:end ~= nanidxs  );
+        control_vals( nanidxs ) = [];
+        drug_vals( nanidxs ) = [];
     end
     
     rs_pval = ranksum( control_vals, drug_vals );
