@@ -4,7 +4,7 @@ function overview_fig = gen_overview_fig( data_struct_in, currents )
 
     all_paradigms = {'Attention', 'WM', 'Attention_Contrast' };
     file_paradigms = unique({data_struct_in.paradigm});
-    usable_paradigms = file_paradigms(contains( file_paradigms, all_paradigms ) ); % TEST ME
+    usable_paradigms = file_paradigms(contains( file_paradigms, all_paradigms ) );
 
     % Set up superfig
     overview_fig = figure();%'visible', 'off');
@@ -24,14 +24,13 @@ function overview_fig = gen_overview_fig( data_struct_in, currents )
             end
             
             retain_current = currents(1);
-            eject_current = currents(i);
+            eject_current  = currents(i);
             
             % Different Window for WM
             if strcmp( usable_paradigms{j}, 'WM' )
                 window_str = 'wm_last500'; %Not 'wm' - full, variable 'wm' range currently.
             else            
                 window_str = 'fullNoMotor';
-                %continue; %%% REMOVE !!! %%%
             end
             
             corr_idx = find( [data_struct.trial_error] == 0 );

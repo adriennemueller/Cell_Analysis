@@ -2,7 +2,9 @@
 % Handle gen_overview_figs for WM trials
 % Figure out what's up with probe trials - how to handle.
 %     MOTOR WINDOW
-
+% Show full trial length
+% Label epochs appropriately. 
+% Make sure epochs correct
 
 %%% Want function to make summary anova fig - how many cells with attend
 %%% effects exhibit drug/attend interactions. How many drug effects etc.
@@ -20,6 +22,11 @@
 
 % Make a better version of     plot_contrast_dprimes; which doesn't require
 % manual rotation / does something better than the rotation.
+
+% USE MI instead of d' (as option)
+
+% Go through and toss out bad/duplicate units so working with actual clean
+% dataset.
 
 
 %%% THINK %%%

@@ -19,7 +19,7 @@ function gen_overview_figs()
         
         overview_fig = gen_overview_fig( data_struct, currents{i} );
         
-        % Save out fig in appropriate directory %%% AS YET UNTESTED
+        % Save out fig in appropriate directory %
         current_list = currents{i};
         save_name_mat = strcat( 'tmp_figs/',fnames(i), '_', num2str(current_list(2)), 'nA' );
         save_name = strrep(save_name_mat,'.mat','');
