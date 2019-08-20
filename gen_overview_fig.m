@@ -8,11 +8,13 @@ function overview_fig = gen_overview_fig( data_struct_in, currents )
 
     % Set up superfig
     overview_fig = figure();%'visible', 'off');
-    base_overview_fig_numplots = 5; % 4 Drug off/on raster+sden + 1, overlapping d' (fix, vis, att/wm)
-    numplots =  base_overview_fig_numplots * length(currents) * length(usable_paradigms);
-    
+
     % Filter Data by current and paradigm
-    % Loop through all paradigms in that file an
+    % Loop through all paradigms and currents in that file and make a separate
+    % overview_fig for each one.
+    
+    direc_plot_num = 1; % Starting count for number of plots
+    total_num_direc_plots = (length(currents) - 1) * length(usable_paradigms);
     for i = 2:length(currents) 
         for j = 1:length(usable_paradigms)
 
@@ -52,9 +54,13 @@ function overview_fig = gen_overview_fig( data_struct_in, currents )
                 
                 spike_sden_subplot = raster_sden_plot( plot_data, sample_correct_trial, window_str );
                 
-                overview_fig = insert_subpanel( overview_fig, spike_sden_subplot, k, total_num_directions );
+                direc_fig = figure();
+                direc_fig = insert_subpanel( direc_fig, spike_sden_subplot, k, total_num_directions );
             end
-
+        
+            overview_fig = append_direc_fig( overview_fig, direc_fig, usable_paradigms(j), currents(i), direc_plot_num );
+            direc_plot_num = direc_plot_num + 1; % Suboptimal?
+            
             % Plot d' plot for each sub-window (Fix, Vis, Attend/WM)
 
             % Plot Anova -pval plot?
@@ -65,10 +71,15 @@ function overview_fig = gen_overview_fig( data_struct_in, currents )
     
 end
 
-function overview_fig = insert_subpanel( overview_fig, ss_subplot, direc_num, total_num_directions )
+function overview_fig = append_direc_fig( overview_fig, direc_fig, paradigm, current )
+
+
+end
+
+function direc_fig = insert_subpanel( direc_fig, ss_subplot, direc_num, total_num_directions )
     
     num_subfig_panels = length(ss_subplot);
-    figure(overview_fig); % Make this figure the current figure
+    figure(direc_fig); % Make this figure the current figure
 
     for i = 1:num_subfig_panels
         curr_panel_num = sub2ind( [total_num_directions, num_subfig_panels], direc_num, i );
