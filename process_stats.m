@@ -33,6 +33,7 @@ function mfs = process_stats( mfs )
                 mfs.session(i).attend_stats{j} = windowed_stats( attend_trial_struct, currents, 'attend' );
                 mfs.session(i).attend_visual_stats{j} = windowed_stats( attend_trial_struct, currents, 'visual' );
                 mfs.session(i).attend_fixation_stats{j} = windowed_stats( attend_trial_struct, currents, 'fixation' );
+                mfs.session(i).vis_signif{j} = visual_significance( attend_trial_struct, currents );
             end
 
             if sum( strcmp( paradigm_list, 'WM' ) )
@@ -68,6 +69,64 @@ function mfs = process_stats( mfs )
         master_file_struct = mfs;
         save( 'master_file_struct', 'master_file_struct' );
     end
+end
+
+
+function vis_signif = visual_significance( data_struct, currents )
+
+    contrast_flag = 0;
+    
+    % Go through all different ejected currents in the file. (currents(1)
+    % will be the retain current.
+    for i = 2:length(currents)
+        
+        retain_current = currents(1);
+        eject_current  = currents(i); 
+        
+        corr_idx = find( [data_struct.trial_error] == 0 );
+        %window = get_window( data_struct(corr_idx(1)), window_str );
+        
+        % Get fixation period spikemat
+        fix_spikemat = get_directional_spikemat( data_struct, retain_current, 'fixation','', contrast_flag );
+        
+        % Get visual period spikemat
+        vis_spikemat = get_directional_spikemat( data_struct, retain_current, 'visual', '', contrast_flag );
+        
+        
+        fix_mat = []; vis_mat = []; vis_direcs = [];
+        for j = 1:8 % Number of directions
+            
+            if j > 4, direc = j - 4;
+            else, direc = j;
+            end
+            
+            tmp_fixmat = (sum(fix_spikemat( j ).spikes) / size(fix_spikemat(j).spikes, 1)) * 1000;
+            tmp_fixdirec = ones( 1, length(tmp_fixmat)) .* direc;
+            fix_mat = horzcat( fix_mat, tmp_fixmat );
+            
+            tmp_vismat = (sum(vis_spikemat( j ).spikes) / size(vis_spikemat(j).spikes, 1)) * 1000;
+            tmp_visdirec = ones( 1, length(tmp_vismat)) .* direc;
+            vis_direcs = horzcat( vis_direcs, tmp_visdirec );
+            vis_mat = horzcat( vis_mat, tmp_vismat );
+        end
+        
+        % Get Anova for this
+        data_vec = horzcat( fix_mat, vis_mat );
+        fix_vis_idx = horzcat( ones(1,length(fix_mat)), ones(1, length(vis_mat) ) * 2 ); 
+        vis_direcs = horzcat( vis_direcs, vis_direcs );
+        [p,tbl] = anovan( data_vec, {fix_vis_idx, vis_direcs}, 'model','full','varnames',{'fix_vis', 'direc'}, 'display','off', 'sstype', 1 );
+        
+        % Return results for each current separately
+        vis_signif(i-1).current = eject_current;
+        vis_signif(i-1).average_fix_fr = mean( fix_mat );
+        vis_signif(i-1).average_vis_fr = mean( vis_mat );
+        vis_signif(i-1).ps = p;
+        vis_signif(i-1).tbl = tbl;
+
+    end
+
+
+
 end
 
 % Clear out old stats
