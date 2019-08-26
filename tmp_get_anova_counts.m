@@ -74,10 +74,42 @@ function tmp_get_anova_counts( mfs, drug, current, paradigm )
     plot( fix_means, vis_means, 'ok');
 %    xl = xlim; yl = ylim;
 %    max_axis_vals = max(xl, yl);
-    max_axis_vals = [0 60]
+    max_axis_vals = [0 60];
     xlim(max_axis_vals); ylim(max_axis_vals);
     line( max_axis_vals, max_axis_vals, 'Color', 'black');
+    
+    rs_pval = ranksum( fix_means, vis_means );
+    rs_str = get_pval_string(rs_pval);
+    %control_vals( ~isfinite( control_vals )) = NaN;
+    fix_mean = nanmean( fix_means );
+    %drug_vals( ~isfinite( drug_vals )) = NaN;
+    vis_mean = nanmean( vis_means );
 
+    p_x = 5; p_y = 50;
+    text(p_x, p_y, ['p ' rs_str], 'FontSize', 16, 'FontWeight', 'bold');
+    text(p_x, 45, strcat( 'Fixation Mean = ', num2str(fix_mean))); 
+    text(p_x, 40, strcat( 'Visual Period Mean = ', num2str(vis_mean))); 
+    text(50, 5, ['N = ' num2str(length(fix_means))], 'FontSize', 16, 'FontWeight', 'bold');
+
+    title(strcat( drug,{' '} , num2str(current), 'nA' ), 'FontSize', 18, 'Color', m_color);
+    
+end
+
+function pval_str = get_pval_string( pval )
+    if isempty(pval)
+        pval_str = '= NaN';
+    elseif pval >= 0.01
+        pval_str = [ '= ' num2str(round(pval, 2))];
+    elseif (0.001 < pval) && (pval < 0.01)
+        pval_str = ['< 0.01'];
+    elseif pval < 0.000001
+        pval_str = ['< 1*10-6' ];
+    elseif pval < 0.001
+        pval_str = ['< 0.001'];
+    else
+        pval_str = '= NaN';
+    end
+    % Make for smaller
 end
 
 function m_color = get_marker_color( drug )
