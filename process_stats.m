@@ -84,7 +84,6 @@ function vis_signif = visual_significance( data_struct, currents )
         eject_current  = currents(i); 
         
         corr_idx = find( [data_struct.trial_error] == 0 );
-        %window = get_window( data_struct(corr_idx(1)), window_str );
         
         % Get fixation period spikemat
         fix_spikemat = get_directional_spikemat( data_struct, retain_current, 'fixation','', contrast_flag );
@@ -92,10 +91,8 @@ function vis_signif = visual_significance( data_struct, currents )
         % Get visual period spikemat
         vis_spikemat = get_directional_spikemat( data_struct, retain_current, 'visual', '', contrast_flag );
         
-        
         fix_mat = []; vis_mat = []; vis_direcs = [];
         for j = 1:8 % Number of directions
-            
             if j > 4, direc = j - 4;
             else, direc = j;
             end
@@ -124,9 +121,6 @@ function vis_signif = visual_significance( data_struct, currents )
         vis_signif(i-1).tbl = tbl;
 
     end
-
-
-
 end
 
 % Clear out old stats
@@ -286,6 +280,7 @@ function dmat = gen_dprime_struct( groupA, groupB )
         end
        
         dmat(i).dprime_val = d_prime( groupA_n_spikes, groupB_n_spikes );
+        dmat(i).mod_idx = (mean(groupA_n_spikes) - mean(groupB_n_spikes)) / (mean(groupA_n_spikes) + mean(groupB_n_spikes));
        
     end
 end

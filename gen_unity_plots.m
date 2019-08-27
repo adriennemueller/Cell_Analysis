@@ -26,18 +26,22 @@ function [control_vals, drug_vals, rs_pval] = gen_unity_plots( mfs, drug, curren
                 continue
             end
             
-            
             currents = [substruct(i).attend_stats{j}.current];
             for k = 1:length( currents )
                 if currents(k) == current
                     
                     break_me = 0;
                     if signif_att_flag
-                        pvals = substruct(i).attend_visual_stats{1,j}(k).anova_mat.tbl( [2,5,6,8] , 7 );
-                        pvals = cell2mat(pvals);
-                        if ~sum(find(pvals < 0.05))
+%                         pvals = substruct(i).attend_visual_stats{1,j}(k).anova_mat.tbl( [2,5,6,8] , 7 );
+%                         pvals = cell2mat(pvals);
+%                         if ~sum(find(pvals < 0.05))
+%                             break_me = 1;
+%                         end
+                        pvals = substruct(i).vis_signif{1,j}(k).ps; % Using significant visual period activity compared to fixation as criterion
+                        if ~sum(find(pvals <= 0.05))
                             break_me = 1;
-                        end
+                        end 
+
                     end
                     
                     if break_me, continue; end
@@ -45,16 +49,23 @@ function [control_vals, drug_vals, rs_pval] = gen_unity_plots( mfs, drug, curren
                     tmp_element.attend_stats = substruct(i).attend_stats{j};
                     tmp_element.attend_visual_stats = substruct(i).attend_visual_stats{j};
                     tmp_element.attend_fixation_stats = substruct(i).attend_fixation_stats{j};
+                    tmp_element.vis_signif = substruct(i).vis_signif{j};
             
                     new_element.attend_stats          = tmp_element.attend_stats(k);
                     new_element.attend_visual_stats   = tmp_element.attend_visual_stats(k);
                     new_element.attend_fixation_stats = tmp_element.attend_fixation_stats(k);
+                    new_element.vis_signif = tmp_element.vis_signif(k); %% CHECK THIS! WHY K?
+                    
                     
                     stripped_struct = [stripped_struct, new_element];
                 end
             end
         end
     end
+    
+    
+    
+    
     
     
     %%% FOUR POINTS 
@@ -114,9 +125,17 @@ function [control_vals, drug_vals, rs_pval] = gen_unity_plots( mfs, drug, curren
 %             best_idx = best_idx(ismember( best_idx, [4,5,6,7] ));
 %             best_idx = best_idx(ismember( best_idx, [5,6,7,8] ));
 %             best_idx = best_idx(ismember( best_idx, [6,7,8,1] ));
-                
-            tmp_bestdir_ctrl_vals = [stripped_struct(i).attend_stats.control_dmat.dmat.dprime_val];
-            tmp_bestdir_drug_vals = [stripped_struct(i).attend_stats.drug_dmat.dmat.dprime_val];
+             
+            % ORIGINAL WITH D PRIME
+            %tmp_bestdir_ctrl_vals = [stripped_struct(i).attend_stats.control_dmat.dmat.dprime_val];
+            %tmp_bestdir_drug_vals = [stripped_struct(i).attend_stats.drug_dmat.dmat.dprime_val];
+            
+            %bestdir_ctrl_vals = horzcat( bestdir_ctrl_vals, tmp_bestdir_ctrl_vals(1, best_idx) );
+            %bestdir_drug_vals = horzcat( bestdir_drug_vals, tmp_bestdir_drug_vals(1, best_idx) );
+            
+            % NEW WITH MOD. INDEX
+            tmp_bestdir_ctrl_vals = [stripped_struct(i).attend_stats.control_dmat.dmat.mod_idx];
+            tmp_bestdir_drug_vals = [stripped_struct(i).attend_stats.drug_dmat.dmat.mod_idx];
             
             bestdir_ctrl_vals = horzcat( bestdir_ctrl_vals, tmp_bestdir_ctrl_vals(1, best_idx) );
             bestdir_drug_vals = horzcat( bestdir_drug_vals, tmp_bestdir_drug_vals(1, best_idx) );
