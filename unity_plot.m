@@ -22,7 +22,7 @@ function [control_vals, drug_vals, rs_pval] = unity_plot( control_vals, drug_val
     
     ax = gca;
     if strcmp(unity_type, 'd_prime')
-        xlabel('Control d''', 'FontSize', 16, 'FontWeight', 'bold'); ylabel( [drug 'd'''], 'FontSize', 16, 'FontWeight', 'bold' );
+        xlabel('Control M.I.''', 'FontSize', 16, 'FontWeight', 'bold'); ylabel( [drug 'M.I.'], 'FontSize', 16, 'FontWeight', 'bold' );
         xlim([-2 2]);
         ylim([-2 2]);
         ax.XTick = [-2 -1 0 1 2];
@@ -72,7 +72,7 @@ function pval_str = get_pval_string( pval )
     if isempty(pval)
         pval_str = '= NaN';
     elseif pval >= 0.01
-        pval_str = [ '= ' num2str(round(pval, 2))];
+        pval_str = [ '= ' num2str(round(pval, 3))];
     elseif (0.001 < pval) && (pval < 0.01)
         pval_str = ['< 0.01'];
     elseif pval < 0.000001
