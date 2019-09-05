@@ -70,7 +70,6 @@ function [control_vals, drug_vals, rs_pval] = gen_unity_plots( mfs, drug, curren
                     
                     if strfind( substruct(i).event_file, 'Jose' ), animal = 'Jose'; else animal = 'Garfunkel'; end
                     new_element.animal = animal;
-            
                     
                     stripped_struct = [stripped_struct, new_element];
                 end
@@ -78,25 +77,6 @@ function [control_vals, drug_vals, rs_pval] = gen_unity_plots( mfs, drug, curren
         end
     end
     
-    
-    %%% FOUR POINTS 
-    % Loop through structs making a vector of drug on and drug off for
-%     % specified period and unity_type (d_prime or mean_fr )
-%     if strcmp( unity_type, 'd_prime' )
-%         four_pt_ctrl_vals = [];
-%         four_pt_drug_vals = [];
-% 
-%         for i = 1:length(stripped_struct)
-%         
-%             tmp_four_pt_ctrl_vals = [stripped_struct(i).attend_stats.control_dmat.dmat.dprime_val];
-%             tmp_four_pt_drug_vals = [stripped_struct(i).attend_stats.drug_dmat.dmat.dprime_val];
-%             
-%             four_pt_ctrl_vals = horzcat( four_pt_ctrl_vals, tmp_four_pt_ctrl_vals(1, [8,1,2]) );
-%             four_pt_drug_vals = horzcat( four_pt_drug_vals, tmp_four_pt_drug_vals(1, [8,1,2]) );
-%         end
-%         unity_plot( four_pt_ctrl_vals, four_pt_drug_vals, drug, current, 'd_prime' );
-%     end
-
     
     %%% FIXATION FIRING RATE
     if strcmp( unity_type, 'mean_fr' )
