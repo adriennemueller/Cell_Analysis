@@ -1,5 +1,5 @@
 
-function [control_vals, drug_vals, rs_pval] = unity_plot( control_vals, drug_vals, drug, current, unity_type )
+function [control_vals, drug_vals, rs_pval] = unity_plot( unity_struct, drug, current, unity_type )
 
     
     nanidxs = [find(isnan(control_vals) )  find(isnan( drug_vals) ) ];
@@ -8,6 +8,10 @@ function [control_vals, drug_vals, rs_pval] = unity_plot( control_vals, drug_val
         control_vals( nanidxs ) = [];
         drug_vals( nanidxs ) = [];
     end
+    
+    
+    control_vals = unity_struct.bestdir_ctrl_vals;
+    drug_vals    = unity_struct.bestdir_drug_vals;
     
     rs_pval = ranksum( control_vals, drug_vals );
     
