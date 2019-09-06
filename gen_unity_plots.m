@@ -8,14 +8,7 @@
 %       during the visual, targets on, period.
 %   'best_cue' will plot the position with the highest activity during the
 %       cue period.
-% signif_att_type = 'none', 'visVfix', 'attend'
-%   signif_att_type determines whether to only plot those units with
-%   anova-determined significant activity
-%   'none' will plot all units
-%   'visVfix' will only plot units with significant activity comparing the
-%       visual period to the fixation period, with position also a factor.
-%   'attend' will only plot units with significant attentional modulation
-%       during the cue period (drug and position also included as factors)
+
 
 function [control_vals, drug_vals, rs_pval] = gen_unity_plots( mfs, drug, current, paradigm, unity_type, position_type )
 
@@ -88,7 +81,10 @@ function [control_vals, drug_vals, rs_pval] = gen_unity_plots( mfs, drug, curren
         
         best_idx = best_idx(ismember( best_idx, [7,8,1,2] )); 
         %best_idx = best_idx(ismember( best_idx, [8,1,2,3] )); %Because could choose either 90º or 270º position 
-            
+        
+        % If two identical values for some reason, just pick one.
+        if length(best_idx), best_idx = best_idx(1); end
+        
         % Plot Firing Rate
         if strcmp( unity_type, 'mean_fr' )
             tmp_bestdir_ctrl_vals = [stripped_struct(i).attend_fixation_stats.control_summ_stats.avg_fr];
