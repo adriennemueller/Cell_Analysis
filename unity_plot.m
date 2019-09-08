@@ -13,7 +13,8 @@ function [control_vals, drug_vals, rs_pval] = unity_plot( unity_struct, drug, cu
         drug_vals( nanidxs ) = [];
     end
     
-    rs_pval = ranksum( control_vals, drug_vals );
+    %rs_pval = ranksum( control_vals, drug_vals );
+    rs_pval = signrank( control_vals, drug_vals );
     
     figure('units','normalized','position',[.1 .1 .3 .42]);
     m_color = get_marker_color( drug );

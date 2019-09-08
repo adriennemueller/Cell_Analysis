@@ -99,7 +99,7 @@ function pval_str = get_pval_string( pval )
     if isempty(pval)
         pval_str = '= NaN';
     elseif pval >= 0.01
-        pval_str = [ '= ' num2str(round(pval, 2))];
+        pval_str = [ '= ' num2str(round(pval,3))];
     elseif (0.001 < pval) && (pval < 0.01)
         pval_str = ['< 0.01'];
     elseif pval < 0.000001
