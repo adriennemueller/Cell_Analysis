@@ -15,6 +15,13 @@ function overview_fig = gen_overview_fig( data_struct_in, currents )
     
     direc_plot_num = 1; % Starting count for number of plots
     total_num_direc_plots = (length(currents) - 1) * length(usable_paradigms);
+    
+        %%% TMP FOR DEBUGGING
+        if total_num_direc_plots == 1
+
+            return
+                end
+    
     for i = 2:length(currents) 
         for j = 1:length(usable_paradigms)
 
@@ -46,6 +53,7 @@ function overview_fig = gen_overview_fig( data_struct_in, currents )
 
             % Plot Histograms and SDen Overlay for the subsets
             total_num_directions = length( control_spikemat_in ) / 2;
+            direc_fig = figure();
             for k = 1:total_num_directions % Number of Directions / 2; because data the same in other four - just flipped in and out
                 plot_data.ctrl_in  = logical(control_spikemat_in(k).spikes');
                 plot_data.ctrl_out = logical(control_spikemat_out(k).spikes');
@@ -54,11 +62,12 @@ function overview_fig = gen_overview_fig( data_struct_in, currents )
                 
                 spike_sden_subplot = raster_sden_plot( plot_data, sample_correct_trial, window_str );
                 
-                direc_fig = figure();
                 direc_fig = insert_subpanel( direc_fig, spike_sden_subplot, k, total_num_directions );
             end
         
-            overview_fig = append_direc_fig( overview_fig, direc_fig, usable_paradigms(j), currents(i), direc_plot_num );
+            
+            
+            overview_fig = append_direc_fig( overview_fig, direc_fig, usable_paradigms(j), currents(i), total_num_direc_plots, direc_plot_num );
             direc_plot_num = direc_plot_num + 1; % Suboptimal?
             
             % Plot d' plot for each sub-window (Fix, Vis, Attend/WM)
@@ -71,9 +80,34 @@ function overview_fig = gen_overview_fig( data_struct_in, currents )
     
 end
 
-function overview_fig = append_direc_fig( overview_fig, direc_fig, paradigm, current )
+function overview_fig = append_direc_fig( overview_fig, direc_fig, paradigm, current, total_num_direc_plots, direc_plot_num )
 
+    figure( overview_fig ); % Make this figure the current figure
+    
+    % Get number of subfig panels in the current direc_fig
+    sub_fig_N_x = 4; % 4 Positions
+    sub_fig_N_y = 6; % 6 Subplots: Attend in/out for Control/Drug, + Control SDen + Drug SDen
+    direc_fig_subplot_num = sub_fig_N_x * sub_fig_N_y;
+    
+    if total_num_direc_plots == 1
+        overview_fig = direc_fig;
+    else
+        % Loop through all of the subfigs in this direc_fig
+        for i = 1:direc_fig_subplot_num %24
+            curr_panel_num = direc_fig_subplot_num * (direc_plot_num-1) + i;
 
+            % Copy this subfig from the direc_fig into the appropriate position in the
+            % overview_fig
+            
+            hFigIAxes = findobj('Parent', direc_fig, 'Type','axes');
+            hAxes = hFigIAxes(i);
+            subplot_child = get(hAxes(i), 'children');
+            
+            %subplot_child = get(direc_fig(i), 'children');
+            curr_subplot = subplot( sub_fig_N_x * total_num_direc_plots, sub_fig_N_y, curr_panel_num );
+            copyobj(subplot_child, curr_subplot);
+        end
+    end
 end
 
 function direc_fig = insert_subpanel( direc_fig, ss_subplot, direc_num, total_num_directions )

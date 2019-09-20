@@ -5,7 +5,7 @@ function [control_vals, drug_vals, rs_pval] = unity_plot( unity_struct, drug, cu
     drug_vals    = unity_struct.bestdir_drug_vals;
     animal = unity_struct.animal;
     signif_visfix = unity_struct.signif_visfix;
-    signif_attent = unity_struct.signif_attend;
+    signif_attend = unity_struct.signif_attend;
 
 %     nanidxs = [find(isnan(control_vals) )  find(isnan( drug_vals) ) ];
 %      if ~ isempty(nanidxs)
