@@ -65,8 +65,6 @@ function overview_fig = gen_overview_fig( data_struct_in, currents )
                 direc_fig = insert_subpanel( direc_fig, spike_sden_subplot, k, total_num_directions );
             end
         
-            
-            
             overview_fig = append_direc_fig( overview_fig, direc_fig, usable_paradigms(j), currents(i), total_num_direc_plots, direc_plot_num );
             direc_plot_num = direc_plot_num + 1; % Suboptimal?
             
@@ -93,22 +91,45 @@ function overview_fig = append_direc_fig( overview_fig, direc_fig, paradigm, cur
         overview_fig = direc_fig;
     else
         % Loop through all of the subfigs in this direc_fig
+        hFigIAxes = findobj('Parent', direc_fig, 'Type','axes');
+        hFigIAxes = remap_subplot_positions(hFigIAxes);
         for i = 1:direc_fig_subplot_num %24
-            curr_panel_num = direc_fig_subplot_num * (direc_plot_num-1) + i;
-
+            
+            curr_panel_num = (ceil(i/sub_fig_N_x) - 1) * sub_fig_N_x * total_num_direc_plots + mod(i,sub_fig_N_x);
+            if mod(i,4) == 0, curr_panel_num = curr_panel_num + 4; end
+            curr_panel_num = curr_panel_num + 4 * (direc_plot_num - 1);
+            
+            
             % Copy this subfig from the direc_fig into the appropriate position in the
             % overview_fig
-            
-            hFigIAxes = findobj('Parent', direc_fig, 'Type','axes');
             hAxes = hFigIAxes(i);
-            subplot_child = get(hAxes(i), 'children');
+            subplot_child = get(hAxes, 'children');
             
             %subplot_child = get(direc_fig(i), 'children');
-            curr_subplot = subplot( sub_fig_N_x * total_num_direc_plots, sub_fig_N_y, curr_panel_num );
+            curr_subplot = subplot( sub_fig_N_y, sub_fig_N_x * total_num_direc_plots, curr_panel_num );
             copyobj(subplot_child, curr_subplot);
         end
+        
+        subtitle_str = strcat(paradigm, " ", num2str(current), "nA");
+        pos = get(overview_fig, 'Position'); %// gives x left, y bottom, width, height
+        ofig_width = pos(3); ofig_height = pos(4);
+        subtitle_spacing = ofig_width / (total_num_direc_plots+1);
+        %text( subtitle_spacing * direc_plot_num, ofig_height - 10, subtitle_str ); 
+        annotation('textbox', [subtitle_spacing * direc_plot_num, ofig_height - 10, 0, 0], 'string', subtitle_str)
     end
+    
 end
+
+function axes_list = remap_subplot_positions( axes_list )
+
+    x = reshape(1:24,4,6);
+    x = x';
+    tmp_indices = flip(x(:),1);
+    [~,new_indices] = sort(tmp_indices);
+    axes_list = axes_list( new_indices );
+  
+end
+
 
 function direc_fig = insert_subpanel( direc_fig, ss_subplot, direc_num, total_num_directions )
     
