@@ -23,7 +23,10 @@ function gen_overview_figs()
         current_list = currents{i};
         save_name_mat = strcat( 'tmp_figs/',fnames(i), '_', num2str(current_list(2)), 'nA' );
         save_name = strrep(save_name_mat,'.mat','');
-        saveas( overview_fig, strcat(save_name{1}, '.svg') ); % .png and .fig also posisble. % May Want to add paradigm to this eventually
+        overview_fig.PaperPositionMode = 'auto';
+        overview_fig_pos = overview_fig.PaperPosition;
+        overview_fig.PaperSize = [overview_fig_pos(3) overview_fig_pos(4)];
+        print( overview_fig, strcat(save_name{1}, '.pdf'), '-dpdf'); % .png and .fig also posisble. % May Want to add paradigm to this eventually
         
         close all;
     end
