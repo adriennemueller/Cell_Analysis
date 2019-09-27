@@ -20,6 +20,10 @@ function win_info = get_window( correct_trial, window_string )
         if attend_earlysession_flag, trial_window = [121 126]; % Need a function for this because I changed the event codes in Jan/Mar 2016 
         else, trial_window = [133 126];
         end
+    elseif strcmp( window_string, 'blank' )
+        trial_window = [126 128];
+    elseif strcmp( window_string, 'post_blank' )
+        trial_window = [128 132];    
     elseif strcmp( window_string, 'wm' ) || strcmp( window_string, 'wm_last500' )% These are variable durations.
         trial_window = [155 161]; 
     elseif strcmp( window_string, 'visual' )
@@ -33,7 +37,7 @@ function win_info = get_window( correct_trial, window_string )
         end
     elseif strcmp( window_string, 'fullNoMotor' )
         if wm_flag, trial_window = [120 161];
-        else, trial_window = [120 126]; 
+        else, trial_window = [120 128]; %[120 126]; 
         end
     end
     

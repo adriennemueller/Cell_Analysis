@@ -193,6 +193,17 @@ function output_plot = raster_sden_plot( plot_data, sample_correct_trial, window
     
     % Find the times for the different events during the trial
     event_struct = find_event_times( sample_correct_trial, window_str );
+    
+    
+    %%% Debug code
+    for i = 1:length(event_struct)
+        disp( strcat( event_struct(i).e_string,{': '}, num2str(event_struct(i).e_time) ) );
+    end
+    disp( 'Durations:' );
+    disp( [event_struct(2:end).e_time] - [event_struct(1:end-1).e_time] );
+    %%%
+    
+    
     for i = 1:4 % number of plots
         for j = 1:length(event_struct)
         

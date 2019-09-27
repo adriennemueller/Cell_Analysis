@@ -5,7 +5,7 @@ function make_master_file_struct( clean )
 
     if nargin < 1, clean = 1; end % Clean old mfs by default.
 
-    ionto_super_direc = '/Volumes/Hnoss/Data/Iontophoresis';
+    ionto_super_direc = '/Volumes/Hnoss/Data/Iontophoresis/Clean';
     unit_sub_direcs = dir(ionto_super_direc);
     unit_sub_direcs = unit_sub_direcs([unit_sub_direcs.isdir] == 1);
     unit_sub_direcs = unit_sub_direcs( 3:end ); % Eliminate . and .. directories
