@@ -24,31 +24,28 @@ function overview_fig = gen_overview_fig( data_struct_in, currents )
     for i = 2:length(currents) 
         for j = 1:length(usable_paradigms)
 
-            % Filtered data_struct by paradigm
-            data_struct = data_struct_in( strcmp( {data_struct_in.paradigm}, usable_paradigms{j} ) );
+            curr_paradigm = usable_paradigms{j};
             
-            if strcmp( usable_paradigms{j}, 'Attention_Contrast' )
-                contrast_flag = 1; else, contrast_flag = 0;
-            end
+            % Filtered data_struct by paradigm
+            data_struct = data_struct_in( strcmp( {data_struct_in.paradigm}, curr_paradigm ) );
             
             retain_current = currents(1);
             eject_current  = currents(i);
             
             % Different Window for WM
-            if strcmp( usable_paradigms{j}, 'WM' )
-                window_str = 'wm_last500'; %Not 'wm' - full, variable 'wm' range currently.
-            else            
-                window_str = 'fullNoMotor';
-            end
-            
+                %%%% TMP %%%
+    window_str = 'fullNoMotor';
+    %%%%%
+    
+    
             corr_idx = find( [data_struct.trial_error] == 0 );
             sample_correct_trial = data_struct(corr_idx(1)); 
             
             % Filter by direction
-            control_spikemat_in  = get_directional_spikemat( data_struct, retain_current, window_str, 'in', contrast_flag );
-            control_spikemat_out = get_directional_spikemat( data_struct, retain_current, window_str, 'out', contrast_flag );
-            drug_spikemat_in     = get_directional_spikemat( data_struct, eject_current, window_str, 'in', contrast_flag );
-            drug_spikemat_out    = get_directional_spikemat( data_struct, eject_current, window_str, 'out', contrast_flag );
+            control_spikemat_in  = get_combined_spikemat( data_struct, retain_current, curr_paradigm, 'in' );
+            control_spikemat_out = get_combined_spikemat( data_struct, retain_current, curr_paradigm, 'out' );
+            drug_spikemat_in     = get_combined_spikemat( data_struct, eject_current, curr_paradigm, 'in' );
+            drug_spikemat_out    = get_combined_spikemat( data_struct, eject_current, curr_paradigm, 'out' );
 
             % Plot Histograms and SDen Overlay for the subsets
             total_num_directions = length( control_spikemat_in ) / 2;
@@ -64,7 +61,7 @@ function overview_fig = gen_overview_fig( data_struct_in, currents )
                 direc_fig = insert_subpanel( direc_fig, spike_sden_subplot, k, total_num_directions );
             end
         
-            overview_fig = append_direc_fig( overview_fig, direc_fig, usable_paradigms(j), currents(i), total_num_direc_plots, direc_plot_num );
+            overview_fig = append_direc_fig( overview_fig, direc_fig, curr_paradigm, currents(i), total_num_direc_plots, direc_plot_num );
             direc_plot_num = direc_plot_num + 1; % Suboptimal?
             
             % Plot d' plot for each sub-window (Fix, Vis, Attend/WM)
@@ -76,6 +73,43 @@ function overview_fig = gen_overview_fig( data_struct_in, currents )
     % Make some sort of composite overview_fig for contrast data?
     
 end
+
+function combined_spikemat = get_combined_spikemat( data_struct, current, paradigm, attend_type )
+
+    if strcmp( paradigm, 'Attention_Contrast' )
+        contrast_flag = 1; else, contrast_flag = 0;
+    end
+
+    blank_period = 100; % 100ms break in between sections
+    
+    % WM Trials
+    if strcmp( paradigm, 'WM' )
+        fix_spikemat  = get_directional_spikemat( data_struct, current, 'fixation', attend_type, contrast_flag );
+        vis_spikemat  = get_directional_spikemat( data_struct, current, 'visual', attend_type, contrast_flag );
+        main_spikemat = get_directional_spikemat( data_struct, current, 'wm_last500', attend_type, contrast_flag );
+        rwd_spikemat  = get_directional_spikemat( data_struct, current, 'reward', attend_type, contrast_flag );
+   
+        num_trials = size( main_spikemat(1).spikes, 2 );
+        blank_mat = zeros( blank_period, num_trials );
+          
+        combined_spikemat_spikes = horzcat( fix_spikemat(1).spikes, vis_spikemat(1).spikes, blank_mat, main_spikemat(1).spikes, blank_mat, rwd_spikemat(1).spikes );
+        
+        
+    % ATTEND TRIALS
+    else
+        main_spikemat = get_directional_spikemat( data_struct, current, 'fullNoMotor', attend_type, contrast_flag );
+        rwd_spikemat  = get_directional_spikemat( data_struct, current,  'reward', attend_type, contrast_flag );
+        
+        num_trials = size( main_spikemat(1).spikes, 2 );
+        blank_mat = zeros( blank_period, num_trials );
+        combined_spikemat_spikes = vertcat(  main_spikemat(1).spikes, blank_mat, rwd_spikemat(1).spikes );
+    end
+    
+    combined_spikemat = main_spikemat;
+    combined_spikemat(1).spikes = combined_spikemat_spikes;
+    
+end
+
 
 function overview_fig = append_direc_fig( overview_fig, direc_fig, paradigm, current, total_num_direc_plots, direc_plot_num )
 
@@ -192,6 +226,7 @@ function output_plot = raster_sden_plot( plot_data, sample_correct_trial, window
     fill(x,yy,'r', 'FaceAlpha', 0.1, 'LineStyle', 'none'); hold off;
     
     % Find the times for the different events during the trial
+
     event_struct = find_event_times( sample_correct_trial, window_str );
     
     

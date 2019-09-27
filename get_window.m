@@ -35,18 +35,16 @@ function win_info = get_window( correct_trial, window_string )
         if wm_flag, trial_window = [120 153]; % WM Trials
         else, trial_window = [120 124]; % Attend Trials
         end
-    elseif strcmp( window_string, 'fullNoMotor' )
+    elseif strcmp( window_string, 'fullNoMotor' ) % Up to and including Blank
         if wm_flag, trial_window = [120 161];
         else, trial_window = [120 128]; %[120 126]; 
         end
+    elseif strcmp( window_string, 'reward' )
+        trial_window = [132 132]; % No actual end for this;
     end
     
     end_code = trial_window(2);
     win_length = get_win_length( correct_trial, trial_window, window_string );
-    
-    if strcmp( window_string, 'wm_last500' ) % Useful because WM ranges are variable duration.
-        win_length = 500;
-    end
     
     win_info = [end_code win_length];
 end
@@ -58,12 +56,20 @@ function win_length = get_win_length( correct_trial, trial_window, window_string
     %attend_latesession_flag  = find(correct_trial.event_codes == 133);
     wm_flag                  = find(correct_trial.event_codes == 153);
 
-    fix_win_length = 300; % Always take the last 300ms of the fixation window
-    wm_win_length  = 750; % Always take the last 750ms of the delay window in the WM task
-    
+    fix_win_length = 300;  % Always take the last 300ms of the fixation window
+    wm_win_length  = 500;  % Always take the last 500ms of the delay window in the WM task
+    reward_length  = -300; % Take the 300ms going FORWARD from the end of the trial
+        
     % If fixation window 
     if strcmp(window_string, 'fixation' )
         win_length = fix_win_length; 
+        
+    % Useful because WM ranges are variable duration.    
+    elseif strcmp( window_string, 'wm_last500' ) || strcmp( window_string, 'wm' ) 
+        win_length = wm_win_length;
+        
+    elseif strcmp( window_string, 'reward' )
+        win_length = reward_length;
         
     % fullNoMotor window
     elseif strcmp( window_string, 'fullNoMotor' )
