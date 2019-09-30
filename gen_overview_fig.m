@@ -32,21 +32,15 @@ function overview_fig = gen_overview_fig( data_struct_in, currents )
             retain_current = currents(1);
             eject_current  = currents(i);
             
-            % Different Window for WM
-                %%%% TMP %%%
-    window_str = 'fullNoMotor';
-    %%%%%
-    
-    
-            corr_idx = find( [data_struct.trial_error] == 0 );
-            sample_correct_trial = data_struct(corr_idx(1)); 
-            
             % Filter by direction
             control_spikemat_in  = get_combined_spikemat( data_struct, retain_current, curr_paradigm, 'in' );
             control_spikemat_out = get_combined_spikemat( data_struct, retain_current, curr_paradigm, 'out' );
             drug_spikemat_in     = get_combined_spikemat( data_struct, eject_current, curr_paradigm, 'in' );
             drug_spikemat_out    = get_combined_spikemat( data_struct, eject_current, curr_paradigm, 'out' );
-
+            
+            event_struct = 
+            
+            
             % Plot Histograms and SDen Overlay for the subsets
             total_num_directions = length( control_spikemat_in ) / 2;
             direc_fig = figure();
@@ -56,7 +50,7 @@ function overview_fig = gen_overview_fig( data_struct_in, currents )
                 plot_data.drug_in  = logical(drug_spikemat_in(k).spikes');
                 plot_data.drug_out = logical(drug_spikemat_out(k).spikes');
                 
-                spike_sden_subplot = raster_sden_plot( plot_data, sample_correct_trial, window_str );
+                spike_sden_subplot = raster_sden_plot( plot_data, event_struct );
                 
                 direc_fig = insert_subpanel( direc_fig, spike_sden_subplot, k, total_num_directions );
             end
@@ -74,7 +68,7 @@ function overview_fig = gen_overview_fig( data_struct_in, currents )
     
 end
 
-function combined_spikemat = get_combined_spikemat( data_struct, current, paradigm, attend_type )
+function [combined_spikemat, event_struct] = get_combined_spikemat( data_struct, current, paradigm, attend_type )
 
     if strcmp( paradigm, 'Attention_Contrast' )
         contrast_flag = 1; else, contrast_flag = 0;
@@ -91,18 +85,21 @@ function combined_spikemat = get_combined_spikemat( data_struct, current, paradi
    
         num_trials = size( main_spikemat(1).spikes, 2 );
         blank_mat = zeros( blank_period, num_trials );
-          
-        combined_spikemat_spikes = horzcat( fix_spikemat(1).spikes, vis_spikemat(1).spikes, blank_mat, main_spikemat(1).spikes, blank_mat, rwd_spikemat(1).spikes );
-        
-        
+                
+        %%%% MAKE THIS WORK FOR ALL!
+        combined_spikemat_spikes = vertcat( fix_spikemat(1).spikes, vis_spikemat(1).spikes, blank_mat, main_spikemat(1).spikes, blank_mat, rwd_spikemat(1).spikes );
+        event_struct = ;
     % ATTEND TRIALS
     else
         main_spikemat = get_directional_spikemat( data_struct, current, 'fullNoMotor', attend_type, contrast_flag );
-        rwd_spikemat  = get_directional_spikemat( data_struct, current,  'reward', attend_type, contrast_flag );
+        rwd_spikemat  = get_directional_spikemat( data_struct, current, 'reward', attend_type, contrast_flag );
         
         num_trials = size( main_spikemat(1).spikes, 2 );
         blank_mat = zeros( blank_period, num_trials );
+        
+        %%%% MAKE THIS WORK FOR ALL!
         combined_spikemat_spikes = vertcat(  main_spikemat(1).spikes, blank_mat, rwd_spikemat(1).spikes );
+        event_struct = ;
     end
     
     combined_spikemat = main_spikemat;
@@ -174,7 +171,7 @@ function direc_fig = insert_subpanel( direc_fig, ss_subplot, direc_num, total_nu
 end
 
 
-function output_plot = raster_sden_plot( plot_data, sample_correct_trial, window_str  )
+function output_plot = raster_sden_plot( plot_data, event_struct )
 
     output_plot = figure();%'visible', 'off');
 
@@ -226,8 +223,7 @@ function output_plot = raster_sden_plot( plot_data, sample_correct_trial, window
     fill(x,yy,'r', 'FaceAlpha', 0.1, 'LineStyle', 'none'); hold off;
     
     % Find the times for the different events during the trial
-
-    event_struct = find_event_times( sample_correct_trial, window_str );
+    %event_struct = find_event_times( sample_correct_trial, window_str );
     
     
     %%% Debug code
@@ -279,45 +275,45 @@ end
 
 
 % This will only work for fullNoMotor trials
-function event_struct = find_event_times( corr_trial, window_str )
-    
-    event_struct = struct;
-
-    e_codes = corr_trial.event_codes;
-    e_times = corr_trial.code_times;
-  
-    attend_earlysession_flag = ~isempty( find(e_codes == 121) );
-    attend_latesession_flag  = ~isempty( find(e_codes == 133) );
-    wm_flag                  = ~isempty( find(e_codes == 153) );
-    
-    offset = e_times(e_codes == 120) - 1; 
-    
-    
-    if strcmp( window_str, 'fullNoMotor' )
-        % Fixation Onset the same for all trials.
-        event_struct(1).e_string = 'Fix'; 
-        event_struct(1).e_time = e_times(e_codes == 120) - offset; 
-
-        % Visual Onset
-        event_struct(2).e_string = 'Target'; 
-        if attend_earlysession_flag || attend_latesession_flag
-            event_struct(2).e_time = e_times(e_codes == 124) - offset; % Attend Conditions
-        else
-            event_struct(2).e_time = e_times(e_codes == 153) - offset; % WM Condition
-        end
-
-        if attend_earlysession_flag
-            event_struct(3).e_string = 'Cue';
-            event_struct(3).e_time   = e_times(e_codes == 121) - offset;
-        elseif attend_latesession_flag
-            event_struct(3).e_string = 'Cue';
-            event_struct(3).e_time   = e_times(e_codes == 133) - offset;
-        end
-    elseif strcmp( window_str, 'wm_last500' )    % WM Condition  %%% TEST TEST TEST TEST
-            event_struct(1).e_string = 'Delay End';
-            event_struct(1).e_time   = e_times(e_codes == 155) - offset;
-        
-    end
-    
-    
-end
+% function event_struct = find_event_times( corr_trial, window_str )
+%     
+%     event_struct = struct;
+% 
+%     e_codes = corr_trial.event_codes;
+%     e_times = corr_trial.code_times;
+%   
+%     attend_earlysession_flag = ~isempty( find(e_codes == 121) );
+%     attend_latesession_flag  = ~isempty( find(e_codes == 133) );
+%     wm_flag                  = ~isempty( find(e_codes == 153) );
+%     
+%     offset = e_times(e_codes == 120) - 1; 
+%     
+%     
+%     if strcmp( window_str, 'fullNoMotor' )
+%         % Fixation Onset the same for all trials.
+%         event_struct(1).e_string = 'Fix'; 
+%         event_struct(1).e_time = e_times(e_codes == 120) - offset; 
+% 
+%         % Visual Onset
+%         event_struct(2).e_string = 'Target'; 
+%         if attend_earlysession_flag || attend_latesession_flag
+%             event_struct(2).e_time = e_times(e_codes == 124) - offset; % Attend Conditions
+%         else
+%             event_struct(2).e_time = e_times(e_codes == 153) - offset; % WM Condition
+%         end
+% 
+%         if attend_earlysession_flag
+%             event_struct(3).e_string = 'Cue';
+%             event_struct(3).e_time   = e_times(e_codes == 121) - offset;
+%         elseif attend_latesession_flag
+%             event_struct(3).e_string = 'Cue';
+%             event_struct(3).e_time   = e_times(e_codes == 133) - offset;
+%         end
+%     elseif strcmp( window_str, 'wm_last500' )    % WM Condition  %%% TEST TEST TEST TEST
+%             event_struct(1).e_string = 'Delay End';
+%             event_struct(1).e_time   = e_times(e_codes == 155) - offset;
+%         
+%     end
+%     
+%     
+% end

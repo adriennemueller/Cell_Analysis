@@ -78,7 +78,13 @@ function windowed_mat = extract_window( trial_window, spike_mat, millis_mat, eve
 
     % Grab the chunk of spikes from beginning index to end index
     %windowed_cellarray = cellfun(@(spikes, beg_idxs, end_idxs) spikes( beg_idxs:end_idxs ), spike_mat, win_beg_idxs, win_end_idxs, 'uniformoutput', 0);
-    windowed_cellarray = cellfun(@(spikes, end_idxs) spikes( end_idxs - win_length:end_idxs ), spike_mat, win_end_idxs, 'uniformoutput', 0);
+    if win_length < 0
+    % New code to handle 'window of time in FRONT of a particular
+    % event-code index.
+        windowed_cellarray = cellfun(@(spikes, end_idxs) spikes( end_idxs:end_idxs - win_length ), spike_mat, win_end_idxs, 'uniformoutput', 0);
+    else
+        windowed_cellarray = cellfun(@(spikes, end_idxs) spikes( end_idxs - win_length:end_idxs ), spike_mat, win_end_idxs, 'uniformoutput', 0);
+    end
     
     % Shave off any excess time_bins so can make a matrix. Shave off from
     % the front. This feels a little dodgy, but I think it's okay as long
