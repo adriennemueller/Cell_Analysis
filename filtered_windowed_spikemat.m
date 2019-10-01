@@ -7,7 +7,7 @@
 % Beautiful way to identify attend trials - no longer necessary:
 % attend_trial_idxs = find(cell2mat(cellfun( @(codes) ismember(126, codes), {curr_data_mat.event_codes}, 'Uniformoutput', 0 )));
 
-function [rslt_mat, contrasts] = filtered_windowed_spikemat( curr_data_mat, current, window_str, direction, inout, contrast_flag )
+function [rslt_mat, contrasts, events] = filtered_windowed_spikemat( curr_data_mat, current, window_str, direction, inout, contrast_flag )
     contrasts = [];
 
     % Filter for correct trials
@@ -24,7 +24,9 @@ function [rslt_mat, contrasts] = filtered_windowed_spikemat( curr_data_mat, curr
 
     % Get actual window values
     tmp_data_mat = curr_data_mat(valid_idxs);
-    trial_window = get_window( tmp_data_mat(1), window_str );
+    e_codes = tmp_data_mat(1).event_codes;
+    e_times = tmp_data_mat(1).code_times;
+    trial_window = get_window( e_codes, e_times, window_str );
     
     % Filter for (attend) direction
     if ~ isempty( inout ) && strcmp( inout, 'out' )
@@ -42,6 +44,9 @@ function [rslt_mat, contrasts] = filtered_windowed_spikemat( curr_data_mat, curr
     event_codes = {curr_data_mat(valid_idxs).event_codes};
     code_times = {curr_data_mat(valid_idxs).code_times};
     rslt_mat = extract_window( trial_window, spike_mat, millis_mat, event_codes, code_times  );
+    
+    events.e_codes = event_codes;
+    events.e_times = code_times;
     
     if contrast_flag
         contrasts = {curr_data_mat(valid_idxs).contrast};

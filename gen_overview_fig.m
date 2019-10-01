@@ -33,13 +33,10 @@ function overview_fig = gen_overview_fig( data_struct_in, currents )
             eject_current  = currents(i);
             
             % Filter by direction
-            control_spikemat_in  = get_combined_spikemat( data_struct, retain_current, curr_paradigm, 'in' );
-            control_spikemat_out = get_combined_spikemat( data_struct, retain_current, curr_paradigm, 'out' );
-            drug_spikemat_in     = get_combined_spikemat( data_struct, eject_current, curr_paradigm, 'in' );
-            drug_spikemat_out    = get_combined_spikemat( data_struct, eject_current, curr_paradigm, 'out' );
-            
-            event_struct = 
-            
+            [control_spikemat_in, event_struct]  = get_combined_spikemat( data_struct, retain_current, curr_paradigm, 'in' );
+            [control_spikemat_out, event_struct] = get_combined_spikemat( data_struct, retain_current, curr_paradigm, 'out' );
+            [drug_spikemat_in, event_struct]     = get_combined_spikemat( data_struct, eject_current, curr_paradigm, 'in' );
+            [drug_spikemat_out, event_struct]    = get_combined_spikemat( data_struct, eject_current, curr_paradigm, 'out' );
             
             % Plot Histograms and SDen Overlay for the subsets
             total_num_directions = length( control_spikemat_in ) / 2;
@@ -74,7 +71,10 @@ function [combined_spikemat, event_struct] = get_combined_spikemat( data_struct,
         contrast_flag = 1; else, contrast_flag = 0;
     end
 
-    blank_period = 100; % 100ms break in between sections
+    spacer_period = 100; % 100ms break in between sections
+    
+    event_struct = struct( 'label', {' '}, 'index', 0 );
+    
     
     % WM Trials
     if strcmp( paradigm, 'WM' )
@@ -84,28 +84,102 @@ function [combined_spikemat, event_struct] = get_combined_spikemat( data_struct,
         rwd_spikemat  = get_directional_spikemat( data_struct, current, 'reward', attend_type, contrast_flag );
    
         num_trials = size( main_spikemat(1).spikes, 2 );
-        blank_mat = zeros( blank_period, num_trials );
-                
+        spacer_period = zeros( blank_period, num_trials );
+        
+        events = main_spikemat.events;
+        
         %%%% MAKE THIS WORK FOR ALL!
-        combined_spikemat_spikes = vertcat( fix_spikemat(1).spikes, vis_spikemat(1).spikes, blank_mat, main_spikemat(1).spikes, blank_mat, rwd_spikemat(1).spikes );
-        event_struct = ;
+        %combined_spikemat_spikes = vertcat( fix_spikemat(1).spikes, vis_spikemat(1).spikes, spacer_period, main_spikemat(1).spikes, spacer_period, rwd_spikemat(1).spikes );
+        combined_spikemat_spikes = arrayfun(@concatenate_spikes, fix_spikemat, vis_spikemat, spacer, main_spikemat, spacer, rwd_spikemat);
+
+        
+        event_struct = add_events( event_struct, events, 'fixation' );
+        event_struct = add_events( event_struct, events, 'visual' );
+        spacer_struct = struct( 'label', {' '}, 'index', event_struct(end).index + spacer_period );
+        event_struct = [event_struct, spacer_struct];
+        event_struct = add_events( event_struct, events, 'wm_last500' );
+        spacer_struct = struct( 'label', {' '}, 'index', event_struct(end).index + spacer_period );
+        event_struct = [event_struct, spacer_struct];
+        event_struct = add_events( event_struct, events, 'reward' );       
+        
     % ATTEND TRIALS
     else
         main_spikemat = get_directional_spikemat( data_struct, current, 'fullNoMotor', attend_type, contrast_flag );
         rwd_spikemat  = get_directional_spikemat( data_struct, current, 'reward', attend_type, contrast_flag );
         
         num_trials = size( main_spikemat(1).spikes, 2 );
-        blank_mat = zeros( blank_period, num_trials );
+        spacer_period = zeros( spacer_period, num_trials );
         
+
         %%%% MAKE THIS WORK FOR ALL!
-        combined_spikemat_spikes = vertcat(  main_spikemat(1).spikes, blank_mat, rwd_spikemat(1).spikes );
-        event_struct = ;
+        spacer = arrayfun(@make_spacer, main_spikemat);
+        combined_spikemat_spikes = arrayfun(@concatenate_spikes, main_spikemat, spacer, rwd_spikemat);
+        
+        events = main_spikemat.events;
+        event_struct = add_events( event_struct, events, 'fullNoMotor' );
+        spacer_struct = struct( 'label', {' '}, 'index', event_struct(end).index + spacer_period );
+        event_struct = [event_struct, spacer_struct];
+        event_struct = add_events( event_struct, events, 'reward' );  
+        
     end
     
     combined_spikemat = main_spikemat;
-    combined_spikemat(1).spikes = combined_spikemat_spikes;
+    combined_spikemat.spikes = combined_spikemat_spikes.spikes;
     
 end
+
+function spacer = make_spacer(C1)
+    num_trials = size( C1.spikes, 2 );
+    blank_period = 100;
+    spacer.spikes = zeros( blank_period, num_trials );
+end
+
+function combined = concatenate_spikes(C1, spacer, C2)
+    combined.spikes = vertcat(C1.spikes, spacer.spikes, C2.spikes);
+end
+
+function event_struct = add_events( event_struct, events, window )
+    
+    if strcmp( window, 'fullNoMotor' )
+        event_struct = add_events(  event_struct, events, 'fixation' );
+        event_struct = add_events(  event_struct, events, 'visual' );
+        event_struct = add_events(  event_struct, events, 'attend' );
+        event_struct = add_events(  event_struct, events, 'blank' );
+        event_struct = add_events(  event_struct, events, 'post_blank' );
+        return
+    end
+    
+    if strcmp( window, 'reward' )
+        tmp_struct.label = 'R';  
+        
+        win_info = get_window( events(1).e_codes{1}, events(1).e_times{1}, window );
+        win_length = win_info(2);
+        idx = event_struct(end).index + abs(win_length);
+        tmp_struct.index = idx;
+
+        event_struct = [ event_struct, tmp_struct ];
+        return
+    end
+
+    if strcmp( window, 'fixation' ),        label = 'F';
+    elseif strcmp( window, 'visual' ),      label = 'V';
+    elseif strcmp( window, 'wm_last500' ),  label = 'D';
+    elseif strcmp( window, 'attend' ),      label = 'C';
+    elseif strcmp( window, 'blank' ),       label = 'B';
+    elseif strcmp( window, 'post_blank' ),  label = 'O';
+    end
+    
+    win_info = get_window( events(1).e_codes{1}, events(1).e_times{1}, window );
+    win_length = win_info(2);
+    idx = event_struct(end).index + win_length;
+    
+    tmp_struct.label = label;
+    tmp_struct.index = idx;
+    
+    event_struct = [ event_struct, tmp_struct ];
+    
+end
+
 
 
 function overview_fig = append_direc_fig( overview_fig, direc_fig, paradigm, current, total_num_direc_plots, direc_plot_num )
@@ -227,30 +301,30 @@ function output_plot = raster_sden_plot( plot_data, event_struct )
     
     
     %%% Debug code
-    for i = 1:length(event_struct)
-        disp( strcat( event_struct(i).e_string,{': '}, num2str(event_struct(i).e_time) ) );
-    end
-    disp( 'Durations:' );
-    disp( [event_struct(2:end).e_time] - [event_struct(1:end-1).e_time] );
-    %%%
-    
-    
-    for i = 1:4 % number of plots
-        for j = 1:length(event_struct)
-        
-            curr_plot = output_plot(i);
-            
-            % Add the lines for the events 
-            ylimits = ylim( curr_plot ); ylength = ylimits(2) - ylimits(1) + 1;
-            line( output_plot(i), repmat(event_struct(j).e_time, ylength), ylimits(1):ylimits(2), 'Color','r' ); %%% TODO
-    
-            set(output_plot(i), 'xticklabel', {});
-        end
-    end
-
-    % Add Event Strings to X Axis
-    e_strings = {event_struct.e_string}; xlabel_times = [event_struct.e_time];
-    set(output_plot(4), 'xtick', xlabel_times, 'xticklabel', e_strings);
+%     for i = 1:length(event_struct)
+%         disp( strcat( event_struct(i).e_string,{': '}, num2str(event_struct(i).e_time) ) );
+%     end
+%     disp( 'Durations:' );
+%     disp( [event_struct(2:end).e_time] - [event_struct(1:end-1).e_time] );
+%     %%%
+%     
+%     
+%     for i = 1:4 % number of plots
+%         for j = 1:length(event_struct)
+%         
+%             curr_plot = output_plot(i);
+%             
+%             % Add the lines for the events 
+%             ylimits = ylim( curr_plot ); ylength = ylimits(2) - ylimits(1) + 1;
+%             line( output_plot(i), repmat(event_struct(j).e_time, ylength), ylimits(1):ylimits(2), 'Color','r' ); %%% TODO
+%     
+%             set(output_plot(i), 'xticklabel', {});
+%         end
+%     end
+% 
+%     % Add Event Strings to X Axis
+%     e_strings = {event_struct.e_string}; xlabel_times = [event_struct.e_time];
+%     set(output_plot(4), 'xtick', xlabel_times, 'xticklabel', e_strings);
     
     
     % Make plot pretty
