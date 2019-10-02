@@ -11,6 +11,15 @@
 % Will return a pair of numbers:
 % end_code of the window
 % win_length - how many samples should be counted back from that window
+
+%%% WM CODES:
+% 9 / 9 / 9 Trial Start
+% 120 Fix Start
+% 153 Cue On
+% 155 Cue Off / Delay Start
+% 157 Fix Off
+% 161 Acquire Target/Reward
+% 18 / 18 / 18 Trial End
 function win_info = get_window( e_codes, e_times, window_string )
     attend_earlysession_flag = find(e_codes == 121);
     attend_latesession_flag  = find(e_codes == 133);
@@ -24,8 +33,10 @@ function win_info = get_window( e_codes, e_times, window_string )
         trial_window = [126 128];
     elseif strcmp( window_string, 'post_blank' )
         trial_window = [128 132];    
-    elseif strcmp( window_string, 'wm' ) || strcmp( window_string, 'wm_last500' )% These are variable durations.
-        trial_window = [155 161]; 
+    elseif strcmp( window_string, 'wm_delay' )
+        trial_window = [155 157];
+    elseif strcmp (window_string, 'wm_response' )% These are variable durations.
+         trial_window = [157 161];
     elseif strcmp( window_string, 'visual' )
         if attend_earlysession_flag, trial_window = [124 121]; % Attend Trials Early Sessions
         elseif attend_latesession_flag, trial_window = [124 133]; % Attend Trials Late Sessions
@@ -40,7 +51,9 @@ function win_info = get_window( e_codes, e_times, window_string )
         else, trial_window = [120 128]; %[120 126]; 
         end
     elseif strcmp( window_string, 'reward' )
-        trial_window = [132 132]; % No actual end for this;
+        if wm_flag, trial_window = [157 161];% WM Trials
+        else, trial_window = [132 132]; % No actual end for this;
+        end
     end
     
     end_code = trial_window(2);
@@ -57,16 +70,16 @@ function win_length = get_win_length( e_codes, e_times, trial_window, window_str
     wm_flag                  = find(e_codes == 153);
 
     fix_win_length = 300;  % Always take the last 300ms of the fixation window
-    wm_win_length  = 500;  % Always take the last 500ms of the delay window in the WM task
+    wm_resp_win_length  = 300;  % Always take the last 500ms of the delay window in the WM task
     reward_length  = -300; % Take the 300ms going FORWARD from the end of the trial
         
     % If fixation window 
     if strcmp(window_string, 'fixation' )
         win_length = fix_win_length; 
         
-    % Useful because WM ranges are variable duration.    
-    elseif strcmp( window_string, 'wm_last500' ) || strcmp( window_string, 'wm' ) 
-        win_length = wm_win_length;
+    % Useful because WM response ranges are variable duration.    
+    elseif strcmp( window_string, 'wm_response' ) 
+        win_length = wm_resp_win_length;
         
     elseif strcmp( window_string, 'reward' )
         win_length = reward_length;

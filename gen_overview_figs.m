@@ -15,6 +15,12 @@ function gen_overview_figs()
     for i = 1:length(fnames)
         
         disp(fnames(i));
+        
+        % Testing one file
+%         if ~ strcmp( fnames(i), 'PROC_2016.05.25_Garfunkel_SKF81297_10mM_6360-7616_MultiUnit1.mat' )
+%             continue
+%         end
+
         load( ffpaths{i}, 'data_struct' ); % Loads data_struct
         
         overview_fig = gen_overview_fig( data_struct, currents{i} );

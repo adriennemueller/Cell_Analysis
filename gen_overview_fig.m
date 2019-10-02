@@ -33,9 +33,9 @@ function overview_fig = gen_overview_fig( data_struct_in, currents )
             eject_current  = currents(i);
             
             % Filter by direction
-            [control_spikemat_in, event_struct]  = get_combined_spikemat( data_struct, retain_current, curr_paradigm, 'in' );
-            [control_spikemat_out, event_struct] = get_combined_spikemat( data_struct, retain_current, curr_paradigm, 'out' );
-            [drug_spikemat_in, event_struct]     = get_combined_spikemat( data_struct, eject_current, curr_paradigm, 'in' );
+            [control_spikemat_in, ~]  = get_combined_spikemat( data_struct, retain_current, curr_paradigm, 'in' );
+            [control_spikemat_out, ~] = get_combined_spikemat( data_struct, retain_current, curr_paradigm, 'out' );
+            [drug_spikemat_in, ~]     = get_combined_spikemat( data_struct, eject_current, curr_paradigm, 'in' );
             [drug_spikemat_out, event_struct]    = get_combined_spikemat( data_struct, eject_current, curr_paradigm, 'out' );
             
             % Plot Histograms and SDen Overlay for the subsets
@@ -71,88 +71,82 @@ function [combined_spikemat, event_struct] = get_combined_spikemat( data_struct,
         contrast_flag = 1; else, contrast_flag = 0;
     end
 
-    spacer_period = 100; % 100ms break in between sections
-    
+    spacer_length = 100; % 100ms break in between sections
     event_struct = struct( 'label', {' '}, 'index', 0 );
+
+    fix_spikemat  = get_directional_spikemat( data_struct, current, 'fixation', attend_type, contrast_flag );
+    vis_spikemat  = get_directional_spikemat( data_struct, current, 'visual', attend_type, contrast_flag );
+    rwd_spikemat  = get_directional_spikemat( data_struct, current, 'reward', attend_type, contrast_flag );
+
+    combined_spikemat = fix_spikemat; % Copy struct fields    
     
     
     % WM Trials
     if strcmp( paradigm, 'WM' )
-        fix_spikemat  = get_directional_spikemat( data_struct, current, 'fixation', attend_type, contrast_flag );
-        vis_spikemat  = get_directional_spikemat( data_struct, current, 'visual', attend_type, contrast_flag );
-        main_spikemat = get_directional_spikemat( data_struct, current, 'wm_last500', attend_type, contrast_flag );
-        rwd_spikemat  = get_directional_spikemat( data_struct, current, 'reward', attend_type, contrast_flag );
-   
-        num_trials = size( main_spikemat(1).spikes, 2 );
-        spacer_period = zeros( blank_period, num_trials );
+        main_spikemat = get_directional_spikemat( data_struct, current, 'wm_delay', attend_type, contrast_flag );
+        wm_response   = get_directional_spikemat( data_struct, current, 'wm_response', attend_type, contrast_flag );
         
-        events = main_spikemat.events;
-        
-        %%%% MAKE THIS WORK FOR ALL!
-        %combined_spikemat_spikes = vertcat( fix_spikemat(1).spikes, vis_spikemat(1).spikes, spacer_period, main_spikemat(1).spikes, spacer_period, rwd_spikemat(1).spikes );
-        combined_spikemat_spikes = arrayfun(@concatenate_spikes, fix_spikemat, vis_spikemat, spacer, main_spikemat, spacer, rwd_spikemat);
-
-        
-        event_struct = add_events( event_struct, events, 'fixation' );
-        event_struct = add_events( event_struct, events, 'visual' );
-        spacer_struct = struct( 'label', {' '}, 'index', event_struct(end).index + spacer_period );
+        for i = 1:length(main_spikemat) % Loop through all 8 directions; writing over spike field
+            num_trials = size( main_spikemat(i).spikes, 2 );
+            spacer_period = zeros( spacer_length, num_trials );
+            combined_spikemat(i).spikes = vertcat(  fix_spikemat(i).spikes, vis_spikemat(i).spikes, main_spikemat(i).spikes, ...
+                                                    spacer_period, wm_response(i).spikes, rwd_spikemat(i).spikes );
+        end
+    
+        trial_events = main_spikemat.events;
+        event_struct = add_events( event_struct, trial_events, 'fixation' );
+        event_struct = add_events( event_struct, trial_events, 'visual' );
+        event_struct = add_events( event_struct, trial_events, 'wm_delay' );
+        spacer_struct = struct( 'label', {' '}, 'index', event_struct(end).index + spacer_length );
         event_struct = [event_struct, spacer_struct];
-        event_struct = add_events( event_struct, events, 'wm_last500' );
-        spacer_struct = struct( 'label', {' '}, 'index', event_struct(end).index + spacer_period );
-        event_struct = [event_struct, spacer_struct];
-        event_struct = add_events( event_struct, events, 'reward' );       
+        event_struct = add_events( event_struct, trial_events, 'wm_response' );
+        event_struct = add_events( event_struct, trial_events, 'reward' );       
         
     % ATTEND TRIALS
     else
-        main_spikemat = get_directional_spikemat( data_struct, current, 'fullNoMotor', attend_type, contrast_flag );
-        rwd_spikemat  = get_directional_spikemat( data_struct, current, 'reward', attend_type, contrast_flag );
+        main_spikemat       = get_directional_spikemat( data_struct, current, 'attend', attend_type, contrast_flag );
+        blank_spikemat      = get_directional_spikemat( data_struct, current, 'blank', attend_type, contrast_flag );
         
-        num_trials = size( main_spikemat(1).spikes, 2 );
-        spacer_period = zeros( spacer_period, num_trials );
+        for i = 1:length(main_spikemat) % Loop through all 8 directions
+            num_trials = size( main_spikemat(i).spikes, 2 );
+            spacer_period = zeros( spacer_length, num_trials );
+            combined_spikemat(i).spikes = vertcat(  fix_spikemat(i).spikes, vis_spikemat(i).spikes, main_spikemat(i).spikes, ...
+                                                    blank_spikemat(i).spikes, spacer_period, rwd_spikemat(i).spikes );
+        end
         
-
-        %%%% MAKE THIS WORK FOR ALL!
-        spacer = arrayfun(@make_spacer, main_spikemat);
-        combined_spikemat_spikes = arrayfun(@concatenate_spikes, main_spikemat, spacer, rwd_spikemat);
-        
-        events = main_spikemat.events;
-        event_struct = add_events( event_struct, events, 'fullNoMotor' );
-        spacer_struct = struct( 'label', {' '}, 'index', event_struct(end).index + spacer_period );
+        trial_events = main_spikemat.events;
+        event_struct = add_events( event_struct, trial_events, 'fixation' );
+        event_struct = add_events( event_struct, trial_events, 'visual' );
+        event_struct = add_events( event_struct, trial_events, 'attend' );
+        event_struct = add_events( event_struct, trial_events, 'blank' );
+        spacer_struct = struct( 'label', {' '}, 'index', event_struct(end).index + spacer_length );
         event_struct = [event_struct, spacer_struct];
-        event_struct = add_events( event_struct, events, 'reward' );  
+        event_struct = add_events( event_struct, trial_events, 'reward' );  
         
     end
+   
+    % Rotating so at start of epoch instead of end.
+    shifted_labels = circshift( {event_struct.label}, -1);
+    [event_struct.label] = shifted_labels{:};
     
-    combined_spikemat = main_spikemat;
-    combined_spikemat.spikes = combined_spikemat_spikes.spikes;
-    
 end
 
-function spacer = make_spacer(C1)
-    num_trials = size( C1.spikes, 2 );
-    blank_period = 100;
-    spacer.spikes = zeros( blank_period, num_trials );
-end
 
-function combined = concatenate_spikes(C1, spacer, C2)
-    combined.spikes = vertcat(C1.spikes, spacer.spikes, C2.spikes);
-end
-
-function event_struct = add_events( event_struct, events, window )
+function event_struct = add_events( event_struct, trial_events, window )
     
     if strcmp( window, 'fullNoMotor' )
-        event_struct = add_events(  event_struct, events, 'fixation' );
-        event_struct = add_events(  event_struct, events, 'visual' );
-        event_struct = add_events(  event_struct, events, 'attend' );
-        event_struct = add_events(  event_struct, events, 'blank' );
-        event_struct = add_events(  event_struct, events, 'post_blank' );
+        event_struct = add_events(  event_struct, trial_events, 'fixation' );
+        event_struct = add_events(  event_struct, trial_events, 'visual' );
+        event_struct = add_events(  event_struct, trial_events, 'attend' );
+        event_struct = add_events(  event_struct, trial_events, 'blank' );
+        event_struct = add_events(  event_struct, trial_events, 'post_blank' );
         return
     end
     
     if strcmp( window, 'reward' )
         tmp_struct.label = 'R';  
         
-        win_info = get_window( events(1).e_codes{1}, events(1).e_times{1}, window );
+        win_info = get_window( trial_events(1).e_codes{1}, trial_events(1).e_times{1}, window );
         win_length = win_info(2);
         idx = event_struct(end).index + abs(win_length);
         tmp_struct.index = idx;
@@ -163,13 +157,14 @@ function event_struct = add_events( event_struct, events, window )
 
     if strcmp( window, 'fixation' ),        label = 'F';
     elseif strcmp( window, 'visual' ),      label = 'V';
-    elseif strcmp( window, 'wm_last500' ),  label = 'D';
+    elseif strcmp( window, 'wm_delay' ),    label = 'D';
+    elseif strcmp( window, 'wm_response' ), label = 'M';
     elseif strcmp( window, 'attend' ),      label = 'C';
     elseif strcmp( window, 'blank' ),       label = 'B';
     elseif strcmp( window, 'post_blank' ),  label = 'O';
     end
     
-    win_info = get_window( events(1).e_codes{1}, events(1).e_times{1}, window );
+    win_info = get_window( trial_events(1).e_codes{1}, trial_events(1).e_times{1}, window );
     win_length = win_info(2);
     idx = event_struct(end).index + win_length;
     
@@ -209,10 +204,14 @@ function overview_fig = append_direc_fig( overview_fig, direc_fig, paradigm, cur
             % overview_fig
             hAxes = hFigIAxes(i);
             subplot_child = get(hAxes, 'children');
-            
-            %subplot_child = get(direc_fig(i), 'children');
             curr_subplot = subplot( sub_fig_N_y, sub_fig_N_x * total_num_direc_plots, curr_panel_num );
             copyobj(subplot_child, curr_subplot);
+            
+            xticks(get(hAxes, 'xtick'));
+            xticklabels(get(hAxes, 'xticklabels'));
+            %set(curr_subplot(i), 'xtick', new_xticks);
+            %set(output_plot(6), 'xticklabels', num2cell(new_xticks/1000));
+    
         end
         subtitle_str = strcat(paradigm, " ", num2str(current), "nA");
         subtitle_spacing = 1 / (total_num_direc_plots+1);
@@ -241,6 +240,9 @@ function direc_fig = insert_subpanel( direc_fig, ss_subplot, direc_num, total_nu
         subplot_child = get(ss_subplot(i), 'children');
         curr_subplot = subplot( num_subfig_panels, total_num_directions, curr_panel_num );
         copyobj(subplot_child, curr_subplot);
+        
+        xticks(get(ss_subplot(i), 'xtick'));
+        xticklabels(get(ss_subplot(i), 'xticklabels'));
     end
 end
 
@@ -287,7 +289,8 @@ function output_plot = raster_sden_plot( plot_data, event_struct )
     fill(x,yy,'k', 'FaceAlpha', 0.3, 'LineStyle', 'none');
     yy = [ctrl_out_sden, fliplr(min(ctrl_out_sden, ctrl_in_sden))]; % Draw where attIn < attOut
     fill(x,yy,'k', 'FaceAlpha', 0.1, 'LineStyle', 'none'); hold off;
-    
+    set(output_plot(5), 'xticklabel', {});
+
     % Drug In vs Out
     output_plot(6) = subplot(6,1,6); hold on;
     x = [ 1 : length(drug_out_sden), length(drug_out_sden) : -1 : 1];
@@ -296,37 +299,39 @@ function output_plot = raster_sden_plot( plot_data, event_struct )
     yy = [drug_out_sden, fliplr(min(drug_out_sden, drug_in_sden))]; % Draw where attIn < attOut
     fill(x,yy,'r', 'FaceAlpha', 0.1, 'LineStyle', 'none'); hold off;
     
+    curr_xlim = xlim( output_plot(6) );
+    curr_max_xlim = curr_xlim(2);
+    new_max_xlim = round( curr_max_xlim / 500 ) * 500;
+    new_xticks = 0:500:new_max_xlim;
+    set(output_plot(6), 'xtick', new_xticks);
+    set(output_plot(6), 'xticklabels', num2cell(new_xticks/1000));
+    
     % Find the times for the different events during the trial
-    %event_struct = find_event_times( sample_correct_trial, window_str );
-    
-    
-    %%% Debug code
+%     %%% Debug code
 %     for i = 1:length(event_struct)
 %         disp( strcat( event_struct(i).e_string,{': '}, num2str(event_struct(i).e_time) ) );
 %     end
 %     disp( 'Durations:' );
 %     disp( [event_struct(2:end).e_time] - [event_struct(1:end-1).e_time] );
 %     %%%
-%     
-%     
-%     for i = 1:4 % number of plots
-%         for j = 1:length(event_struct)
-%         
-%             curr_plot = output_plot(i);
-%             
-%             % Add the lines for the events 
-%             ylimits = ylim( curr_plot ); ylength = ylimits(2) - ylimits(1) + 1;
-%             line( output_plot(i), repmat(event_struct(j).e_time, ylength), ylimits(1):ylimits(2), 'Color','r' ); %%% TODO
-%     
-%             set(output_plot(i), 'xticklabel', {});
-%         end
-%     end
-% 
-%     % Add Event Strings to X Axis
-%     e_strings = {event_struct.e_string}; xlabel_times = [event_struct.e_time];
-%     set(output_plot(4), 'xtick', xlabel_times, 'xticklabel', e_strings);
     
-    
+    for i = 1:4 % number of plots
+        for j = 1:length(event_struct)
+         
+            curr_plot = output_plot(i);
+             
+            % Add the lines for the events 
+            ylimits = ylim( curr_plot ); ylength = ylimits(2) - ylimits(1) + 1;
+            line( output_plot(i), repmat(event_struct(j).index, ylength), ylimits(1):ylimits(2), 'Color','r' ); %%% TODO
+   
+            set(output_plot(i), 'xticklabel', {});
+        end
+    end
+
+    % Add Event Strings to X Axis
+    e_strings = {event_struct.label}; xlabel_times = [event_struct.index];
+    set(output_plot(4), 'xtick', xlabel_times, 'xticklabel', e_strings);
+        
     % Make plot pretty
 end
 
@@ -346,48 +351,3 @@ function [sden_avg sden_se] = gen_sden_data( spike_mat, kernel_width )
     num_trials = size( sden_mat, 1);
     sden_se = sden_std ./ sqrt( num_trials );
 end
-
-
-% This will only work for fullNoMotor trials
-% function event_struct = find_event_times( corr_trial, window_str )
-%     
-%     event_struct = struct;
-% 
-%     e_codes = corr_trial.event_codes;
-%     e_times = corr_trial.code_times;
-%   
-%     attend_earlysession_flag = ~isempty( find(e_codes == 121) );
-%     attend_latesession_flag  = ~isempty( find(e_codes == 133) );
-%     wm_flag                  = ~isempty( find(e_codes == 153) );
-%     
-%     offset = e_times(e_codes == 120) - 1; 
-%     
-%     
-%     if strcmp( window_str, 'fullNoMotor' )
-%         % Fixation Onset the same for all trials.
-%         event_struct(1).e_string = 'Fix'; 
-%         event_struct(1).e_time = e_times(e_codes == 120) - offset; 
-% 
-%         % Visual Onset
-%         event_struct(2).e_string = 'Target'; 
-%         if attend_earlysession_flag || attend_latesession_flag
-%             event_struct(2).e_time = e_times(e_codes == 124) - offset; % Attend Conditions
-%         else
-%             event_struct(2).e_time = e_times(e_codes == 153) - offset; % WM Condition
-%         end
-% 
-%         if attend_earlysession_flag
-%             event_struct(3).e_string = 'Cue';
-%             event_struct(3).e_time   = e_times(e_codes == 121) - offset;
-%         elseif attend_latesession_flag
-%             event_struct(3).e_string = 'Cue';
-%             event_struct(3).e_time   = e_times(e_codes == 133) - offset;
-%         end
-%     elseif strcmp( window_str, 'wm_last500' )    % WM Condition  %%% TEST TEST TEST TEST
-%             event_struct(1).e_string = 'Delay End';
-%             event_struct(1).e_time   = e_times(e_codes == 155) - offset;
-%         
-%     end
-%     
-%     
-% end
