@@ -133,6 +133,13 @@ end
 
 
 function event_struct = add_events( event_struct, trial_events, window )
+
+    if isempty(trial_events.e_codes)
+        tmp_struct.label = ' ';
+        tmp_struct.index =  0;
+        event_struct = [ event_struct, tmp_struct ];
+        return
+    end 
     
     if strcmp( window, 'fullNoMotor' )
         event_struct = add_events(  event_struct, trial_events, 'fixation' );

@@ -17,7 +17,7 @@ function gen_overview_figs()
         disp(fnames(i));
         
         % Testing one file
-%         if ~ strcmp( fnames(i), 'PROC_2016.05.25_Garfunkel_SKF81297_10mM_6360-7616_MultiUnit1.mat' )
+%         if ~ strcmp( fnames(i), 'PROC_2016.08.26_Garfunkel_10mM_SKF81297_3368-4843_MultiUnit.mat')
 %             continue
 %         end
 
