@@ -32,7 +32,7 @@ function win_info = get_window( e_codes, e_times, window_string )
     elseif strcmp( window_string, 'blank' )
         trial_window = [126 128];
     elseif strcmp( window_string, 'post_blank' )
-        trial_window = [128 132];    
+        trial_window = [128 128];    
     elseif strcmp( window_string, 'wm_delay' )
         trial_window = [155 157];
     elseif strcmp (window_string, 'wm_response' )% These are variable durations.
@@ -72,18 +72,22 @@ function win_length = get_win_length( e_codes, e_times, trial_window, window_str
     fix_win_length = 300;  % Always take the last 300ms of the fixation window
     wm_resp_win_length  = 300;  % Always take the last 500ms of the delay window in the WM task
     reward_length  = -300; % Take the 300ms going FORWARD from the end of the trial
-        
+    post_blank_length = -300;
+    
     % If fixation window 
     if strcmp(window_string, 'fixation' )
         win_length = fix_win_length; 
         
-    % Useful because WM response ranges are variable duration.    
+    % Useful because these ranges are variable duration.    
     elseif strcmp( window_string, 'wm_response' ) 
         win_length = wm_resp_win_length;
         
     elseif strcmp( window_string, 'reward' )
         win_length = reward_length;
-        
+
+    elseif strcmp( window_string, 'post_blank' )
+        win_length = post_blank_length;
+
     % fullNoMotor window
     elseif strcmp( window_string, 'fullNoMotor' )
         if wm_flag, fix_end_code = 153;

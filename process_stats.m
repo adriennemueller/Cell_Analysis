@@ -30,26 +30,26 @@ function mfs = process_stats( mfs )
             % save substruct of stats for each paradigm into mfs
             if contains( paradigm_list, 'Attention' )
                 attend_trial_struct = data_struct( contains({data_struct.paradigm}, 'Attention' ) );
-                mfs.session(i).attend_stats{j} = windowed_stats( attend_trial_struct, currents, 'attend' );
-                mfs.session(i).attend_visual_stats{j} = windowed_stats( attend_trial_struct, currents, 'visual' );
-                mfs.session(i).attend_fixation_stats{j} = windowed_stats( attend_trial_struct, currents, 'fixation' );
-                mfs.session(i).vis_signif{j} = visual_significance( attend_trial_struct, currents );
+                mfs.session(i).stats{j}.attend_stats = windowed_stats( attend_trial_struct, currents, 'attend' );
+                mfs.session(i).stats{j}.attend_visual_stats = windowed_stats( attend_trial_struct, currents, 'visual' );
+                mfs.session(i).stats{j}.attend_fixation_stats = windowed_stats( attend_trial_struct, currents, 'fixation' );
+                mfs.session(i).stats{j}.vis_signif = visual_significance( attend_trial_struct, currents );
             end
 
             if sum( strcmp( paradigm_list, 'WM' ) )
                 wm_trial_struct = data_struct( contains({data_struct.paradigm}, 'WM' ) );
-                mfs.session(i).wm_stats{j} = windowed_stats( wm_trial_struct, currents, 'wm' );
-                mfs.session(i).wm_visual_stats{j} = windowed_stats( wm_trial_struct, currents, 'visual' );
-                mfs.session(i).wm_fixation_stats{j} = windowed_stats( wm_trial_struct, currents, 'fixation' );
+                mfs.session(i).stats{j}.wm_delay_stats = windowed_stats( wm_trial_struct, currents, 'wm_delay' );
+                mfs.session(i).stats{j}.wm_visual_stats = windowed_stats( wm_trial_struct, currents, 'visual' );
+                mfs.session(i).stats{j}.wm_fixation_stats = windowed_stats( wm_trial_struct, currents, 'fixation' );
             end
             
             if sum( strcmp( paradigm_list, 'Attention_Contrast' ) )
                 attContrast_trial_struct = data_struct( contains({data_struct.paradigm}, 'Attention_Contrast' ) );
                 
                 % Analyze irrespective of Contrast
-                mfs.session(i).attend_stats{j} = windowed_stats( attContrast_trial_struct, currents, 'attend' );
-                mfs.session(i).attend_visual_stats{j} = windowed_stats( attContrast_trial_struct, currents, 'visual' );
-                mfs.session(i).attend_fixation_stats{j} = windowed_stats( attContrast_trial_struct, currents, 'fixation' );
+                mfs.session(i).stats{j}.attend_stats = windowed_stats( attContrast_trial_struct, currents, 'attend' );
+                mfs.session(i).stats{j}.attend_visual_stats = windowed_stats( attContrast_trial_struct, currents, 'visual' );
+                mfs.session(i).stats{j}.attend_fixation_stats = windowed_stats( attContrast_trial_struct, currents, 'fixation' );
                 
                 % Analyze for each Contrast separately
                 %contrasts = unique( [attContrast_trial_struct.contrast] );
@@ -57,9 +57,9 @@ function mfs = process_stats( mfs )
                     % Make Contrast-Specific Substruct
                     %curr_attContrast_trial_struct = attContrast_trial_struct( [attContrast_trial_struct.contrast] == contrasts(k) );
                     %mfs.session(i).attendContrast{j,k} = contrasts(k);
-                    mfs.session(i).attendContrast_stats{j} = windowed_stats( attContrast_trial_struct, currents, 'attContrast' );
-                    mfs.session(i).attendContrast_visual_stats{j} = windowed_stats( attContrast_trial_struct, currents, 'visual' );
-                    mfs.session(i).attendContrast_fixation_stats{j} = windowed_stats( attContrast_trial_struct, currents, 'fixation' );
+                    mfs.session(i).stats{j}.attendContrast_stats = windowed_stats( attContrast_trial_struct, currents, 'attContrast' );
+                    mfs.session(i).stats{j}.attendContrast_visual_stats = windowed_stats( attContrast_trial_struct, currents, 'visual' );
+                    mfs.session(i).stats{j}.attendContrast_fixation_stats = windowed_stats( attContrast_trial_struct, currents, 'fixation' );
                 %end
             end
     
@@ -168,7 +168,6 @@ function win_stats = windowed_stats( data_struct, currents, window_str )
         control_summ_stats = gen_summ_stats( control_spikemat_attin, control_spikemat_attout ); 
         drug_summ_stats    = gen_summ_stats( drug_spikemat_attin, drug_spikemat_attout );
         
- 
         % Return results for each current separately
         win_stats(i-1).current = eject_current;
         win_stats(i-1).control_dmat = control_dmat;
@@ -185,7 +184,6 @@ function rslt = gen_summ_stats( attin_vals, attout_vals)
     
     for i = 1:length( [attin_vals.direction] )
         
-        
         rslt(i).direction = attin_vals(i).direction;
         
         spikes = horzcat( attin_vals(i).spikes, attout_vals(i).spikes );
@@ -193,6 +191,8 @@ function rslt = gen_summ_stats( attin_vals, attout_vals)
         numspikes = sum( spikes, 1 );
         
         rslt(i).avg_fr = mean(numspikes ./ ms) * 1000;
+        rslt(i).std_dev = std(numspikes ./ ms) * 1000;
+        rslt(i).std_err = rslt(i).std_dev / sqrt(trials);
         rslt(i).num_trials = trials;
     end
 

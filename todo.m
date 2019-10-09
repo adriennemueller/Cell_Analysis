@@ -15,6 +15,7 @@
 % Perform SVM on drug-no drug for different epochs
 
 % Consider unrewarded trials?
+Fix sden so it handles spacer gaps.
 
 %%% THINK %%%
 

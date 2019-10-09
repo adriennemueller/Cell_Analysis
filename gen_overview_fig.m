@@ -106,12 +106,13 @@ function [combined_spikemat, event_struct] = get_combined_spikemat( data_struct,
     else
         main_spikemat       = get_directional_spikemat( data_struct, current, 'attend', attend_type, contrast_flag );
         blank_spikemat      = get_directional_spikemat( data_struct, current, 'blank', attend_type, contrast_flag );
+        post_blank_spikemat = get_directional_spikemat( data_struct, current, 'post_blank', attend_type, contrast_flag );
         
         for i = 1:length(main_spikemat) % Loop through all 8 directions
             num_trials = size( main_spikemat(i).spikes, 2 );
             spacer_period = zeros( spacer_length, num_trials );
             combined_spikemat(i).spikes = vertcat(  fix_spikemat(i).spikes, vis_spikemat(i).spikes, main_spikemat(i).spikes, ...
-                                                    blank_spikemat(i).spikes, spacer_period, rwd_spikemat(i).spikes );
+                                                    blank_spikemat(i).spikes, post_blank_spikemat(i).spikes, spacer_period, rwd_spikemat(i).spikes );
         end
         
         trial_events = main_spikemat.events;
@@ -119,6 +120,7 @@ function [combined_spikemat, event_struct] = get_combined_spikemat( data_struct,
         event_struct = add_events( event_struct, trial_events, 'visual' );
         event_struct = add_events( event_struct, trial_events, 'attend' );
         event_struct = add_events( event_struct, trial_events, 'blank' );
+        event_struct = add_events( event_struct, trial_events, 'post_blank' );
         spacer_struct = struct( 'label', {' '}, 'index', event_struct(end).index + spacer_length );
         event_struct = [event_struct, spacer_struct];
         event_struct = add_events( event_struct, trial_events, 'reward' );  
@@ -146,7 +148,7 @@ function event_struct = add_events( event_struct, trial_events, window )
         event_struct = add_events(  event_struct, trial_events, 'visual' );
         event_struct = add_events(  event_struct, trial_events, 'attend' );
         event_struct = add_events(  event_struct, trial_events, 'blank' );
-        event_struct = add_events(  event_struct, trial_events, 'post_blank' );
+        %event_struct = add_events(  event_struct, trial_events, 'post_blank' );
         return
     end
     
@@ -161,6 +163,19 @@ function event_struct = add_events( event_struct, trial_events, window )
         event_struct = [ event_struct, tmp_struct ];
         return
     end
+    
+    if strcmp( window, 'post_blank' )
+        tmp_struct.label = 'D';  
+        
+        win_info = get_window( trial_events(1).e_codes{1}, trial_events(1).e_times{1}, window );
+        win_length = win_info(2);
+        idx = event_struct(end).index + abs(win_length);
+        tmp_struct.index = idx;
+
+        event_struct = [ event_struct, tmp_struct ];
+        return
+    end
+    
 
     if strcmp( window, 'fixation' ),        label = 'F';
     elseif strcmp( window, 'visual' ),      label = 'V';
@@ -168,7 +183,6 @@ function event_struct = add_events( event_struct, trial_events, window )
     elseif strcmp( window, 'wm_response' ), label = 'M';
     elseif strcmp( window, 'attend' ),      label = 'C';
     elseif strcmp( window, 'blank' ),       label = 'B';
-    elseif strcmp( window, 'post_blank' ),  label = 'O';
     end
     
     win_info = get_window( trial_events(1).e_codes{1}, trial_events(1).e_times{1}, window );
