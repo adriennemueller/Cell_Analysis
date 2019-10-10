@@ -30,17 +30,22 @@ function mfs = process_stats( mfs )
             % save substruct of stats for each paradigm into mfs
             if contains( paradigm_list, 'Attention' )
                 attend_trial_struct = data_struct( contains({data_struct.paradigm}, 'Attention' ) );
-                mfs.session(i).stats{j}.attend_stats = windowed_stats( attend_trial_struct, currents, 'attend' );
-                mfs.session(i).stats{j}.attend_visual_stats = windowed_stats( attend_trial_struct, currents, 'visual' );
-                mfs.session(i).stats{j}.attend_fixation_stats = windowed_stats( attend_trial_struct, currents, 'fixation' );
+                mfs.session(i).stats{j}.attend_fixation_stats   = windowed_stats( attend_trial_struct, currents, 'fixation' );
+                mfs.session(i).stats{j}.attend_visual_stats     = windowed_stats( attend_trial_struct, currents, 'visual' );
+                mfs.session(i).stats{j}.attend_attend_stats     = windowed_stats( attend_trial_struct, currents, 'attend' );
+                mfs.session(i).stats{j}.attend_blank_stats      = windowed_stats( attend_trial_struct, currents, 'blank' );
+                mfs.session(i).stats{j}.attend_post_blank_stats = windowed_stats( attend_trial_struct, currents, 'post_blank' );
+                mfs.session(i).stats{j}.attend_reward_stats     = windowed_stats( attend_trial_struct, currents, 'reward' );
                 mfs.session(i).stats{j}.vis_signif = visual_significance( attend_trial_struct, currents );
             end
 
             if sum( strcmp( paradigm_list, 'WM' ) )
                 wm_trial_struct = data_struct( contains({data_struct.paradigm}, 'WM' ) );
-                mfs.session(i).stats{j}.wm_delay_stats = windowed_stats( wm_trial_struct, currents, 'wm_delay' );
-                mfs.session(i).stats{j}.wm_visual_stats = windowed_stats( wm_trial_struct, currents, 'visual' );
                 mfs.session(i).stats{j}.wm_fixation_stats = windowed_stats( wm_trial_struct, currents, 'fixation' );
+                mfs.session(i).stats{j}.wm_visual_stats   = windowed_stats( wm_trial_struct, currents, 'visual' );
+                mfs.session(i).stats{j}.wm_delay_stats    = windowed_stats( wm_trial_struct, currents, 'wm_delay' );
+                mfs.session(i).stats{j}.wm_response_stats = windowed_stats( wm_trial_struct, currents, 'wm_response' );
+                mfs.session(i).stats{j}.wm_reward_stats   = windowed_stats( wm_trial_struct, currents, 'reward' );
             end
             
             if sum( strcmp( paradigm_list, 'Attention_Contrast' ) )
@@ -149,8 +154,7 @@ function win_stats = windowed_stats( data_struct, currents, window_str )
         retain_current = currents(1);
         eject_current  = currents(i); 
         
-        corr_idx = find( [data_struct.trial_error] == 0 );
-        %window = get_window( data_struct(corr_idx(1)), window_str );
+        %corr_idx = find( [data_struct.trial_error] == 0 );
         
         control_spikemat_attin  = get_directional_spikemat( data_struct, retain_current, window_str, 'in', contrast_flag );
         control_spikemat_attout = get_directional_spikemat( data_struct, retain_current, window_str, 'out', contrast_flag );
@@ -162,7 +166,8 @@ function win_stats = windowed_stats( data_struct, currents, window_str )
         drug_dmat    = gen_dprime_struct_wrapper( drug_spikemat_attin, drug_spikemat_attout );
     
         % Get Anova for this
-        anova_mat = gen_anova_struct( control_spikemat_attin, control_spikemat_attout, drug_spikemat_attin, drug_spikemat_attout, contrast_flag );
+        anova_data_mat = create_anova_data_mat( data_struct, retain_current, eject_current, window_str, contrast_flag );
+        anova_mat = get_anova_struct( anova_data_mat );
         
         % Get Summary Statistics for this window
         control_summ_stats = gen_summ_stats( control_spikemat_attin, control_spikemat_attout ); 
@@ -179,6 +184,24 @@ function win_stats = windowed_stats( data_struct, currents, window_str )
 end
 
 
+function anova_data_mat = create_anova_data_mat( data_struct, retain_current, eject_current, window_str, contrast_flag )
+
+    % Loop through datastruct, creating a matrix based on the epoch 
+    ctrl_spike_mat = filtered_windowed_spikemat( data_struct, retain_current, window_str, [], [], contrast_flag )
+    
+    
+    
+    
+%     sum( strcmp( window_str, {'attend', 'blank'} ) ) % Cue Matters / Attend In/Out
+%                 anova_mat = gen_anova_struct( control_spikemat_attin, control_spikemat_attout, drug_spikemat_attin, drug_spikemat_attout, contrast_flag );
+%             elseif strcmp( window_str, 'post_blank' ) % Flip / No Flip Matters and Direction
+%             elseif sum( strcmp( window_str, {'visual', 'wm_delay', 'wm_response', 'reward'} ) ) % Direction Matters
+%             elseif strcmp( window_str, 'fixation' ) % Only drug or no drug matters
+            
+    
+
+
+end
 
 function rslt = gen_summ_stats( attin_vals, attout_vals) 
     

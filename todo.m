@@ -24,6 +24,7 @@ Fix sden so it handles spacer gaps.
 % Plot SVM performance vs scrambled SVM Performance (unity plot? or two
 % histograms)
 
+WM DOES NOT HAVE 8 UNIQUE VALUES FOR EPOCHS. FIX.
     
 Make ReadMe with Workflow?
  make_master_file_struct
