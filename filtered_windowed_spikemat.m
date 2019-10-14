@@ -47,6 +47,8 @@ function [rslt_mat, contrasts, events] = filtered_windowed_spikemat( curr_data_m
     
     events.e_codes = event_codes;
     events.e_times = code_times;
+    events.target_change = {curr_data_mat(valid_idxs).comb};
+    events.theta = {curr_data_mat(valid_idxs).theta};
     
     if contrast_flag
         contrasts = {curr_data_mat(valid_idxs).contrast};

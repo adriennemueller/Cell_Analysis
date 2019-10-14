@@ -185,11 +185,25 @@ end
 
 
 function anova_data_mat = create_anova_data_mat( data_struct, retain_current, eject_current, window_str, contrast_flag )
+    
+    currents = [retain_current, eject_current];
+    spikes = []; theta = []; target_change = []; drug = [];
 
-    % Loop through datastruct, creating a matrix based on the epoch 
-    ctrl_spike_mat = filtered_windowed_spikemat( data_struct, retain_current, window_str, [], [], contrast_flag )
+    for i = 1:length(currents)
     
+        % Loop through datastruct, creating a matrix based on the epoch 
+        [ctrl_spike_mat, contrasts, events] = filtered_windowed_spikemat( data_struct, currents(i), window_str, [], [], contrast_flag );
+ 
+        spikes        = cat( spikes, spikessum( ctrl_spike_mat, 1 ));
+        theta         = cat( theta, events.theta );
+        target_change = cat( target_change, events.target_change );
+        drug          = cat( drug, rep(length(events.theta), currents(i) ) );
+        %anova_data_mat.attend        =  
     
+    end    
+    
+    if strcmp( window_str, 'fixation' )
+        a
     
     
 %     sum( strcmp( window_str, {'attend', 'blank'} ) ) % Cue Matters / Attend In/Out
@@ -199,9 +213,26 @@ function anova_data_mat = create_anova_data_mat( data_struct, retain_current, ej
 %             elseif strcmp( window_str, 'fixation' ) % Only drug or no drug matters
             
     
-
+    anova_data_mat = [];
 
 end
+
+function anova_mat = get_anova_struct( anova_data_mat )
+    anova_mat = [];
+    
+    if contrast_flag
+        [p,tbl] = anovan( data_vec, {direction, drug, attend, cell2mat(contrast)}, 'model','full','varnames',{'direction','drug','attend', 'contrast'}, 'display','off', 'sstype', 1 );
+    else
+        [p,tbl] = anovan( data_vec, {direction, drug, attend}, 'model','full','varnames',{'direction','drug','attend'}, 'display','off', 'sstype', 1 );
+    end
+    
+    rslt.p = p;
+    rslt.tbl = tbl;
+    
+    
+end
+
+
 
 function rslt = gen_summ_stats( attin_vals, attout_vals) 
     

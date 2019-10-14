@@ -43,7 +43,7 @@ function gen_overview_figs()
         summary_fig.PaperPositionMode = 'auto';
         summary_fig_pos = summary_fig.PaperPosition;
         summary_fig.PaperSize = [summary_fig_pos(3) summary_fig_pos(4)];
-        print( summary_fig, strcat(save_name{1}, '_summary', '.pdf'), '-dpdf'); % .png and .fig also posisble. % May Want to add paradigm to this eventually
+%        print( summary_fig, strcat(save_name{1}, '_summary', '.pdf'), '-dpdf'); % .png and .fig also posisble. % May Want to add paradigm to this eventually
         
         close all;
     end
