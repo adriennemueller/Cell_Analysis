@@ -166,8 +166,8 @@ function win_stats = windowed_stats( data_struct, currents, window_str )
         drug_dmat    = gen_dprime_struct_wrapper( drug_spikemat_attin, drug_spikemat_attout );
     
         % Get Anova for this
-        anova_data_mat = create_anova_data_mat( data_struct, retain_current, eject_current, window_str, contrast_flag );
-        anova_mat = get_anova_struct( anova_data_mat );
+        anova_mat = create_anova_data_mat( data_struct, retain_current, eject_current, window_str, contrast_flag );
+        %anova_mat = get_anova_struct( anova_data_mat );
         
         % Get Summary Statistics for this window
         control_summ_stats = gen_summ_stats( control_spikemat_attin, control_spikemat_attout ); 
@@ -187,48 +187,60 @@ end
 function anova_data_mat = create_anova_data_mat( data_struct, retain_current, eject_current, window_str, contrast_flag )
     
     currents = [retain_current, eject_current];
-    spikes = []; theta = []; target_change = []; drug = [];
+    spikes = []; theta = []; target_change = []; drug = []; contrast = [];
 
     for i = 1:length(currents)
     
         % Loop through datastruct, creating a matrix based on the epoch 
         [ctrl_spike_mat, contrasts, events] = filtered_windowed_spikemat( data_struct, currents(i), window_str, [], [], contrast_flag );
  
-        spikes        = cat( spikes, spikessum( ctrl_spike_mat, 1 ));
-        theta         = cat( theta, events.theta );
-        target_change = cat( target_change, events.target_change );
-        drug          = cat( drug, rep(length(events.theta), currents(i) ) );
-        %anova_data_mat.attend        =  
+        spikes        = horzcat( spikes, sum( ctrl_spike_mat, 1 ));
+        theta         = horzcat( theta, [events.theta{:}] );
+        target_change = horzcat( target_change, [events.target_change{:}] );
+        drug          = horzcat( drug, repmat( currents(i), 1, length(events.theta)) );
+        contrast      = horzcat( contrast, contrasts );
+        %attend        =  
     
-    end    
+    end
     
+    % Just drug as factor - 'Fixation' Window
     if strcmp( window_str, 'fixation' )
-        a
+        merged_mat = {spikes, drug};
+        factors_list = {'drug'};
+    % If direction also a factor
+    elseif sum( strcmp( window_str, {'visual', 'wm_delay', 'wm_response', 'reward'} ) )
+        merged_mat = {spikes, drug, theta};
+        factors_list = { 'drug', 'theta' };
+    % IF ATTEND A FACTOR - DOESN'T WORK YET
+    elseif sum( strcmp( window_str, {'attend', 'blank'} ) )
+%         merged_mat = {spikes, drug, theta, attend}; FIX THIS
+%         factors_list = { 'drug', 'theta', 'attend' }; FIX THIS
+        merged_mat = {spikes, drug, theta};
+        factors_list = { 'drug', 'theta' };
+    % If whether target flips is a factor
+    elseif strcmp( window_str, 'post_blank' )
+%         merged_mat = {spikes, drug, theta, attend, target_change}; FIX THIS
+%         factors_list = { 'drug', 'theta', 'attend', 'target_change' }; FIX ThiS
+        merged_mat = {spikes, drug, theta, target_change}; 
+        factors_list = {'drug', 'theta', 'target_change'};
+    end        
+
+    % Add Contrast Flag if applicable
+    if contrast_flag
+        merged_mat = {merge_mat, contrasts};
+        factors_list = strcat( factors_list, 'contrast' );
+    end
     
-    
-%     sum( strcmp( window_str, {'attend', 'blank'} ) ) % Cue Matters / Attend In/Out
-%                 anova_mat = gen_anova_struct( control_spikemat_attin, control_spikemat_attout, drug_spikemat_attin, drug_spikemat_attout, contrast_flag );
-%             elseif strcmp( window_str, 'post_blank' ) % Flip / No Flip Matters and Direction
-%             elseif sum( strcmp( window_str, {'visual', 'wm_delay', 'wm_response', 'reward'} ) ) % Direction Matters
-%             elseif strcmp( window_str, 'fixation' ) % Only drug or no drug matters
-            
-    
-    anova_data_mat = [];
+    anova_data_mat = get_anova_struct( merged_mat, factors_list );
 
 end
 
-function anova_mat = get_anova_struct( anova_data_mat )
-    anova_mat = [];
+function anova_mat = get_anova_struct( anova_data_mat, factors_list )
     
-    if contrast_flag
-        [p,tbl] = anovan( data_vec, {direction, drug, attend, cell2mat(contrast)}, 'model','full','varnames',{'direction','drug','attend', 'contrast'}, 'display','off', 'sstype', 1 );
-    else
-        [p,tbl] = anovan( data_vec, {direction, drug, attend}, 'model','full','varnames',{'direction','drug','attend'}, 'display','off', 'sstype', 1 );
-    end
+    data_vec = anova_data_mat{ 1, :};
+    factors  = anova_data_mat( 2:end );
     
-    rslt.p = p;
-    rslt.tbl = tbl;
-    
+    [anova_mat.p, anova_mat.tbl] = anovan( data_vec, factors, 'model','full','varnames', factors_list, 'display','off', 'sstype', 1 );
     
 end
 

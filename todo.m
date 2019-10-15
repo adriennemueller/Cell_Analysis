@@ -25,6 +25,7 @@ Fix sden so it handles spacer gaps.
 % histograms)
 
 WM DOES NOT HAVE 8 UNIQUE VALUES FOR EPOCHS. FIX.
+Make anova also hand attend direction as a factor
     
 Make ReadMe with Workflow?
  make_master_file_struct
