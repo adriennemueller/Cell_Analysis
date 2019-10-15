@@ -3,7 +3,6 @@
 %%% effects exhibit drug/attend interactions. How many drug effects etc.
 % Merge gen_anova_counts and gen_anova_contrast_counts
 
-
 % Should combined drug_svm? (jackknife also)
 % MAKE SVM MORE GENERIC FOR other label types (attin/attout, e.g.)
 % Make attend_svm not a thing (a hacked copy-paste of drug_svm )
@@ -15,17 +14,16 @@
 % Perform SVM on drug-no drug for different epochs
 
 % Consider unrewarded trials?
-Fix sden so it handles spacer gaps.
-
-%%% THINK %%%
 
 % Plot SVM performance as increase number of neurons included
 
 % Plot SVM performance vs scrambled SVM Performance (unity plot? or two
 % histograms)
 
+Make summary figure for attend paradigm
 WM DOES NOT HAVE 8 UNIQUE VALUES FOR EPOCHS. FIX.
-Make anova also hand attend direction as a factor
+Make anova also handle attend direction as a factor
+Make population / epoch figs
     
 Make ReadMe with Workflow?
  make_master_file_struct

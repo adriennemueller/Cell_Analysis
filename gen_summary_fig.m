@@ -65,7 +65,12 @@ function summary_fig = gen_summary_fig( stats, currents )
             subplot( 1, 5, 1)
             errorbar( [ctrl_mean drug_mean], [ctrl_ste, drug_ste] ); % make different colors if possible
             hold on;
-
+            
+            % Add anova results text
+            stats_string = get_stats_string( stats.wm_fixation_stats.anova_mat );
+            [text_x_loc, text_y_loc] = get_text_location( xlim, ylim );
+            text( text_x_loc, text_y_loc, stats_string );
+            
             for k = 2:5 % All Epochs after fixation
                 ctrl_means = [stats.([wm_fields{k}]).control_summ_stats(j,:).avg_fr];
                 ctrl_stes  = [stats.([wm_fields{k}]).control_summ_stats(j,:).std_err];
@@ -76,14 +81,35 @@ function summary_fig = gen_summary_fig( stats, currents )
                 errorbar( ctrl_means, ctrl_stes, 'k.' );
                 hold on;
                 errorbar( drug_means, drug_stes, 'r.' );
-            end                
+
+                % Add anova results text
+                stats_string = get_stats_string( stats.([wm_fields{k}]).anova_mat );
+                [text_x_loc, text_y_loc] = get_text_location( xlim, ylim );
+                text( text_x_loc, text_y_loc, stats_string );
                 
-                % Add ANOVA RESULT
-            
-         end
+            end                
+        end
+    end
+end
+
+function [x_pos, y_pos] = get_text_location( xlimits, ylimits )
+    x_pos = xlimits(1) + 0.2;
+    y_pos = ylimits(2) - range(ylimits / 10);
+end
+
+function stats_string = get_stats_string( stats_struct )
+    
+    stats_string = [];
+
+    factors_list = stats_struct.tbl( 2:end-2, 1 ); % Factors Column 
+    p_vals       = stats_struct.tbl( 2:end-2, 7 ); % P values column
+    
+    for i = 1:length( factors_list )
+        stats_string{i} = strcat( factors_list(i), {': '}, num2str( round(p_vals{i}, 3) ) );
     end
     
-end
+    stats_string = string(stats_string);
+end        
 
 
 
