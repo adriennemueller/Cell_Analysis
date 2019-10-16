@@ -63,8 +63,9 @@ function summary_fig = gen_summary_fig( stats, currents )
             drug_ste  = gen_grand_av( [drug_stats.std_err], [drug_stats.num_trials] );
             
             subplot( 1, 5, 1)
-            errorbar( [ctrl_mean drug_mean], [ctrl_ste, drug_ste] ); % make different colors if possible
+            errorbar( ctrl_mean, ctrl_ste, 'k.' );
             hold on;
+            errorbar( drug_mean, drug_ste, 'r.' );
             
             % Add anova results text
             stats_string = get_stats_string( stats.wm_fixation_stats.anova_mat );

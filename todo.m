@@ -24,6 +24,7 @@ Make summary figure for attend paradigm
 WM DOES NOT HAVE 8 UNIQUE VALUES FOR EPOCHS. FIX.
 Make anova also handle attend direction as a factor
 Make population / epoch figs
+Verify d' does what it's supposed to for WM
     
 Make ReadMe with Workflow?
  make_master_file_struct

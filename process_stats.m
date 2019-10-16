@@ -147,25 +147,25 @@ function win_stats = windowed_stats( data_struct, currents, window_str, paradigm
         retain_current = currents(1);
         eject_current  = currents(i); 
         
-        if strcmp( paradigm, 'WM' )
             
-        else
-            control_spikemat_attin  = get_directional_spikemat( data_struct, retain_current, window_str, 'in', contrast_flag );
-            control_spikemat_attout = get_directional_spikemat( data_struct, retain_current, window_str, 'out', contrast_flag );
-            drug_spikemat_attin     = get_directional_spikemat( data_struct, eject_current, window_str, 'in', contrast_flag );
-            drug_spikemat_attout    = get_directional_spikemat( data_struct, eject_current, window_str, 'out', contrast_flag );
-        end    
-        
+        control_spikemat_attin  = get_directional_spikemat( data_struct, retain_current, window_str, 'in', contrast_flag );
+        control_spikemat_attout = get_directional_spikemat( data_struct, retain_current, window_str, 'out', contrast_flag );
+        drug_spikemat_attin     = get_directional_spikemat( data_struct, eject_current, window_str, 'in', contrast_flag );
+        drug_spikemat_attout    = get_directional_spikemat( data_struct, eject_current, window_str, 'out', contrast_flag );
+
         % Get D' for result of this
         control_dmat = gen_dprime_struct_wrapper( control_spikemat_attin, control_spikemat_attout );
         drug_dmat    = gen_dprime_struct_wrapper( drug_spikemat_attin, drug_spikemat_attout );
-    
-        % Get Anova for this
-        anova_mat = create_anova_data_mat( data_struct, retain_current, eject_current, window_str, contrast_flag );
+        
         
         % Get Summary Statistics for this window
-        control_summ_stats = gen_summ_stats( control_spikemat_attin, control_spikemat_attout ); 
-        drug_summ_stats    = gen_summ_stats( drug_spikemat_attin, drug_spikemat_attout );
+        control_spikemat = get_directional_spikemat( data_struct, retain_current, window_str, '', contrast_flag );
+        drug_spikemat    = get_directional_spikemat( data_struct, eject_current, window_str, '', contrast_flag );
+        control_summ_stats = gen_summ_stats( control_spikemat ); 
+        drug_summ_stats    = gen_summ_stats( drug_spikemat );
+                
+        % Get Anova for this
+        anova_mat = create_anova_data_mat( data_struct, retain_current, eject_current, window_str, contrast_flag );
         
         % Return results for each current separately
         win_stats(i-1).current = eject_current;
@@ -205,7 +205,7 @@ function anova_data_mat = create_anova_data_mat( data_struct, retain_current, ej
         merged_mat = {spikes, drug, theta};
         factors_list = { 'drug', 'theta' };
     % IF ATTEND A FACTOR - DOESN'T WORK YET
-    elseif sum( strcmp( window_str, {'attend', 'blank'} ) )
+    elseif sum( strcmp( window_str, {'attend', 'attContrast', 'blank'} ) )
 %         merged_mat = {spikes, drug, theta, attend}; FIX THIS
 %         factors_list = { 'drug', 'theta', 'attend' }; FIX THIS
         merged_mat = {spikes, drug, theta};
@@ -220,8 +220,8 @@ function anova_data_mat = create_anova_data_mat( data_struct, retain_current, ej
 
     % Add Contrast Flag if applicable
     if contrast_flag
-        merged_mat = {merge_mat, contrasts};
-        factors_list = strcat( factors_list, 'contrast' );
+        merged_mat = {merged_mat, contrast};
+        factors_list = [factors_list, 'contrast'];
     end
     
     anova_data_mat = get_anova_struct( merged_mat, factors_list );
@@ -238,13 +238,13 @@ function anova_mat = get_anova_struct( anova_data_mat, factors_list )
 end
 
 
-function rslt = gen_summ_stats( attin_vals, attout_vals) 
+function rslt = gen_summ_stats( direc_spikemat) 
     
-    for i = 1:length( [attin_vals.direction] )
+    for i = 1:length( [direc_spikemat.direction] )
         
-        rslt(i).direction = attin_vals(i).direction;
+        rslt(i).direction = direc_spikemat(i).direction;
         
-        spikes = horzcat( attin_vals(i).spikes, attout_vals(i).spikes );
+        spikes = direc_spikemat(i).spikes;
         [ms, trials] = size( spikes );
         numspikes = sum( spikes, 1 );
         
