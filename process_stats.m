@@ -220,8 +220,8 @@ function anova_data_mat = create_anova_data_mat( data_struct, retain_current, ej
 
     % Add Contrast Flag if applicable
     if contrast_flag
-        merged_mat = {merged_mat, contrast};
-        factors_list = [factors_list, 'contrast'];
+        merged_mat{end+1} = cell2mat(contrast);
+        factors_list{end+1} = 'contrast';
     end
     
     anova_data_mat = get_anova_struct( merged_mat, factors_list );
