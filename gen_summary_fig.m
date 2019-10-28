@@ -119,6 +119,6 @@ function grand_av = gen_grand_av( vals, ns )
     total_n = sum(ns);
     weights = ns ./ total_n;
 
-    grand_av = sum( vals .* weights ); 
+    grand_av = nansum( vals .* weights ); 
 
 end
