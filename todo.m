@@ -20,10 +20,13 @@
 % Plot SVM performance vs scrambled SVM Performance (unity plot? or two
 % histograms)
 
-Make summary figure for attend paradigm
 Make anova also handle attend direction as a factor
 Make population / epoch figs
 Verify d' does what it's supposed to for WM
+Make summary figures look prettier: extend x axis, add cue and current and paradigm labels
+Make summaryfig work in combining att_fig and wm_fig
+Make overviewfig show 8dirs for wm
+
     
 Make ReadMe with Workflow?
  make_master_file_struct

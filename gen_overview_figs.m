@@ -26,7 +26,7 @@ function gen_overview_figs()
 
         load( ffpaths{i}, 'data_struct' ); % Loads data_struct
         
-%        overview_fig = gen_overview_fig( data_struct, currents{i} );
+        overview_fig = gen_overview_fig( data_struct, currents{i} );
         summary_fig  = gen_summary_fig( stats{i}, currents{i});
         
         current_list = currents{i};
@@ -34,16 +34,16 @@ function gen_overview_figs()
         save_name = strrep(save_name_mat,'.mat','');
                 
         % Save out overview fig in appropriate directory %
-%         overview_fig.PaperPositionMode = 'auto';
-%         overview_fig_pos = overview_fig.PaperPosition;
-%         overview_fig.PaperSize = [overview_fig_pos(3) overview_fig_pos(4)];
-%         print( overview_fig, strcat(save_name{1}, '.pdf'), '-dpdf'); % .png and .fig also posisble. % May Want to add paradigm to this eventually
-%         
+        overview_fig.PaperPositionMode = 'auto';
+        overview_fig_pos = overview_fig.PaperPosition;
+        overview_fig.PaperSize = [overview_fig_pos(3) overview_fig_pos(4)];
+        print( overview_fig, strcat(save_name{1}, '.pdf'), '-dpdf'); % .png and .fig also posisble. % May Want to add paradigm to this eventually
+        
         % Save out summary fig in appropriate directory %
         summary_fig.PaperPositionMode = 'auto';
         summary_fig_pos = summary_fig.PaperPosition;
         summary_fig.PaperSize = [summary_fig_pos(3) summary_fig_pos(4)];
-%        print( summary_fig, strcat(save_name{1}, '_summary', '.pdf'), '-dpdf'); % .png and .fig also posisble. % May Want to add paradigm to this eventually
+        print( summary_fig, strcat(save_name{1}, '_summary', '.pdf'), '-dpdf'); % .png and .fig also posisble. % May Want to add paradigm to this eventually
         
         close all;
     end
