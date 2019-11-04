@@ -113,6 +113,11 @@ function epoch_unity_fig = epoch_unity_plots( mfs, drug, current, paradigm, thet
    
    end
     
+   sgtitle( strcat( drug, {' '}, num2str(current), 'nA' ), 'FontWeight', 'bold' );
+   save_name = strcat( 'tmp_figs/population_figs/', 'Unity_Plot',  '_', paradigm,'_', drug, '_', num2str(current), 'nA', '.png' );
+   print( epoch_unity_fig, save_name, '-dpng'); % .png and .fig also posisble. % May Want to add paradigm to this eventually
+
+   
     
 end
 
