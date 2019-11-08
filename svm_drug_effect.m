@@ -38,8 +38,3 @@ end
 function SVM_performance = run_test_SVM( training_data, test_data )
 
 end
-
-
-%
-
-

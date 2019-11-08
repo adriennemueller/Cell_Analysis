@@ -25,7 +25,7 @@ function win_info = get_window( e_codes, e_times, window_string )
     attend_latesession_flag  = find(e_codes == 133);
     wm_flag                  = find(e_codes == 153);
 
-    if strcmp( window_string, 'attend' ) || strcmp( window_string, 'attContrast' )
+    if ismember( window_string, {'attend', 'attContrast'} )
         if attend_earlysession_flag, trial_window = [121 126]; % Need a function for this because I changed the event codes in Jan/Mar 2016 
         else, trial_window = [133 126];
         end
@@ -37,20 +37,20 @@ function win_info = get_window( e_codes, e_times, window_string )
         trial_window = [155 157];
     elseif strcmp (window_string, 'wm_response' )% These are variable durations.
          trial_window = [157 161];
-    elseif strcmp( window_string, 'visual' )
+    elseif ismember( window_string, {'attend_visual', 'wm_visual', 'visual'} )
         if attend_earlysession_flag, trial_window = [124 121]; % Attend Trials Early Sessions
         elseif attend_latesession_flag, trial_window = [124 133]; % Attend Trials Late Sessions
         else, trial_window = [153 155]; % WM Trials
         end
-    elseif strcmp( window_string, 'fixation' )
+    elseif ismember( window_string, {'attend_fixation', 'wm_fixation', 'fixation'} )
         if wm_flag, trial_window = [120 153]; % WM Trials
         else, trial_window = [120 124]; % Attend Trials
         end
-    elseif strcmp( window_string, 'fullNoMotor' ) % Up to and including Blank
+    elseif ismember( window_string, {'attend_fullNoMotor', 'wm_fullNoMotor','fullNoMotor'} ) % Up to and including Blank
         if wm_flag, trial_window = [120 161];
         else, trial_window = [120 128]; %[120 126]; 
         end
-    elseif strcmp( window_string, 'reward' )
+    elseif ismember( window_string, {'attend_reward', 'wm_reward','reward'} )
         if wm_flag, trial_window = [157 161];% WM Trials
         else, trial_window = [132 132]; % No actual end for this;
         end
