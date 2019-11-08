@@ -10,17 +10,8 @@
 function [rslt_mat, contrasts, events] = filtered_windowed_spikemat( curr_data_mat, current, window_str, direction, inout, contrast_flag )
     contrasts = [];
 
-    % Filter for correct trials
-    correct_idxs = find( [curr_data_mat.trial_error] == 0 );
-    
-    
-    % Filter for current & paradigm %%% BROKEN _ NEED MORE PARADIGMS ?
-    if strcmp( window_str, 'attend'), paradigms = {'Attention', 'Attention_Contrast'}; 
-        corr_current_idxs = find( [curr_data_mat.drug] == current & ismember({curr_data_mat.paradigm}, paradigms) );
-    else 
-        corr_current_idxs = find( [curr_data_mat.drug] == current );
-    end
-    valid_idxs = correct_idxs( ismember( correct_idxs, corr_current_idxs ) );
+    % Filter for correct trials and appropriate current and paradigm
+    valid_idxs = find_appropriate_idxs( curr_data_mat, current, window_str );
 
     % Get actual window values
     tmp_data_mat = curr_data_mat(valid_idxs);
@@ -43,7 +34,7 @@ function [rslt_mat, contrasts, events] = filtered_windowed_spikemat( curr_data_m
     millis_mat = {curr_data_mat(valid_idxs).millis};
     event_codes = {curr_data_mat(valid_idxs).event_codes};
     code_times = {curr_data_mat(valid_idxs).code_times};
-    rslt_mat = extract_window( trial_window, spike_mat, millis_mat, event_codes, code_times  );
+    rslt_mat = extract_window( trial_window, spike_mat, millis_mat, event_codes, code_times );
     
     events.e_codes = event_codes;
     events.e_times = code_times;
@@ -56,15 +47,25 @@ function [rslt_mat, contrasts, events] = filtered_windowed_spikemat( curr_data_m
     
 end
 
+function valid_idxs = find_appropriate_idxs( curr_data_mat, current, window_str )
 
-%%% EXPAND ON THIS
-function correct_trial = get_example_correct_trial( data_mat, window_str )
-    if strcmp(  window_str, 'attend' )
-        attend_trials = data_mat(find(strcmp({data_mat.paradigm}, 'Attention' )));
-        correct_trial = attend_trials(1);
+    attend_window_strs = {'attend_fixation', 'attend_visual', 'attend', 'blank', 'post_blank', 'attend_fullNoMotor', 'attend_reward'};
+    wm_window_strs     = {'wm_fixation', 'wm_visual', 'wm_delay', 'wm_response', 'wm_fullNoMotor', 'reward'};
+    %shared_window_strs = {'fixation', 'visual', 'fullNoMotor', 'reward'};
+
+    % Identify Paradigm
+    if ismember( window_str, attend_window_strs )
+        paradigms = {'Attention', 'Attention_Contrast'};
+    elseif ismember( window_str, wm_window_strs )
+        paradigms = {'WM'};
+%     elseif ismember( window_str, shared_window_strs )
+%         paradigms = {'Attention', 'Attention_Contrast', 'WM'};
     else
-        correct_trial = data_mat(1);
+        disp( 'Inappropriate window string input.' );
     end
+
+    % Filter for correct trials of appropriate current and paradigm
+    valid_idxs = find( [curr_data_mat.trial_error] == 0 & [curr_data_mat.drug] == current & ismember({curr_data_mat.paradigm}, paradigms) );
 
 end
 
