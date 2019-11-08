@@ -97,7 +97,7 @@ function windowed_mat = extract_window( trial_window, spike_mat, millis_mat, eve
     % Shave off any excess time_bins so can make a matrix. Shave off from
     % the front. This feels a little dodgy, but I think it's okay as long
     % as acknowledge in methods.
-    %windowed_cellarray = truncate( windowed_cellarray );
+    % windowed_cellarray = truncate( windowed_cellarray );
     
     % Convert to matrix
     windowed_mat = cell2mat(windowed_cellarray);
