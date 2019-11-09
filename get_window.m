@@ -75,7 +75,7 @@ function win_length = get_win_length( e_codes, e_times, trial_window, window_str
     post_blank_length = -300;
     
     % If fixation window 
-    if strcmp(window_string, 'fixation' )
+    if ismember(window_string, {'fixation', 'attend_fixation', 'wm_fixation'} )
         win_length = fix_win_length; 
         
     % Useful because these ranges are variable duration.    
