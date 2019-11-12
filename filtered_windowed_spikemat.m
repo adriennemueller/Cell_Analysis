@@ -49,8 +49,8 @@ end
 
 function valid_idxs = find_appropriate_idxs( curr_data_mat, current, window_str )
 
-    attend_window_strs = {'attend_fixation', 'attend_visual', 'attend', 'blank', 'post_blank', 'attend_fullNoMotor', 'attend_reward'};
-    wm_window_strs     = {'wm_fixation', 'wm_visual', 'wm_delay', 'wm_response', 'wm_fullNoMotor', 'reward'};
+    attend_window_strs = {'attend_fixation', 'attend_visual', 'attend', 'blank', 'post_blank', 'attend_fullNoMotor', 'attend_reward', 'attContrast'};
+    wm_window_strs     = {'wm_fixation', 'wm_visual', 'wm_delay', 'wm_response', 'wm_fullNoMotor', 'wm_reward'};
     %shared_window_strs = {'fixation', 'visual', 'fullNoMotor', 'reward'};
 
     % Identify Paradigm

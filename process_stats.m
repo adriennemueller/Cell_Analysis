@@ -29,35 +29,35 @@ function mfs = process_stats( mfs )
             % save substruct of stats for each paradigm into mfs
             if contains( paradigm_list, 'Attention' )
                 attend_trial_struct = data_struct( contains({data_struct.paradigm}, 'Attention' ) );
-                mfs.session(i).stats{j}.attend_fixation_stats   = windowed_stats( attend_trial_struct, currents, 'fixation', 'Attention' );
-                mfs.session(i).stats{j}.attend_visual_stats     = windowed_stats( attend_trial_struct, currents, 'visual', 'Attention' );
+                mfs.session(i).stats{j}.attend_fixation_stats   = windowed_stats( attend_trial_struct, currents, 'attend_fixation', 'Attention' );
+                mfs.session(i).stats{j}.attend_visual_stats     = windowed_stats( attend_trial_struct, currents, 'attend_visual', 'Attention' );
                 mfs.session(i).stats{j}.attend_attend_stats     = windowed_stats( attend_trial_struct, currents, 'attend', 'Attention' );
                 mfs.session(i).stats{j}.attend_blank_stats      = windowed_stats( attend_trial_struct, currents, 'blank', 'Attention' );
                 mfs.session(i).stats{j}.attend_post_blank_stats = windowed_stats( attend_trial_struct, currents, 'post_blank', 'Attention' );
-                mfs.session(i).stats{j}.attend_reward_stats     = windowed_stats( attend_trial_struct, currents, 'reward', 'Attention' );
+                mfs.session(i).stats{j}.attend_reward_stats     = windowed_stats( attend_trial_struct, currents, 'attend_reward', 'Attention' );
                 mfs.session(i).stats{j}.vis_signif = visual_significance( attend_trial_struct, currents );
             end
 
             if sum( strcmp( paradigm_list, 'WM' ) )
                 wm_trial_struct = data_struct( contains({data_struct.paradigm}, 'WM' ) );
-                mfs.session(i).stats{j}.wm_fixation_stats = windowed_stats( wm_trial_struct, currents, 'fixation', 'WM' );
-                mfs.session(i).stats{j}.wm_visual_stats   = windowed_stats( wm_trial_struct, currents, 'visual', 'WM' );
+                mfs.session(i).stats{j}.wm_fixation_stats = windowed_stats( wm_trial_struct, currents, 'wm_fixation', 'WM' );
+                mfs.session(i).stats{j}.wm_visual_stats   = windowed_stats( wm_trial_struct, currents, 'wm_visual', 'WM' );
                 mfs.session(i).stats{j}.wm_delay_stats    = windowed_stats( wm_trial_struct, currents, 'wm_delay', 'WM' );
                 mfs.session(i).stats{j}.wm_response_stats = windowed_stats( wm_trial_struct, currents, 'wm_response', 'WM' );
-                mfs.session(i).stats{j}.wm_reward_stats   = windowed_stats( wm_trial_struct, currents, 'reward', 'WM' );
+                mfs.session(i).stats{j}.wm_reward_stats   = windowed_stats( wm_trial_struct, currents, 'wm_reward', 'WM' );
             end
             
             if sum( strcmp( paradigm_list, 'Attention_Contrast' ) )
                 attContrast_trial_struct = data_struct( contains({data_struct.paradigm}, 'Attention_Contrast' ) );
                 
                 % Analyze irrespective of Contrast
-                mfs.session(i).stats{j}.attend_fixation_stats = windowed_stats( attContrast_trial_struct, currents, 'fixation', 'Attention' );
-                mfs.session(i).stats{j}.attend_visual_stats = windowed_stats( attContrast_trial_struct, currents, 'visual', 'Attention' );
+                mfs.session(i).stats{j}.attend_fixation_stats = windowed_stats( attContrast_trial_struct, currents, 'attend_fixation', 'Attention' );
+                mfs.session(i).stats{j}.attend_visual_stats = windowed_stats( attContrast_trial_struct, currents, 'attend_visual', 'Attention' );
                 mfs.session(i).stats{j}.attend_stats = windowed_stats( attContrast_trial_struct, currents, 'attend', 'Attention' );
                 
                 % Analyze for each Contrast separately
-                mfs.session(i).stats{j}.attendContrast_fixation_stats = windowed_stats( attContrast_trial_struct, currents, 'fixation', 'Attention_Contrast' );
-                mfs.session(i).stats{j}.attendContrast_visual_stats = windowed_stats( attContrast_trial_struct, currents, 'visual', 'Attention_Contrast' );
+                mfs.session(i).stats{j}.attendContrast_fixation_stats = windowed_stats( attContrast_trial_struct, currents, 'attend_fixation', 'Attention_Contrast' );
+                mfs.session(i).stats{j}.attendContrast_visual_stats = windowed_stats( attContrast_trial_struct, currents, 'attend_visual', 'Attention_Contrast' );
                 mfs.session(i).stats{j}.attendContrast_stats = windowed_stats( attContrast_trial_struct, currents, 'attContrast', 'Attention_Contrast' );
             end
     
@@ -84,10 +84,10 @@ function vis_signif = visual_significance( data_struct, currents )
         corr_idx = find( [data_struct.trial_error] == 0 );
         
         % Get fixation period spikemat
-        fix_spikemat = get_directional_spikemat( data_struct, retain_current, 'fixation','', contrast_flag );
+        fix_spikemat = get_directional_spikemat( data_struct, retain_current, 'attend_fixation','', contrast_flag );
         
         % Get visual period spikemat
-        vis_spikemat = get_directional_spikemat( data_struct, retain_current, 'visual', '', contrast_flag );
+        vis_spikemat = get_directional_spikemat( data_struct, retain_current, 'attend_visual', '', contrast_flag );
         
         fix_mat = []; vis_mat = []; vis_direcs = [];
         for j = 1:8 % Number of directions
@@ -197,11 +197,11 @@ function anova_data_mat = create_anova_data_mat( data_struct, retain_current, ej
     end
     
     % Just drug as factor - 'Fixation' Window
-    if strcmp( window_str, 'fixation' )
+    if ismember( window_str, {'fixation', 'attend_fixation', 'wm_fixation'} )
         merged_mat = {spikes, drug};
         factors_list = {'drug'};
     % If direction also a factor
-    elseif sum( strcmp( window_str, {'visual', 'wm_delay', 'wm_response', 'reward'} ) )
+    elseif sum( strcmp( window_str, {'visual', 'attend_visual', 'wm_visual', 'wm_delay', 'wm_response', 'attend_reward', 'wm_reward','reward'} ) )
         merged_mat = {spikes, drug, theta};
         factors_list = { 'drug', 'theta' };
     % IF ATTEND A FACTOR - DOESN'T WORK YET

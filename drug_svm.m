@@ -12,7 +12,7 @@
 % to the chosen drug at the chosen current and give each trial a label of
 % either 'Control' or 'Drug'. It will then train 'straps'-many SVM
 % classifiers on that data, with the matrix being broken into 'straps'-many
-% sets of training and test matrices.
+% sets of training and test matrices.8006977089 8002372767 8002413371
 
 % The output struct includes the models, the labels, the scores and the percent of
 % the labels that were correct for each model. The struct will also
