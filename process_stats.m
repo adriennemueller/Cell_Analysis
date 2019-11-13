@@ -165,7 +165,8 @@ function win_stats = windowed_stats( data_struct, currents, window_str, paradigm
         drug_summ_stats    = gen_summ_stats( drug_spikemat );
                 
         % Get Anova for this
-        anova_mat = create_anova_data_mat( data_struct, retain_current, eject_current, window_str, contrast_flag );
+        factored_mat = factored_data_mat( data_struct, retain_current, eject_current, window_str, contrast_flag );
+        [anova_mat.p, anova_mat.tbl] = anovan( sum(factored_mat.spikes,1), factored_mat.factors, 'model','full','varnames', factored_mat.factors_strings, 'display','off', 'sstype', 1 );
         
         % Return results for each current separately
         win_stats(i-1).current = eject_current;
@@ -175,66 +176,6 @@ function win_stats = windowed_stats( data_struct, currents, window_str, paradigm
         win_stats(i-1).control_summ_stats = control_summ_stats;
         win_stats(i-1).drug_summ_stats    = drug_summ_stats;
     end
-end
-
-
-function anova_data_mat = create_anova_data_mat( data_struct, retain_current, eject_current, window_str, contrast_flag )
-    
-    currents = [retain_current, eject_current];
-    spikes = []; theta = []; target_change = []; drug = []; contrast = [];
-
-    for i = 1:length(currents)
-    
-        % Loop through datastruct, creating a matrix based on the epoch 
-        [ctrl_spike_mat, contrasts, events] = filtered_windowed_spikemat( data_struct, currents(i), window_str, [], [], contrast_flag );
- 
-        spikes        = horzcat( spikes, sum( ctrl_spike_mat, 1 ));
-        theta         = horzcat( theta, [events.theta{:}] );
-        target_change = horzcat( target_change, [events.target_change{:}] );
-        drug          = horzcat( drug, repmat( currents(i), 1, length(events.theta)) );
-        contrast      = horzcat( contrast, contrasts );
-        %attend        =  
-    end
-    
-    % Just drug as factor - 'Fixation' Window
-    if ismember( window_str, {'fixation', 'attend_fixation', 'wm_fixation'} )
-        merged_mat = {spikes, drug};
-        factors_list = {'drug'};
-    % If direction also a factor
-    elseif sum( strcmp( window_str, {'visual', 'attend_visual', 'wm_visual', 'wm_delay', 'wm_response', 'attend_reward', 'wm_reward','reward'} ) )
-        merged_mat = {spikes, drug, theta};
-        factors_list = { 'drug', 'theta' };
-    % IF ATTEND A FACTOR - DOESN'T WORK YET
-    elseif sum( strcmp( window_str, {'attend', 'attContrast', 'blank'} ) )
-%         merged_mat = {spikes, drug, theta, attend}; FIX THIS
-%         factors_list = { 'drug', 'theta', 'attend' }; FIX THIS
-        merged_mat = {spikes, drug, theta};
-        factors_list = { 'drug', 'theta' };
-    % If whether target flips is a factor
-    elseif strcmp( window_str, 'post_blank' )
-%         merged_mat = {spikes, drug, theta, attend, target_change}; FIX THIS
-%         factors_list = { 'drug', 'theta', 'attend', 'target_change' }; FIX ThiS
-        merged_mat = {spikes, drug, theta, target_change}; 
-        factors_list = {'drug', 'theta', 'target_change'};
-    end        
-
-    % Add Contrast Flag if applicable
-    if contrast_flag
-        merged_mat{end+1} = cell2mat(contrast);
-        factors_list{end+1} = 'contrast';
-    end
-    
-    anova_data_mat = get_anova_struct( merged_mat, factors_list );
-
-end
-
-function anova_mat = get_anova_struct( anova_data_mat, factors_list )
-    
-    data_vec = anova_data_mat{ 1, :};
-    factors  = anova_data_mat( 2:end );
-    
-    [anova_mat.p, anova_mat.tbl] = anovan( data_vec, factors, 'model','full','varnames', factors_list, 'display','off', 'sstype', 1 );
-    
 end
 
 
@@ -342,76 +283,3 @@ function dmat = gen_dprime_struct( groupA, groupB )
        
     end
 end
-
-% 
-% function rslt = gen_anova_struct( ctrl_attin, ctrl_attout, drug_attin, drug_attout, contrast_flag )
-%     data_vec = []; 
-%     direction = [];
-%     drug = [];
-%     attend = [];
-%     
-%     % Identify whether this is attend_Contrast paradigm data.
-%     %contrast_flag = isfield( ctrl_attin, 'contrast' ); % NO SUCH DATA IN
-%     %ATT MAT
-%     if contrast_flag, 
-%         contrast = [];
-%     end    
-%     
-%     for i = 1:length(unique([ctrl_attin.direction])) 
-%         
-%         direc = ctrl_attin(i).direction;
-%         if (direc >= 180), continue, end % Only 4 dir b/c copied att in/out.
-%      
-%         % Find the Drug Off, Attend In trials and make a vector of the
-%         % number of spikes for them.
-%         if ~isempty(ctrl_attin(i).spikes)
-%         data_vec = [data_vec sum(ctrl_attin(i).spikes)]; 
-%         ctrl_attin_length = size(ctrl_attin(i).spikes, 2);
-%         direction = [ direction repmat(direc, 1, ctrl_attin_length )];
-%         drug = [drug zeros(1, ctrl_attin_length)];
-%         attend = [attend ones(1, ctrl_attin_length)];
-%         if contrast_flag, contrast = [contrast ctrl_attin(i).contrasts]; end
-%         end
-%         
-%         % Same for Drug Off, Attend Out
-%         if ~isempty(ctrl_attout(i).spikes)
-%         data_vec = [data_vec sum(ctrl_attout(i).spikes)]; 
-%         ctrl_attout_length = size(ctrl_attout(i).spikes, 2);
-%         direction = [ direction repmat(direc, 1, ctrl_attout_length )];
-%         drug = [drug zeros(1, ctrl_attout_length)];
-%         attend = [attend zeros(1, ctrl_attout_length)];
-%         if contrast_flag, contrast = [contrast ctrl_attout(i).contrasts]; end
-%         end
-%         
-%         % Find the Drug On, Attend In trials and make a vector of the
-%         % number of spikes for them.        
-%         if ~isempty(drug_attin(i).spikes)
-%         data_vec = [data_vec sum(drug_attin(i).spikes)]; 
-%         drug_attin_length = size(drug_attin(i).spikes, 2);
-%         direction = [ direction repmat(direc, 1, drug_attin_length )];
-%         drug = [drug ones(1, drug_attin_length)];
-%         attend = [attend ones(1, drug_attin_length)]; 
-%         if contrast_flag, contrast = [contrast drug_attin(i).contrasts]; end
-%         end
-%         
-%         % Same for Drug On, Attend Out
-%         if ~isempty(drug_attout(i).spikes)
-%         data_vec = [data_vec sum(drug_attout(i).spikes)]; 
-%         drug_attout_length = size(drug_attout(i).spikes, 2);
-%         direction = [ direction repmat(direc, 1, drug_attout_length )];
-%         drug = [drug ones(1, drug_attout_length)];
-%         attend = [attend zeros(1, drug_attout_length)];
-%         if contrast_flag, contrast = [contrast drug_attout(i).contrasts]; end
-%         end
-%         
-%     end
-%     
-%     if contrast_flag
-%         [p,tbl] = anovan( data_vec, {direction, drug, attend, cell2mat(contrast)}, 'model','full','varnames',{'direction','drug','attend', 'contrast'}, 'display','off', 'sstype', 1 );
-%     else
-%         [p,tbl] = anovan( data_vec, {direction, drug, attend}, 'model','full','varnames',{'direction','drug','attend'}, 'display','off', 'sstype', 1 );
-%     end
-%     
-%     rslt.p = p;
-%     rslt.tbl = tbl;
-% end

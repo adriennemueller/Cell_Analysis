@@ -9,13 +9,22 @@ function svm_plot = svm_drug_effect( mfs, drug, current, epoch, crossval_n )
 
     if nargin < 5, crossval_n = 10; end
 
-    % Get the subset of cells with relevant drug and current
-    cell_struct = filter_cells( mfs, drug, current );
     
     
-    % Loop through all relevant cells
     
-    % For each epoch relevant to that svm_parameter
+    
+    % For each epoch
+     
+    % For all cells
+    
+    window_str = 'attend_fixation';
+    
+    cell_struct = filter_cells( mfs, drug, current, window_str );
+
+    % Loop through all relevant svm_parameters
+
+    
+    
    
         % train and test an SVM
         
@@ -28,24 +37,25 @@ end
 
 
 %
-function cell_struct = filter_cells( mfs, drug, epoch, current )
+function cell_struct = filter_cells( mfs, drug, current, window_str )
+
+    contrast_flag = 0; % Could be changed later.
 
     cell_struct = struct;
 
     for i = 1:length(mfs.session)
         if strcmp(mfs.session(i).drug, drug)
             for j = 1:length(mfs.session(i).processed_files)
-                if ismember(current_selection, mfs.session(i).currents{j})
+                if ismember(current, mfs.session(i).currents{j})
                     
                     fname = mfs.session(i).processed_files{j};
                     disp(strcat('Adding: ', {' '},  fname));
         
                     data_struct = load_processed_file( mfs.session(i).sub_direc, fname );
                     
-                    %%% MAKE THIS RETURN A MATRIX WITH RELEVANT IDENTIFIERS
-                    %%% FOR THETA, ATTEND_DIRECTION AND DECISON 
-                    control_trials = filtered_windowed_spikemat( data_struct, -15, epoch, [], [], 0 );
-                    drug_trials    = filtered_windowed_spikemat( data_struct, current, epoch, [], [], 0 );
+                    factored_mat = factored_data_mat( data_struct, -15, current, window_str, contrast_flag );
+                    cell_struct(end+1).spikes = factored_mat.spikes;
+                    cell_struct(end+1).factors = factored_mat.factors;
         
                     % Restrict matrix lengths to be the same widths (times)
                     % by removing columns (time points) from the front.
