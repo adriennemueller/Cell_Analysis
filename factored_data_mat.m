@@ -9,7 +9,7 @@ function data_mat = factored_data_mat( data_struct, retain_current, eject_curren
         % Loop through datastruct, creating a matrix based on the epoch 
         [new_spikes, contrasts, events] = filtered_windowed_spikemat( data_struct, currents(i), window_str, [], [], contrast_flag );
         
-        %%% SHAVE THE VINS HERE
+        %%% SHAVE THE VINS HERE %%% CHECK THIS HORZCAT!
         [spikes, new_spikes, ~] = shave_bins( spikes, new_spikes, new_spikes );
         spikes = horzcat( spikes, new_spikes );
         
