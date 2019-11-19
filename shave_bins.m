@@ -9,9 +9,9 @@ function [svm_mat, control_trials, drug_trials] = shave_bins( svm_mat, control_t
     if svm_mat_x == 0
         shortest_val = min( [ctrl_x, drug_x] );
     else
-        shortest_val = min( [svm_mat_y, ctrl_x, drug_x] );
-        svm_discrepancy = svm_mat_y - shortest_val;
-        svm_mat = svm_mat( :, svm_discrepancy+1:end ); 
+        shortest_val = min( [svm_mat_x, ctrl_x, drug_x] );
+        svm_discrepancy = svm_mat_x - shortest_val;
+        svm_mat = svm_mat( svm_discrepancy+1:end, : ); 
     end
     
     ctrl_discrepancy = ctrl_x - shortest_val;
